@@ -1,0 +1,209 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: dark;
+  --bg-base: #01030b;
+  --bg-alt: #030617;
+  --surface: rgba(7, 12, 27, 0.85);
+  --surface-strong: rgba(9, 13, 32, 0.9);
+  --border-soft: rgba(148, 163, 184, 0.2);
+  --accent: #a78bfa;
+  --accent-strong: #6ee7b7;
+  font-synthesis: none;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Inter', 'Space Grotesk', system-ui, -apple-system,
+    BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  background-color: var(--bg-base);
+  color: #f8fafc;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+      circle at 20% 20%,
+      rgba(61, 90, 241, 0.28),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 80% 10%,
+      rgba(167, 139, 250, 0.35),
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 50% 70%,
+      rgba(56, 189, 248, 0.2),
+      transparent 50%
+    );
+  filter: blur(60px);
+  opacity: 0.8;
+  z-index: -2;
+  pointer-events: none;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(
+      circle at center,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      120deg,
+      rgba(167, 139, 250, 0.08),
+      rgba(56, 189, 248, 0.04)
+    );
+  background-size: 160px 160px, 100% 100%;
+  opacity: 0.55;
+  z-index: -3;
+  pointer-events: none;
+}
+
+a {
+  color: inherit;
+}
+
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'%3E%3Crect width='320' height='320' fill='rgb(2,6,23)'/%3E%3Cg fill='white' fill-opacity='0.03'%3E%3Ccircle cx='15' cy='15' r='1'/%3E%3Ccircle cx='40' cy='40' r='1'/%3E%3Ccircle cx='80' cy='80' r='1'/%3E%3C/g%3E%3C/svg%3E");
+  mix-blend-mode: screen;
+  opacity: 0.35;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.floating-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(60px);
+  opacity: 0.6;
+  animation: float-slow 16s ease-in-out infinite;
+}
+
+.glass-panel {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 1.5rem;
+  box-shadow: 0 18px 45px rgba(2, 6, 17, 0.65);
+  backdrop-filter: blur(24px);
+}
+
+.glass-panel--interactive {
+  transition: border-color 220ms ease, transform 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.glass-panel--interactive:hover {
+  border-color: rgba(167, 139, 250, 0.8);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 26px 70px rgba(1, 12, 32, 0.7);
+}
+
+.gradient-border {
+  position: relative;
+  border-radius: 1.8rem;
+  padding: 1px;
+  background: linear-gradient(
+    120deg,
+    rgba(167, 139, 250, 0.95),
+    rgba(56, 189, 248, 0.8),
+    rgba(110, 231, 183, 0.75)
+  );
+}
+
+.gradient-border > * {
+  border-radius: inherit;
+  width: 100%;
+  background-color: rgba(5, 8, 22, 0.92);
+}
+
+.sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.sheen::after {
+  content: '';
+  position: absolute;
+  inset: -120% -20%;
+  background: linear-gradient(
+    115deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transform: rotate(10deg);
+  animation: sheen-move 8s ease-in-out infinite;
+}
+
+@keyframes sheen-move {
+  0% {
+    transform: translateX(-60%) rotate(10deg);
+  }
+  50% {
+    transform: translateX(20%) rotate(10deg);
+  }
+  100% {
+    transform: translateX(120%) rotate(10deg);
+  }
+}
+
+.dot-grid {
+  background-image: radial-gradient(
+    rgba(248, 250, 252, 0.25) 0.5px,
+    transparent 0.5px
+  );
+  background-size: 20px 20px;
+  opacity: 0.35;
+}
+
+.ticker {
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ticker__inner {
+  display: inline-flex;
+  gap: 1.5rem;
+  animation: ticker 18s linear infinite;
+}
+
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.focus-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  border: 1px solid rgba(248, 250, 252, 0.15);
+  background: rgba(15, 23, 42, 0.65);
+}
