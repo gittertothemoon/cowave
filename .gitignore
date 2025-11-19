@@ -7,10 +7,19 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node / build
 node_modules
 dist
 dist-ssr
+build
 *.local
+
+# Env files
+.env
+.env.local
+.env.development.local
+.env.production.local
+.env.test.local
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +31,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Next.js (se lo usi)
+.next
+
+# Vercel (se lo usi)
+.vercel
