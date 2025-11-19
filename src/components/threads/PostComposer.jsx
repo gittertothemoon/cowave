@@ -40,7 +40,7 @@ export default function PostComposer({
         </div>
         <button
           type="submit"
-          className={`text-[11px] px-3 py-1.5 rounded-2xl font-semibold tracking-wide hover:opacity-95 transition shadow-glow ${
+          className={`text-[11px] px-3 py-1.5 rounded-2xl font-semibold tracking-wide hover:opacity-95 transition shadow-glow w-full sm:w-auto text-center ${
             accentGradient
               ? 'text-slate-950'
               : 'bg-gradient-to-r from-accent to-accentBlue text-slate-950'

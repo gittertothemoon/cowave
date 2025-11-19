@@ -71,7 +71,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <section className="grid gap-5 lg:grid-cols-[2fr,1fr]">
+      <section className="grid gap-5 items-start lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="space-y-3">
           {filteredThreads.length === 0 ? (
             <div className="glass-panel p-5 text-sm text-slate-400">
@@ -85,7 +85,7 @@ export default function HomePage() {
           )}
         </div>
 
-        <aside className="space-y-4">
+        <aside className="space-y-4 w-full">
           <div className="glass-panel p-5 space-y-2">
             <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
               Radar

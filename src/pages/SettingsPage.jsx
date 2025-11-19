@@ -16,25 +16,25 @@ export default function SettingsPage() {
 
       <section className="grid gap-4 md:grid-cols-2 text-sm">
         <div className="glass-panel p-4 sm:p-5 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span>Limite consigliato per oggi</span>
-            <select className="bg-slate-950/70 border border-white/10 rounded-xl px-3 py-1 text-xs text-slate-200">
+            <select className="bg-slate-950/70 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 w-full sm:w-auto">
               <option>30 minuti</option>
               <option>45 minuti</option>
               <option>60 minuti</option>
               <option>Nessun limite</option>
             </select>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span>Modalità contenuti intensi</span>
             <label className="inline-flex items-center gap-2 text-xs text-slate-400">
-              <input type="checkbox" className="accent-accent" defaultChecked />
+              <input type="checkbox" className="accent-accent h-4 w-4" defaultChecked />
               disattiva trigger forti
             </label>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span>Promemoria respiro</span>
-            <select className="bg-slate-950/70 border border-white/10 rounded-xl px-3 py-1 text-xs">
+            <select className="bg-slate-950/70 border border-white/10 rounded-xl px-3 py-2 text-xs w-full sm:w-auto">
               <option>Ogni 20 min</option>
               <option>Ogni 30 min</option>
               <option>Off</option>
@@ -43,13 +43,13 @@ export default function SettingsPage() {
         </div>
 
         <div className="glass-panel p-4 sm:p-5 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span>Filtro stanze NSFW</span>
-            <input type="checkbox" className="accent-accent" />
+            <input type="checkbox" className="accent-accent h-4 w-4" />
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span>Notifiche solo in finestre attive</span>
-            <input type="checkbox" className="accent-accent" defaultChecked />
+            <input type="checkbox" className="accent-accent h-4 w-4" defaultChecked />
           </div>
           <div className="space-y-1">
             <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">

@@ -38,7 +38,7 @@ export default function ProfilePage({ activePersonaId }) {
           <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
             Persona attiva
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="h-12 w-12 rounded-full bg-gradient-to-br from-accent to-accentBlue flex items-center justify-center text-sm font-semibold text-slate-950">
               {activePersona?.label?.[0] ?? 'P'}
             </div>
@@ -73,12 +73,14 @@ export default function ProfilePage({ activePersonaId }) {
             {personas.map((p) => (
               <li
                 key={p.id}
-                className="flex items-center justify-between rounded-2xl border border-white/10 px-3 py-2 bg-slate-950/40"
+                className="rounded-2xl border border-white/10 px-3 py-2 bg-slate-950/40"
               >
-                <span>{p.label}</span>
-                <span className="text-[11px] text-slate-500">
-                  Reputazione: in arrivo
-                </span>
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <span>{p.label}</span>
+                  <span className="text-[11px] text-slate-500">
+                    Reputazione: in arrivo
+                  </span>
+                </div>
               </li>
             ))}
           </ul>

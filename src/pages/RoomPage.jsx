@@ -76,62 +76,62 @@ export default function RoomPage() {
           style={{ background: accentGradient }}
         />
         <div className="relative space-y-3">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="text-[11px] text-slate-400 hover:text-white"
-          >
-            ← Torna al feed
-          </button>
-          <span className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-            Stanza
-          </span>
-        </div>
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold text-white">{room.name}</h1>
-            <p className="text-sm text-slate-400 mt-1 max-w-2xl">
-              {room.description}
-            </p>
-          </div>
-          <button
-            onClick={() => setIsNewThreadOpen(true)}
-            className="w-full md:w-auto inline-flex items-center justify-center gap-2 text-sm px-4 py-2 rounded-2xl text-slate-950 font-semibold shadow-glow"
-            style={{
-              backgroundImage: accentGradient,
-            }}
-          >
-            + Nuovo thread
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-2 text-[11px] text-slate-400">
-          <span className="px-2 py-1 rounded-2xl bg-slate-950/40 border border-white/10">
-            {room.members} membri
-          </span>
-          {room.isPrivate && (
-            <span className="px-2 py-1 rounded-2xl bg-slate-950/40 border border-white/10">
-              Privata
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <button
+              onClick={() => navigate(-1)}
+              className="text-[11px] text-slate-400 hover:text-white text-left"
+            >
+              ← Torna al feed
+            </button>
+            <span className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+              Stanza
             </span>
-          )}
-          {room.tags.map((tag) => (
-            <span
-              key={tag}
-              className="px-2 py-1 rounded-2xl border"
+          </div>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold text-white">{room.name}</h1>
+              <p className="text-sm text-slate-400 mt-1 max-w-2xl">
+                {room.description}
+              </p>
+            </div>
+            <button
+              onClick={() => setIsNewThreadOpen(true)}
+              className="w-full md:w-auto inline-flex items-center justify-center gap-2 text-sm px-4 py-2 rounded-2xl text-slate-950 font-semibold shadow-glow"
               style={{
-                borderColor: theme.primary,
-                color: theme.text,
-                backgroundColor: `${theme.primary}20`,
+                backgroundImage: accentGradient,
               }}
             >
-              #{tag}
+              + Nuovo thread
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2 text-[11px] text-slate-400">
+            <span className="px-2 py-1 rounded-2xl bg-slate-950/40 border border-white/10">
+              {room.members} membri
             </span>
-          ))}
-        </div>
+            {room.isPrivate && (
+              <span className="px-2 py-1 rounded-2xl bg-slate-950/40 border border-white/10">
+                Privata
+              </span>
+            )}
+            {room.tags.map((tag) => (
+              <span
+                key={tag}
+                className="px-2 py-1 rounded-2xl border"
+                style={{
+                  borderColor: theme.primary,
+                  color: theme.text,
+                  backgroundColor: `${theme.primary}20`,
+                }}
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
         </div>
       </header>
 
       <section className="glass-panel p-4 sm:p-5 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
             Thread della stanza
           </p>

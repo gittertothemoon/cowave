@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppState } from '../state/AppStateContext.jsx';
 import PostComposer from '../components/threads/PostComposer.jsx';
@@ -7,6 +8,8 @@ export default function ThreadPage() {
   const { threadId } = useParams();
   const navigate = useNavigate();
   const { threads, postsByThread, createPost, rooms } = useAppState();
+  const treeStartRef = useRef(null);
+  const treeEndRef = useRef(null);
 
   const thread = threads.find((t) => t.id === threadId);
   const posts = postsByThread[threadId] ?? [];
@@ -32,6 +35,11 @@ export default function ThreadPage() {
   }
 
   const treeRoot = buildTree(posts);
+  const scrollTreeIntoView = (nodeRef, block = 'start') => {
+    if (nodeRef?.current) {
+      nodeRef.current.scrollIntoView({ behavior: 'smooth', block });
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -55,7 +63,7 @@ export default function ThreadPage() {
         </div>
       </header>
 
-      <section className="grid gap-5 lg:grid-cols-[2fr,1fr]">
+      <section className="grid gap-5 items-start lg:grid-cols-[2fr,1fr]">
         <div className="space-y-4">
           <div
             className="glass-panel p-5 border"
@@ -71,10 +79,29 @@ export default function ThreadPage() {
             />
           </div>
 
-          <div className="glass-panel p-5">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 mb-3">
-              Rami della conversazione
-            </p>
+          <div className="glass-panel p-5 space-y-3">
+            <div className="flex flex-wrap items-center gap-3 justify-between">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
+                Rami della conversazione
+              </p>
+              <div className="flex flex-wrap gap-2 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => scrollTreeIntoView(treeStartRef, 'start')}
+                  className="px-3 py-1.5 rounded-2xl border border-white/10 text-slate-300 hover:border-accent/60 transition"
+                >
+                  Vai all’inizio
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollTreeIntoView(treeEndRef, 'end')}
+                  className="px-3 py-1.5 rounded-2xl border border-white/10 text-slate-300 hover:border-accent/60 transition"
+                >
+                  Vai all’ultimo
+                </button>
+              </div>
+            </div>
+            <div ref={treeStartRef} aria-hidden="true" />
             {treeRoot.length === 0 ? (
               <p className="text-sm text-slate-400">
                 Ancora nessun ramo. Rispondi alla radice per farlo crescere.
@@ -87,10 +114,12 @@ export default function ThreadPage() {
                     node={node}
                     onReply={handleNewPost}
                     accentGradient={accentGradient}
+                    depth={0}
                   />
                 ))}
               </div>
             )}
+            <div ref={treeEndRef} aria-hidden="true" />
           </div>
         </div>
 
@@ -147,13 +176,15 @@ function buildTree(posts) {
   return roots;
 }
 
-function ThreadTreeNode({ node, onReply, accentGradient }) {
+function ThreadTreeNode({ node, onReply, accentGradient, depth = 0 }) {
   const { post, children } = node;
+  const composerIndent = Math.min(depth + 1, 4) * 0.55;
 
   return (
     <div className="space-y-2">
       <PostNode
         post={post}
+        depth={depth}
         childrenNodes={
           children.length > 0 && (
             <div className="space-y-2">
@@ -163,13 +194,17 @@ function ThreadTreeNode({ node, onReply, accentGradient }) {
                   node={child}
                   onReply={onReply}
                   accentGradient={accentGradient}
+                  depth={depth + 1}
                 />
               ))}
             </div>
           )
         }
       />
-      <div className="ml-3 sm:ml-5">
+      <div
+        className="pt-1"
+        style={{ marginLeft: `${composerIndent}rem` }}
+      >
         <PostComposer
           parentId={post.id}
           onSubmit={onReply}

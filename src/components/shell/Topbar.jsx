@@ -40,16 +40,16 @@ export default function Topbar({
   return (
     <header className="sticky top-0 z-30 border-b border-white/5 bg-gradient-to-b from-surfaceAlt/90 via-surface/85 to-surface/70 backdrop-blur-2xl shadow-soft">
       <div className="absolute inset-0 opacity-60 pointer-events-none bg-[radial-gradient(circle_at_top,_rgba(167,139,250,0.18),_transparent_60%)]" />
-      <div className="relative max-w-6xl mx-auto flex flex-col gap-3 px-4 sm:px-8 py-3">
-        <div className="flex items-center gap-3 flex-wrap">
+      <div className="relative max-w-6xl mx-auto flex flex-col gap-4 px-4 sm:px-8 py-3">
+        <div className="flex items-center gap-3 flex-wrap justify-between">
           <button
-            className="md:hidden text-slate-400 hover:text-slate-100"
+            className="md:hidden text-slate-100 hover:text-white p-2 rounded-xl border border-white/10"
             onClick={onToggleSidebar}
             aria-label="Apri menu laterale"
           >
             ☰
           </button>
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 pr-0 sm:pr-4 border-r border-white/10 -ml-3 sm:-ml-8">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 pr-2 md:pr-4 md:border-r border-white/10 -ml-1 sm:-ml-2">
             <Logo size={34} className="-ml-1" />
             <div className="text-[11px] uppercase tracking-[0.3em] text-slate-400">
               CoWave
@@ -58,25 +58,25 @@ export default function Topbar({
               </span>
             </div>
           </div>
-          <div className="flex-1 hidden sm:flex items-center gap-3">
-            <div className="flex-1 bg-slate-900/60 border border-white/10 rounded-2xl px-3 py-1.5 items-center gap-2 text-xs focus-within:border-accent/60 transition">
+          <div className="flex-1 hidden sm:flex items-center gap-3 min-w-0">
+            <div className="flex-1 bg-slate-900/60 border border-white/10 rounded-2xl px-3 py-1.5 items-center gap-2 text-xs focus-within:border-accent/60 transition flex">
               <span className="text-slate-500">⌘K</span>
               <input
-                className="bg-transparent flex-1 focus:outline-none text-slate-200 placeholder:text-slate-500"
+                className="bg-transparent flex-1 min-w-0 focus:outline-none text-slate-200 placeholder:text-slate-500"
                 placeholder="Cerca stanze, thread o persone…"
               />
               <span className="text-[10px] text-slate-500">⌘K ovunque</span>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-[11px] text-slate-400">
+          <div className="flex items-center gap-2 text-[11px] text-slate-400 sm:ml-auto">
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="hidden sm:inline">Sessione mindful in corso</span>
           </div>
-          <button className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full border border-white/10 text-slate-300 hover:text-white">
+          <button className="hidden sm:flex items-center justify-center w-9 h-9 rounded-full border border-white/10 text-slate-300 hover:text-white">
             <NotificationIcon />
           </button>
 
-          <div className="relative">
+          <div className="relative ml-auto">
             <button
               onClick={() => setPersonaMenuOpen((prev) => !prev)}
               className="flex items-center gap-2 text-xs bg-slate-900/60 border border-white/10 rounded-2xl px-2.5 py-1.5 hover:border-accent/70 transition"
@@ -140,14 +140,14 @@ export default function Topbar({
           </div>
         </div>
       </div>
-      <div className="border-t border-white/5 px-4 sm:px-8 py-2 flex flex-wrap gap-3 items-center">
-        <nav className="flex items-center gap-2 flex-wrap">
+      <div className="border-t border-white/5 px-4 sm:px-8 py-3 flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
+        <nav className="w-full grid grid-cols-2 gap-2 text-center md:flex md:flex-wrap md:items-center md:gap-2">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `px-3 py-1.5 rounded-2xl text-[12px] uppercase tracking-[0.2em] transition flex items-center gap-2 ${
+                `px-3 py-1.5 rounded-2xl text-[12px] uppercase tracking-[0.2em] transition flex items-center justify-center gap-2 ${
                   isActive
                     ? 'bg-white/10 text-white border border-white/20'
                     : 'text-slate-400 border border-transparent hover:text-white'
@@ -161,7 +161,7 @@ export default function Topbar({
             </NavLink>
           ))}
         </nav>
-        <div className="flex-1 flex flex-wrap justify-end gap-2">
+        <div className="w-full grid grid-cols-2 gap-2 md:flex md:flex-wrap md:justify-end md:gap-2">
           {sessionStats.map((stat) => (
             <div
               key={stat.label}
@@ -174,14 +174,14 @@ export default function Topbar({
               <p className="text-[10px] text-slate-500">{stat.detail}</p>
             </div>
           ))}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 col-span-2 justify-between md:justify-end">
             <button className="focus-pill hidden sm:flex">
               <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
               Radar
             </button>
             <button
               onClick={() => navigate('/app/rooms/room-dev')}
-              className="text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 rounded-2xl text-slate-950 font-semibold shadow-glow"
+              className="text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 rounded-2xl text-slate-950 font-semibold shadow-glow w-full sm:w-auto text-center"
               style={{
                 backgroundImage: 'linear-gradient(120deg, #a78bfa, #38bdf8)',
               }}

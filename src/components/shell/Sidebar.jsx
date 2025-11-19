@@ -140,14 +140,30 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
         </aside>
       )}
 
-      {variant === 'mobile' && open && (
-        <div className="fixed inset-0 z-40 md:hidden">
+      {variant === 'mobile' && (
+        <div
+          className={`fixed inset-0 z-40 md:hidden transition duration-300 ${
+            open ? 'pointer-events-auto' : 'pointer-events-none'
+          }`}
+          aria-hidden={!open}
+        >
           <div
-            className="absolute inset-0 bg-black/60"
+            className={`absolute inset-0 bg-black/60 transition-opacity duration-300 ${
+              open ? 'opacity-100' : 'opacity-0'
+            }`}
             onClick={onClose}
             aria-hidden="true"
           />
-          <aside className="absolute left-0 top-0 bottom-0 w-full max-w-xs sm:w-72 bg-surface/95 border-r border-white/10 shadow-soft flex flex-col">
+          <aside
+            className={`absolute left-0 top-0 bottom-0 w-full max-w-xs sm:max-w-sm bg-surface/95 border-r border-white/10 shadow-soft flex flex-col transition-transform duration-300 ${
+              open ? 'translate-x-0' : '-translate-x-full'
+            }`}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu principale"
+            aria-hidden={!open}
+            inert={!open ? '' : undefined}
+          >
             {content}
           </aside>
         </div>
