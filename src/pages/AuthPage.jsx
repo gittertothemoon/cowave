@@ -132,7 +132,7 @@ export default function AuthPage({ onAuth }) {
 
             <button
               type="submit"
-              className="w-full mt-2 bg-gradient-to-r from-accent to-accentBlue text-slate-950 text-sm font-semibold py-3 rounded-2xl transition hover:opacity-95"
+              className="w-full mt-2 bg-gradient-to-r from-accent to-accentBlue text-white text-sm font-semibold py-3 rounded-2xl transition hover:opacity-95"
             >
               {isLogin ? 'Accedi' : 'Registrati'}
             </button>
