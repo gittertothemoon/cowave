@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useNavigate, useLocation, NavLink } from 'react-router-dom';
+import { useNavigate, NavLink } from 'react-router-dom';
 import { useAppState } from '../../state/AppStateContext.jsx';
 import Logo from '../ui/Logo.jsx';
+import { useLogout } from '../../hooks/useLogout.js';
 
 export default function Topbar({
   activePersonaId,
@@ -9,8 +10,8 @@ export default function Topbar({
   onToggleSidebar,
 }) {
   const navigate = useNavigate();
-  const location = useLocation();
   const { personas } = useAppState();
+  const logout = useLogout();
 
   const currentPersona =
     personas.find((p) => p.id === activePersonaId) ?? personas[0];
@@ -174,7 +175,7 @@ export default function Topbar({
               <p className="text-[10px] text-slate-500">{stat.detail}</p>
             </div>
           ))}
-          <div className="flex items-center gap-2 col-span-2 justify-between md:justify-end">
+          <div className="flex items-center gap-2 col-span-2 justify-between md:justify-end md:gap-2">
             <button className="focus-pill hidden sm:flex">
               <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
               Radar
@@ -187,6 +188,13 @@ export default function Topbar({
               }}
             >
               Nuova stanza
+            </button>
+            <button
+              type="button"
+              onClick={logout}
+              className="text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 rounded-2xl border border-white/10 text-slate-300 hover:text-white transition w-full sm:w-auto text-center"
+            >
+              Logout
             </button>
           </div>
         </div>

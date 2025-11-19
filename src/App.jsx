@@ -1,5 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import LandingPage from './pages/LandingPage.jsx';
 import AuthPage from './pages/AuthPage.jsx';
 import MainLayout from './components/layout/MainLayout.jsx';
@@ -10,68 +9,70 @@ import ProfilePage from './pages/ProfilePage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import OnboardingPage from './pages/OnboardingPage.jsx';
 import { useAppState } from './state/AppStateContext.jsx';
+import ProtectedRoute from './routes/ProtectedRoute.jsx';
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { isOnboarded, activePersonaId, setActivePersonaId } = useAppState();
 
-  const location = useLocation();
-  const isAuthFlow = location.pathname.startsWith('/auth');
-  const isLanding = location.pathname === '/';
-  const isAppRoute = location.pathname.startsWith('/app');
-  const isOnboardingRoute = location.pathname === '/app/onboarding';
-
-  if (!isAuthenticated && !isLanding && !isAuthFlow) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (
-    isAuthenticated &&
-    isAppRoute &&
-    !isOnboardingRoute &&
-    !isOnboarded
-  ) {
-    return <Navigate to="/app/onboarding" replace />;
-  }
-
-  if (isAuthenticated && isOnboarded && isOnboardingRoute) {
-    return <Navigate to="/app" replace />;
-  }
-
-  if (isLanding) {
-    return <LandingPage />;
-  }
-
-  if (isAuthFlow) {
-    return <AuthPage onAuth={() => setIsAuthenticated(true)} />;
-  }
-
-  if (isOnboardingRoute) {
-    return <OnboardingPage />;
-  }
-
   return (
-    <MainLayout
-      activePersonaId={activePersonaId}
-      onPersonaChange={setActivePersonaId}
-    >
-      <Routes>
-        <Route path="/app" element={<HomePage activePersonaId={activePersonaId} />} />
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/auth/*" element={<AuthPage />} />
+      <Route
+        path="/app/onboarding"
+        element={
+          <ProtectedRoute>
+            {isOnboarded ? (
+              <Navigate to="/app" replace />
+            ) : (
+              <OnboardingPage />
+            )}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/app"
+        element={
+          <ProtectedRoute>
+            <OnboardedRoute isOnboarded={isOnboarded}>
+              <MainLayout
+                activePersonaId={activePersonaId}
+                onPersonaChange={setActivePersonaId}
+              >
+                <Outlet />
+              </MainLayout>
+            </OnboardedRoute>
+          </ProtectedRoute>
+        }
+      >
         <Route
-          path="/app/rooms/:roomId"
+          index
+          element={<HomePage activePersonaId={activePersonaId} />}
+        />
+        <Route
+          path="rooms/:roomId"
           element={<RoomPage activePersonaId={activePersonaId} />}
         />
         <Route
-          path="/app/threads/:threadId"
+          path="threads/:threadId"
           element={<ThreadPage activePersonaId={activePersonaId} />}
         />
         <Route
-          path="/app/profile"
+          path="profile"
           element={<ProfilePage activePersonaId={activePersonaId} />}
         />
-        <Route path="/app/settings" element={<SettingsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/app" replace />} />
-      </Routes>
-    </MainLayout>
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
+}
+
+function OnboardedRoute({ isOnboarded, children }) {
+  if (!isOnboarded) {
+    return <Navigate to="/app/onboarding" replace />;
+  }
+
+  return children;
 }

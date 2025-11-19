@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../components/ui/Logo.jsx';
 import { useAppState } from '../state/AppStateContext.jsx';
+import { useLogout } from '../hooks/useLogout.js';
 
 const algorithmPresets = [
   {
@@ -29,6 +30,7 @@ const introBullets = [
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
+  const logout = useLogout();
   const {
     rooms,
     personas,
@@ -107,6 +109,13 @@ export default function OnboardingPage() {
           <div className="text-[11px] uppercase tracking-[0.3em] text-slate-400">
             Onboarding • 1 sola volta
           </div>
+          <button
+            type="button"
+            onClick={logout}
+            className="text-xs uppercase tracking-[0.3em] px-4 py-1.5 rounded-2xl border border-white/10 text-slate-300 hover:text-white hover:border-white/30 transition"
+          >
+            Logout
+          </button>
         </header>
 
         <section className="glass-panel p-5 sm:p-6 space-y-4">

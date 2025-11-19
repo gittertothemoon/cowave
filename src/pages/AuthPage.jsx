@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Logo from '../components/ui/Logo.jsx';
 import { useAppState } from '../state/AppStateContext.jsx';
+import { setAuthenticated } from '../utils/auth.js';
 
 const insights = [
   'Thread ramificati anziché commenti in fila.',
@@ -52,6 +53,8 @@ export default function AuthPage({ onAuth }) {
     if (!isLogin) {
       resetOnboarding();
     }
+    // AUTH: set fake authenticated state for protected pages
+    setAuthenticated();
     onAuth?.();
 
     if (isLogin) {
@@ -74,6 +77,14 @@ export default function AuthPage({ onAuth }) {
 
       <div className="relative w-full max-w-4xl mx-auto grid gap-6 lg:grid-cols-[0.85fr,1.15fr] text-slate-100">
         <div className="glass-panel p-5 sm:p-8 rounded-3xl border border-white/10 space-y-4">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white transition w-fit px-3 py-1.5 rounded-2xl border border-white/10 bg-slate-950/40"
+          >
+            <span className="text-base leading-none">←</span>
+            Torna alla landing
+          </button>
           <Logo withWordmark size={44} />
           <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">
             {isLogin ? 'Accesso' : 'Registrazione'}
