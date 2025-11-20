@@ -1,25 +1,26 @@
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppState } from '../../state/AppStateContext.jsx';
 import Modal from '../ui/Modal.jsx';
 import AlgorithmControls from '../ui/AlgorithmControls.jsx';
 import SessionHUD from '../ui/SessionHUD.jsx';
 
+const MOBILE_DRAWER_ID = 'cowave-sidebar-drawer';
+
 export default function Sidebar({ variant = 'desktop', open = false, onClose }) {
-  const { rooms, followedRoomIds } = useAppState();
+  const { rooms, followedRoomIds = [] } = useAppState();
   const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
   const navigate = useNavigate();
   const isMobile = variant === 'mobile';
   const accentPalette = ['#38bdf8', '#a78bfa', '#34d399', '#f472b6', '#fb7185'];
-  const followedSet = new Set(followedRoomIds ?? []);
-  const primaryRooms =
-    followedRoomIds.length > 0
-      ? rooms.filter((room) => followedSet.has(room.id))
-      : rooms;
-  const exploreRooms =
-    followedRoomIds.length > 0
-      ? rooms.filter((room) => !followedSet.has(room.id))
-      : [];
+  const hasFollowedRooms = followedRoomIds.length > 0;
+  const followedSet = new Set(followedRoomIds);
+  const primaryRooms = hasFollowedRooms
+    ? rooms.filter((room) => followedSet.has(room.id))
+    : rooms;
+  const exploreRooms = hasFollowedRooms
+    ? rooms.filter((room) => !followedSet.has(room.id))
+    : [];
 
   const getRoomAccent = (room, index) =>
     room.theme?.primary ?? accentPalette[index % accentPalette.length];
@@ -35,6 +36,17 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
       onClose();
     }
   };
+
+  useEffect(() => {
+    if (!isMobile || !open) return undefined;
+    function handleEscape(event) {
+      if (event.key === 'Escape') {
+        onClose?.();
+      }
+    }
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isMobile, open, onClose]);
 
   const content = (
     <div
@@ -84,8 +96,9 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
               Le tue stanze
             </p>
             <button
+              type="button"
               onClick={() => setIsCreateRoomOpen(true)}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-950 px-2.5 py-1 rounded-2xl"
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-950 px-2.5 py-1 rounded-2xl focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
               style={{
                 backgroundImage: 'linear-gradient(120deg, #a78bfa, #38bdf8)',
                 boxShadow: '0 10px 25px rgba(15,23,42,0.35)',
@@ -100,15 +113,17 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
               const accent = getRoomAccent(room, index);
               return (
                 <li key={room.id}>
-                  <button
-                    onClick={() => handleNavigate(`/app/rooms/${room.id}`)}
-                    className="w-full text-left px-3 py-2.5 rounded-2xl border transition flex items-start gap-3"
-                    style={{
-                      borderColor: `${accent}40`,
-                      boxShadow: `0 0 0 1px ${accent}20`,
-                      backgroundImage: `linear-gradient(120deg, ${accent}18, rgba(15,23,42,0.65))`,
-                    }}
-                  >
+                      <button
+                        type="button"
+                        onClick={() => handleNavigate(`/app/rooms/${room.id}`)}
+                        className="w-full text-left px-3 py-2.5 rounded-2xl border transition flex items-start gap-3 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+                        style={{
+                          borderColor: `${accent}40`,
+                          boxShadow: `0 0 0 1px ${accent}20`,
+                          backgroundImage: `linear-gradient(120deg, ${accent}18, rgba(15,23,42,0.65))`,
+                        }}
+                        aria-label={`Apri stanza ${room.name}`}
+                      >
                     <span
                       className="mt-1 h-2.5 w-2.5 rounded-full flex-shrink-0"
                       style={{ backgroundColor: accent }}
@@ -144,11 +159,13 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
                   return (
                     <li key={room.id}>
                       <button
+                        type="button"
                         onClick={() => handleNavigate(`/app/rooms/${room.id}`)}
-                        className="w-full text-left px-3 py-2 rounded-2xl border border-slate-800 bg-slate-950/40 text-xs text-slate-300 hover:border-white/20 transition"
+                        className="w-full text-left px-3 py-2 rounded-2xl border border-slate-800 bg-slate-950/40 text-xs text-slate-300 hover:border-white/20 transition focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
                         style={{
                           boxShadow: `inset 0 0 0 1px ${accent}20`,
                         }}
+                        aria-label={`Esplora la stanza ${room.name}`}
                       >
                         {room.name}
                       </button>
@@ -158,7 +175,7 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
               </ul>
             </div>
           )}
-          {followedRoomIds.length === 0 && (
+          {!hasFollowedRooms && (
             <p className="text-[11px] text-slate-500 px-1 mt-3">
               Seguirai le stanze preferite durante l’onboarding iniziale.
             </p>
@@ -176,7 +193,8 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
             <button
               key={link.label}
               type="button"
-              className="w-full flex items-center justify-between text-left text-xs text-slate-400 hover:text-white transition"
+              className="w-full flex items-center justify-between text-left text-xs text-slate-400 hover:text-white transition focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/60 rounded-xl px-2 py-1"
+              aria-label={`${link.label}, ${link.hint}`}
             >
               <span>{link.label}</span>
               <span className="text-[10px] text-slate-500">{link.hint}</span>
@@ -203,6 +221,7 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
             aria-hidden="true"
           />
           <aside
+            id={MOBILE_DRAWER_ID}
             className="relative z-50 flex h-full w-72 max-w-[80%] flex-col border-r border-slate-800 bg-slate-950 shadow-soft"
             role="dialog"
             aria-modal="true"

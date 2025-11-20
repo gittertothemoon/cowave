@@ -43,9 +43,21 @@ export default function RoomPage() {
   if (!room) {
     return (
       <div>
-        <p className="text-sm text-red-400">Stanza non trovata.</p>
+        <p className="text-sm text-red-400" role="status" aria-live="assertive">
+          Stanza non trovata.
+        </p>
       </div>
     );
+  }
+
+  function handleBack() {
+    const canGoBack =
+      typeof window !== 'undefined' && window.history.length > 2;
+    if (canGoBack) {
+      navigate(-1);
+    } else {
+      navigate('/app');
+    }
   }
 
   function handleCreateThread(e) {
@@ -78,7 +90,8 @@ export default function RoomPage() {
         <div className="relative space-y-3">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
             <button
-              onClick={() => navigate(-1)}
+              type="button"
+              onClick={handleBack}
               className="text-[11px] text-slate-400 hover:text-white text-left"
             >
               ← Torna al feed
@@ -95,6 +108,7 @@ export default function RoomPage() {
               </p>
             </div>
             <button
+              type="button"
               onClick={() => setIsNewThreadOpen(true)}
               className="w-full md:w-auto inline-flex items-center justify-center gap-2 text-sm px-4 py-2 rounded-2xl text-slate-950 font-semibold shadow-glow"
               style={{

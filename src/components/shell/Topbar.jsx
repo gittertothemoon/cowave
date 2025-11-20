@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAppState } from '../../state/AppStateContext.jsx';
 import Logo from '../ui/Logo.jsx';
@@ -8,6 +8,7 @@ export default function Topbar({
   activePersonaId,
   onPersonaChange,
   onToggleSidebar,
+  isSidebarOpen = false,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,6 +25,33 @@ export default function Topbar({
     personas.find((p) => p.id === activePersonaId) ?? personas[0];
 
   const [personaMenuOpen, setPersonaMenuOpen] = useState(false);
+  const personaMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!personaMenuOpen) return undefined;
+
+    function handleClickOutside(event) {
+      if (
+        personaMenuRef.current &&
+        !personaMenuRef.current.contains(event.target)
+      ) {
+        setPersonaMenuOpen(false);
+      }
+    }
+
+    function handleEscape(event) {
+      if (event.key === 'Escape') {
+        setPersonaMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [personaMenuOpen]);
 
   const navLinkBase =
     'inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition whitespace-nowrap';
@@ -65,8 +93,11 @@ export default function Topbar({
         <div className="flex flex-col gap-2 py-2 md:py-0">
           <div className="flex h-14 items-center gap-2">
             <button
+              type="button"
               className="inline-flex items-center justify-center rounded-md p-2 text-slate-200 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 md:hidden"
               onClick={onToggleSidebar}
+              aria-controls="cowave-sidebar-drawer"
+              aria-expanded={isSidebarOpen}
               aria-label="Apri menu stanze"
             >
               <div className="space-y-1">
@@ -101,9 +132,17 @@ export default function Topbar({
             </div>
 
             <div className="hidden md:flex flex-1 justify-center px-4 lg:px-8">
+              <label
+                htmlFor="desktop-search"
+                className="sr-only"
+              >
+                Cerca in CoWave
+              </label>
               <div className="flex w-full max-w-md items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 px-3 py-1.5 text-xs transition focus-within:border-sky-500/60">
                 <span className="text-slate-500">⌘K</span>
                 <input
+                  id="desktop-search"
+                  type="search"
                   className="bg-transparent flex-1 min-w-0 focus:outline-none text-slate-200 placeholder:text-slate-500 text-sm"
                   placeholder="Cerca stanze, thread o persone…"
                 />
@@ -113,6 +152,7 @@ export default function Topbar({
 
             <div className="ml-auto flex items-center gap-2">
               <button
+                type="button"
                 className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-800 text-slate-300 hover:text-white md:hidden"
                 aria-label="Notifiche"
               >
@@ -141,15 +181,20 @@ export default function Topbar({
                 ))}
               </nav>
               <button
+                type="button"
                 className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-800 text-slate-300 hover:text-white"
                 aria-label="Notifiche"
               >
                 <NotificationIcon />
               </button>
-              <div className="relative">
+              <div className="relative" ref={personaMenuRef}>
                 <button
+                  type="button"
                   onClick={() => setPersonaMenuOpen((prev) => !prev)}
                   className="inline-flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/70 px-2 py-1.5 text-xs hover:border-sky-500/70 transition md:px-2.5"
+                  aria-haspopup="menu"
+                  aria-expanded={personaMenuOpen}
+                  aria-controls="persona-menu"
                 >
                   <span className="h-7 w-7 rounded-full bg-gradient-to-br from-accent to-accentBlue flex items-center justify-center text-[10px] font-semibold text-slate-950">
                     {currentPersona?.label?.[0] ?? 'P'}
@@ -165,7 +210,11 @@ export default function Topbar({
                 </button>
 
                 {personaMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-800 bg-slate-950 py-1.5 text-xs shadow-soft backdrop-blur-xl z-40">
+                  <div
+                    id="persona-menu"
+                    role="menu"
+                    className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-800 bg-slate-950 py-1.5 text-xs shadow-soft backdrop-blur-xl z-40"
+                  >
                     {personas.map((p) => (
                       <button
                         key={p.id}
@@ -174,11 +223,13 @@ export default function Topbar({
                           onPersonaChange?.(p.id);
                           setPersonaMenuOpen(false);
                         }}
-                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-white/5 ${
+                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-white/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
                           p.id === currentPersona?.id
                             ? 'text-accent'
                             : 'text-slate-200'
                         }`}
+                        role="menuitemradio"
+                        aria-checked={p.id === currentPersona?.id}
                       >
                         <span className="h-6 w-6 rounded-full bg-slate-800 flex items-center justify-center text-[10px] uppercase font-semibold">
                           {p.label[0]}
@@ -192,7 +243,8 @@ export default function Topbar({
                         navigate('/app/profile');
                         setPersonaMenuOpen(false);
                       }}
-                      className="w-full border-t border-white/5 px-3 py-1.5 text-left text-[11px] text-slate-400 hover:bg-white/5"
+                      className="w-full border-t border-white/5 px-3 py-1.5 text-left text-[11px] text-slate-400 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+                      role="menuitem"
                     >
                       Gestisci personas
                     </button>
@@ -202,7 +254,8 @@ export default function Topbar({
                         logout();
                         setPersonaMenuOpen(false);
                       }}
-                      className="w-full border-t border-white/5 px-3 py-1.5 text-left text-[11px] text-rose-300 hover:bg-white/5"
+                      className="w-full border-t border-white/5 px-3 py-1.5 text-left text-[11px] text-rose-300 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-400/70"
+                      role="menuitem"
                     >
                       Esci
                     </button>
@@ -215,8 +268,12 @@ export default function Topbar({
           <div className="md:hidden space-y-2 pb-1">
             <div className="px-0.5">
               <div className="flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 px-3 py-1.5 text-sm transition focus-within:border-sky-500/60">
-                <span className="text-slate-500">🔍</span>
+                <span className="text-slate-500" aria-hidden="true">
+                  🔍
+                </span>
                 <input
+                  type="search"
+                  aria-label="Cerca thread o stanze"
                   className="bg-transparent flex-1 focus:outline-none text-slate-200 placeholder:text-slate-500"
                   placeholder="Cerca thread o stanze…"
                 />

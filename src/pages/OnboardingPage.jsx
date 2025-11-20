@@ -37,16 +37,21 @@ export default function OnboardingPage() {
     primaryPersonaId,
     addCustomPersona,
     currentUser,
+    initialRoomIds,
   } = useAppState();
 
   const defaultPersonaId = primaryPersonaId ?? personas[0]?.id ?? null;
-  const [selectedRooms, setSelectedRooms] = useState([]);
+  const [selectedRooms, setSelectedRooms] = useState(
+    initialRoomIds?.length ? initialRoomIds : []
+  );
   const [selectedPersonaId, setSelectedPersonaId] = useState(defaultPersonaId);
   const [selectedPreset, setSelectedPreset] = useState(algorithmPreset);
   const [roomError, setRoomError] = useState('');
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [customPersonaName, setCustomPersonaName] = useState('');
   const [customPersonaError, setCustomPersonaError] = useState('');
+  const selectionLimit = 3;
+  const customPersonaFormId = 'custom-persona-form';
 
   const roomsInfo = useMemo(
     () => rooms.map((room) => ({ ...room, tags: room.tags ?? [] })),
@@ -79,8 +84,10 @@ export default function OnboardingPage() {
         }
         return next;
       }
-      if (prev.length >= 3) {
-        setRoomError('Puoi seguire al massimo tre stanze in partenza.');
+      if (prev.length >= selectionLimit) {
+        setRoomError(
+          `Puoi seguire al massimo ${selectionLimit} stanze in partenza.`
+        );
         return prev;
       }
       setRoomError('');
@@ -158,18 +165,24 @@ export default function OnboardingPage() {
               Step 1
             </p>
             <p className="text-xs text-slate-400">
-              {selectedRooms.length}/3 selezionate
+              {selectedRooms.length}/{selectionLimit} selezionate
             </p>
           </div>
           <h2 className="text-2xl font-semibold text-white">
             Scegli le tue stanze iniziali
           </h2>
           <p className="text-sm text-slate-300">
-            Seleziona tra 1 e 3 stanze da seguire subito. Potrai aggiungerne
+            Seleziona tra 1 e {selectionLimit} stanze da seguire subito. Potrai aggiungerne
             altre o crearne di nuove dopo l’ingresso.
           </p>
           {roomError && (
-            <p className="text-xs text-rose-300">{roomError}</p>
+            <p
+              className="text-xs text-rose-300"
+              role="status"
+              aria-live="assertive"
+            >
+              {roomError}
+            </p>
           )}
           <div className="grid gap-3 sm:grid-cols-2">
             {roomsInfo.map((room) => {
@@ -183,6 +196,10 @@ export default function OnboardingPage() {
                     isSelected
                       ? 'border-accent/80 bg-accent/15 shadow-glow'
                       : 'border-white/10 hover:border-white/25'
+                  }`}
+                  aria-pressed={isSelected}
+                  aria-label={`${isSelected ? 'Rimuovi' : 'Segui'} la stanza ${
+                    room.name
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -204,7 +221,7 @@ export default function OnboardingPage() {
                       {isSelected ? 'Scelta' : 'Segui'}
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-1 mt-3">
+                  <div className="flex flex-wrap gap-1 mt-3" aria-hidden="true">
                     {room.tags.map((tag) => (
                       <span
                         key={`${room.id}-${tag}`}
@@ -245,6 +262,7 @@ export default function OnboardingPage() {
                       ? 'border-accent/80 bg-accent/15 shadow-glow'
                       : 'border-white/10 hover:border-white/20'
                   }`}
+                  aria-pressed={isSelected}
                 >
                   <div className="flex items-center gap-3">
                     <span
@@ -287,13 +305,15 @@ export default function OnboardingPage() {
                     setCustomPersonaError('');
                   }}
                   className="rounded-full border border-white/10 w-8 h-8 text-lg text-white"
+                  aria-expanded={showCustomForm}
+                  aria-controls={customPersonaFormId}
                   aria-label="Apri form persona personalizzata"
                 >
                   {showCustomForm ? '−' : '+'}
                 </button>
               </div>
               {showCustomForm && (
-                <div className="mt-3 space-y-2">
+                <div id={customPersonaFormId} className="mt-3 space-y-2">
                   <input
                     type="text"
                     className="w-full bg-slate-900/70 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent text-slate-100"
@@ -305,7 +325,13 @@ export default function OnboardingPage() {
                     }}
                   />
                   {customPersonaError && (
-                    <p className="text-xs text-rose-300">{customPersonaError}</p>
+                    <p
+                      className="text-xs text-rose-300"
+                      role="status"
+                      aria-live="assertive"
+                    >
+                      {customPersonaError}
+                    </p>
                   )}
                   <button
                     type="button"
@@ -348,6 +374,7 @@ export default function OnboardingPage() {
                       ? 'border-accentBlue/80 bg-accentBlue/15 shadow-glow'
                       : 'border-white/10 hover:border-white/20'
                   }`}
+                  aria-pressed={isSelected}
                 >
                   <p className="text-base font-semibold text-white">
                     {preset.title}

@@ -1,4 +1,10 @@
 export default function SettingsPage() {
+  const limitId = 'limit-select';
+  const intenseModeId = 'intense-mode';
+  const reminderId = 'reminder-select';
+  const nsfwId = 'nsfw-toggle';
+  const activeWindowId = 'active-window-toggle';
+
   return (
     <div className="space-y-5">
       <header className="glass-panel p-4 sm:p-5 space-y-2">
@@ -17,8 +23,17 @@ export default function SettingsPage() {
       <section className="grid gap-4 md:grid-cols-2 text-sm">
         <div className="glass-panel p-4 sm:p-5 space-y-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <span>Limite consigliato per oggi</span>
-            <select className="bg-slate-950/70 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-200 w-full sm:w-auto">
+            <label
+              htmlFor={limitId}
+              className="text-slate-200 font-medium"
+            >
+              Limite consigliato per oggi
+            </label>
+            <select
+              id={limitId}
+              className="bg-slate-950/70 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-200 w-full sm:w-auto"
+              defaultValue="30 minuti"
+            >
               <option>30 minuti</option>
               <option>45 minuti</option>
               <option>60 minuti</option>
@@ -26,15 +41,39 @@ export default function SettingsPage() {
             </select>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <span>Modalità contenuti intensi</span>
-            <label className="inline-flex items-center gap-2 text-sm text-slate-400">
-              <input type="checkbox" className="accent-accent h-4 w-4" defaultChecked />
-              disattiva trigger forti
+            <div>
+              <p className="text-slate-200 font-medium">
+                Modalità contenuti intensi
+              </p>
+              <p className="text-xs text-slate-400">
+                Disattiva trigger forti durante questa sessione.
+              </p>
+            </div>
+            <label
+              htmlFor={intenseModeId}
+              className="inline-flex items-center gap-2 text-sm text-slate-400"
+            >
+              <input
+                id={intenseModeId}
+                type="checkbox"
+                className="accent-accent h-4 w-4"
+                defaultChecked
+              />
+              Attiva
             </label>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <span>Promemoria respiro</span>
-            <select className="bg-slate-950/70 border border-white/10 rounded-xl px-3 py-2 text-sm w-full sm:w-auto">
+            <label
+              htmlFor={reminderId}
+              className="text-slate-200 font-medium"
+            >
+              Promemoria respiro
+            </label>
+            <select
+              id={reminderId}
+              className="bg-slate-950/70 border border-white/10 rounded-xl px-3 py-2 text-sm w-full sm:w-auto"
+              defaultValue="Ogni 20 min"
+            >
               <option>Ogni 20 min</option>
               <option>Ogni 30 min</option>
               <option>Off</option>
@@ -44,12 +83,31 @@ export default function SettingsPage() {
 
         <div className="glass-panel p-4 sm:p-5 space-y-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <span>Filtro stanze NSFW</span>
-            <input type="checkbox" className="accent-accent h-4 w-4" />
+            <label
+              htmlFor={nsfwId}
+              className="text-slate-200 font-medium"
+            >
+              Filtro stanze NSFW
+            </label>
+            <input
+              id={nsfwId}
+              type="checkbox"
+              className="accent-accent h-4 w-4"
+            />
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <span>Notifiche solo in finestre attive</span>
-            <input type="checkbox" className="accent-accent h-4 w-4" defaultChecked />
+            <label
+              htmlFor={activeWindowId}
+              className="text-slate-200 font-medium"
+            >
+              Notifiche solo in finestre attive
+            </label>
+            <input
+              id={activeWindowId}
+              type="checkbox"
+              className="accent-accent h-4 w-4"
+              defaultChecked
+            />
           </div>
           <div className="space-y-1">
             <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">

@@ -11,9 +11,18 @@ export default function ThreadCard({ thread }) {
     secondary: '#38bdf8',
     glow: 'rgba(59,130,246,0.35)',
   };
+  const readableDate = new Date(thread.createdAt).toLocaleString();
+  const cardLabel = `Apri thread ${thread.title} nella stanza ${room?.name ?? 'sconosciuta'}`;
 
   function handleNavigation() {
     navigate(`/app/threads/${thread.id}`);
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleNavigation();
+    }
   }
 
   return (
@@ -21,12 +30,9 @@ export default function ThreadCard({ thread }) {
       className="relative glass-panel glass-panel--interactive p-4 sm:p-5 cursor-pointer overflow-hidden group"
       onClick={handleNavigation}
       tabIndex={0}
-      role="button"
-      onKeyDown={(event) => {
-        if (event.key === 'Enter') {
-          handleNavigation();
-        }
-      }}
+      role="link"
+      onKeyDown={handleKeyDown}
+      aria-label={cardLabel}
     >
       <div
         aria-hidden="true"
@@ -64,6 +70,7 @@ export default function ThreadCard({ thread }) {
         <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:gap-1">
           <span
             className="h-10 w-10 rounded-full bg-gradient-to-br from-slate-900 to-slate-700 flex items-center justify-center text-[11px] font-semibold text-white flex-shrink-0"
+            aria-hidden="true"
           >
             {persona?.label?.[0] ?? 'P'}
           </span>
@@ -82,7 +89,8 @@ export default function ThreadCard({ thread }) {
           Energia: {thread.energy}
         </span>
         <span>
-          Ultimo aggiornamento: {new Date(thread.createdAt).toLocaleString()}
+          Ultimo aggiornamento:{' '}
+          <time dateTime={thread.createdAt}>{readableDate}</time>
         </span>
         <span className="text-slate-300 flex items-center gap-1 sm:ml-auto">
           Continua il ramo ↗

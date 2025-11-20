@@ -74,6 +74,7 @@ export default function HomePage() {
                   ? 'bg-gradient-to-r from-accent/30 to-accentBlue/30 text-white border-accent/40'
                   : 'text-slate-400 border-white/10 hover:text-white'
               }`}
+              aria-pressed={energyFilter === filter.value}
             >
               {filter.label}
             </button>
@@ -84,7 +85,11 @@ export default function HomePage() {
       <section className="grid gap-5 items-start lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="space-y-3">
           {filteredThreads.length === 0 ? (
-            <div className="glass-panel p-5 text-sm text-slate-400">
+            <div
+              className="glass-panel p-5 text-sm text-slate-400"
+              role="status"
+              aria-live="polite"
+            >
               Nessun thread nelle stanze che segui con questa energia ora. Cambia
               filtro o avvia tu il prossimo.
             </div>
