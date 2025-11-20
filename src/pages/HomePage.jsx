@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import ThreadCard from '../components/threads/ThreadCard.jsx';
 import { useAppState } from '../state/AppStateContext.jsx';
+import SessionHeaderCard from '../components/ui/SessionHeaderCard.jsx';
 
 const energyFilters = [
   { label: 'Tutti', value: 'all' },
@@ -45,8 +46,9 @@ export default function HomePage() {
 
   return (
     <div className="space-y-5">
+      <SessionHeaderCard />
       <header className="glass-panel p-4 sm:p-5">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex flex-col gap-3">
           <div>
             <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">
               Home
@@ -58,10 +60,6 @@ export default function HomePage() {
               Ogni card è un albero di conversazione. Niente scroll infinito:
               solo thread scelti dalle stanze che segui o scopri da subito.
             </p>
-          </div>
-          <div className="inline-flex items-center gap-2 text-[11px] text-slate-400 bg-slate-950/40 border border-white/10 rounded-2xl px-3 py-2 w-full sm:w-auto justify-center">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Focus mode • restano 28 min</span>
           </div>
         </div>
 

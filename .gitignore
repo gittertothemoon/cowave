@@ -37,3 +37,5 @@ build
 
 # Vercel (se lo usi)
 .vercel
+
+.qodo

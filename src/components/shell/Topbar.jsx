@@ -25,15 +25,8 @@ export default function Topbar({
 
   const [personaMenuOpen, setPersonaMenuOpen] = useState(false);
 
-  const tickerItems = [
-    '13 stanze live',
-    '28 thread avviati oggi',
-    'Sessione media 34 min',
-    'Highlight Dev Lab: “Workflow senza feed”',
-  ];
-
   const navLinkBase =
-    'inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition';
+    'inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition whitespace-nowrap';
   const navLinkActive = 'bg-sky-500 text-slate-900 shadow-sm';
   const navLinkInactive =
     'text-slate-400 hover:text-slate-100 hover:bg-slate-800';
@@ -66,17 +59,11 @@ export default function Topbar({
     },
   ];
 
-  const sessionStats = [
-    { label: 'Focus', value: '28m', detail: 'ancora 12m' },
-    { label: 'Rami attivi', value: '7', detail: '+3 oggi' },
-    { label: 'Streak', value: '5 giorni', detail: 'modalità mindful' },
-  ];
-
   return (
     <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
       <div className="mx-auto w-full max-w-6xl px-3 sm:px-4 lg:px-6">
-        <div className="flex h-14 items-center gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 py-2 md:py-0">
+          <div className="flex h-14 items-center gap-2">
             <button
               className="inline-flex items-center justify-center rounded-md p-2 text-slate-200 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 md:hidden"
               onClick={onToggleSidebar}
@@ -90,198 +77,175 @@ export default function Topbar({
             </button>
             <Link
               to="/app"
-              className="flex items-center gap-2 text-slate-200"
+              className="hidden md:flex items-center gap-2 text-slate-200"
             >
               <Logo size={32} className="-ml-1" />
-              <div className="hidden sm:flex flex-col leading-tight">
+              <div className="flex flex-col leading-tight">
                 <span className="text-[10px] uppercase tracking-[0.3em] text-slate-400">
                   CoWave
                 </span>
                 <span className="text-[10px] text-slate-500">beta privata</span>
               </div>
             </Link>
-          </div>
-
-          <div className="hidden md:flex flex-1 items-center gap-3 pl-2">
-            <div className="flex-1 bg-slate-900/80 border border-slate-800 rounded-2xl px-3 py-1.5 items-center gap-2 text-xs focus-within:border-sky-500/60 transition flex">
-              <span className="text-slate-500">⌘K</span>
-              <input
-                className="bg-transparent flex-1 min-w-0 focus:outline-none text-slate-200 placeholder:text-slate-500 text-sm"
-                placeholder="Cerca stanze, thread o persone…"
-              />
-              <span className="text-[10px] text-slate-500">ricerca</span>
-            </div>
-            <div className="hidden lg:flex items-center gap-2 text-[11px] text-slate-400">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              Sessione mindful in corso
-            </div>
-            <button className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-700 text-slate-300 hover:text-white">
-              <NotificationIcon />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 ml-auto">
-            <button
-              className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-800 text-slate-300 hover:text-white md:hidden"
-              aria-label="Notifiche"
-            >
-              <NotificationIcon />
-            </button>
-            <div className="relative">
-              <button
-                onClick={() => setPersonaMenuOpen((prev) => !prev)}
-                className="inline-flex items-center gap-2 text-xs bg-slate-900/70 border border-slate-800 rounded-2xl px-2.5 py-1.5 hover:border-sky-500/70 transition"
+            <div className="flex flex-1 justify-center md:hidden">
+              <Link
+                to="/app"
+                className="flex items-center gap-2 text-slate-100"
+                aria-label="Vai alla home CoWave"
               >
-                <span className="h-7 w-7 rounded-full bg-gradient-to-br from-accent to-accentBlue flex items-center justify-center text-[10px] font-semibold text-slate-950">
-                  {currentPersona?.label?.[0] ?? 'P'}
+                <Logo size={28} />
+                <span className="text-sm font-semibold tracking-tight">
+                  CoWave
                 </span>
-                <div className="hidden md:block text-left">
-                  <p className="text-[11px] text-slate-400 leading-tight">
-                    Persona attiva
-                  </p>
-                  <p className="text-[11px] font-medium">
-                    {currentPersona?.label ?? 'Tu'}
-                  </p>
-                </div>
-              </button>
+              </Link>
+            </div>
 
-              {personaMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-slate-950 border border-slate-800 rounded-2xl shadow-soft py-1.5 text-xs z-40 backdrop-blur-xl">
-                  {personas.map((p) => (
+            <div className="hidden md:flex flex-1 justify-center px-4 lg:px-8">
+              <div className="flex w-full max-w-md items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 px-3 py-1.5 text-xs transition focus-within:border-sky-500/60">
+                <span className="text-slate-500">⌘K</span>
+                <input
+                  className="bg-transparent flex-1 min-w-0 focus:outline-none text-slate-200 placeholder:text-slate-500 text-sm"
+                  placeholder="Cerca stanze, thread o persone…"
+                />
+                <span className="text-[10px] text-slate-500">ricerca</span>
+              </div>
+            </div>
+
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-800 text-slate-300 hover:text-white md:hidden"
+                aria-label="Notifiche"
+              >
+                <NotificationIcon />
+              </button>
+              <nav className="hidden md:flex items-center gap-1">
+                {navItems.map((item) => (
+                  <NavLink
+                    key={item.label}
+                    to={item.to}
+                    end={item.exact}
+                    className={({ isActive }) => {
+                      const active = item.match
+                        ? item.match(location.pathname)
+                        : isActive;
+                      return `${navLinkBase} ${
+                        active ? navLinkActive : navLinkInactive
+                      }`;
+                    }}
+                  >
+                    <span className="text-white/80">
+                      <NavItemIcon type={item.icon} />
+                    </span>
+                    {item.label}
+                  </NavLink>
+                ))}
+              </nav>
+              <button
+                className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-800 text-slate-300 hover:text-white"
+                aria-label="Notifiche"
+              >
+                <NotificationIcon />
+              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setPersonaMenuOpen((prev) => !prev)}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/70 px-2 py-1.5 text-xs hover:border-sky-500/70 transition md:px-2.5"
+                >
+                  <span className="h-7 w-7 rounded-full bg-gradient-to-br from-accent to-accentBlue flex items-center justify-center text-[10px] font-semibold text-slate-950">
+                    {currentPersona?.label?.[0] ?? 'P'}
+                  </span>
+                  <div className="hidden md:block text-left">
+                    <p className="text-[11px] text-slate-400 leading-tight">
+                      Persona attiva
+                    </p>
+                    <p className="text-[11px] font-medium">
+                      {currentPersona?.label ?? 'Tu'}
+                    </p>
+                  </div>
+                </button>
+
+                {personaMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-800 bg-slate-950 py-1.5 text-xs shadow-soft backdrop-blur-xl z-40">
+                    {personas.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          onPersonaChange?.(p.id);
+                          setPersonaMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-white/5 ${
+                          p.id === currentPersona?.id
+                            ? 'text-accent'
+                            : 'text-slate-200'
+                        }`}
+                      >
+                        <span className="h-6 w-6 rounded-full bg-slate-800 flex items-center justify-center text-[10px] uppercase font-semibold">
+                          {p.label[0]}
+                        </span>
+                        <span className="truncate">{p.label}</span>
+                      </button>
+                    ))}
                     <button
-                      key={p.id}
                       type="button"
                       onClick={() => {
-                        onPersonaChange?.(p.id);
+                        navigate('/app/profile');
                         setPersonaMenuOpen(false);
                       }}
-                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-white/5 ${
-                        p.id === currentPersona?.id
-                          ? 'text-accent'
-                          : 'text-slate-200'
-                      }`}
+                      className="w-full border-t border-white/5 px-3 py-1.5 text-left text-[11px] text-slate-400 hover:bg-white/5"
                     >
-                      <span className="h-6 w-6 rounded-full bg-slate-800 flex items-center justify-center text-[10px] uppercase font-semibold">
-                        {p.label[0]}
-                      </span>
-                      <span className="truncate">{p.label}</span>
+                      Gestisci personas
                     </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigate('/app/profile');
-                      setPersonaMenuOpen(false);
-                    }}
-                    className="w-full px-3 py-1.5 text-left text-[11px] text-slate-400 hover:bg-white/5 border-t border-white/5"
-                  >
-                    Gestisci personas
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      logout();
-                      setPersonaMenuOpen(false);
-                    }}
-                    className="w-full px-3 py-1.5 text-left text-[11px] text-rose-300 hover:bg-white/5 border-t border-white/5"
-                  >
-                    Esci
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="md:hidden w-full pb-3">
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl px-3 py-1.5 text-sm flex items-center gap-2 focus-within:border-sky-500/60 transition">
-            <span className="text-slate-500">🔍</span>
-            <input
-              className="bg-transparent flex-1 focus:outline-none text-slate-200 placeholder:text-slate-500"
-              placeholder="Cerca thread o stanze…"
-            />
-          </div>
-        </div>
-
-        <div className="py-3 space-y-3">
-          <nav className="flex flex-wrap gap-2 overflow-x-auto pb-1">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.label}
-                to={item.to}
-                end={item.exact}
-                className={({ isActive }) => {
-                  const active = item.match
-                    ? item.match(location.pathname)
-                    : isActive;
-                  return `${navLinkBase} ${
-                    active ? navLinkActive : navLinkInactive
-                  }`;
-                }}
-              >
-                <span className="text-white/80">
-                  <NavItemIcon type={item.icon} />
-                </span>
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-[11px] text-slate-400 sm:hidden">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              Sessione mindful attiva
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-2">
-              <button className="focus-pill hidden lg:inline-flex">
-                <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
-                Radar
-              </button>
-              <button
-                onClick={() => navigate(`/app/rooms/${roomsNavTarget}`)}
-                className="text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 rounded-2xl text-slate-950 font-semibold shadow-glow w-full sm:w-auto text-center"
-                style={{
-                  backgroundImage: 'linear-gradient(120deg, #a78bfa, #38bdf8)',
-                }}
-              >
-                Nuova stanza
-              </button>
-              <button
-                type="button"
-                onClick={logout}
-                className="hidden md:inline-flex text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 rounded-2xl border border-slate-800 text-slate-300 hover:text-white transition text-center"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-
-          <div className="hidden lg:grid grid-cols-3 gap-2">
-            {sessionStats.map((stat) => (
-              <div
-                key={stat.label}
-                className="px-3 py-1.5 rounded-2xl border border-slate-800 text-xs text-slate-300"
-              >
-                <p className="uppercase tracking-[0.2em] text-[10px] text-slate-500">
-                  {stat.label}
-                </p>
-                <p className="text-white font-semibold">{stat.value}</p>
-                <p className="text-[10px] text-slate-500">{stat.detail}</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        logout();
+                        setPersonaMenuOpen(false);
+                      }}
+                      className="w-full border-t border-white/5 px-3 py-1.5 text-left text-[11px] text-rose-300 hover:bg-white/5"
+                    >
+                      Esci
+                    </button>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="hidden lg:block border-t border-slate-800/80 py-1">
-          <div className="ticker text-[11px] text-slate-400">
-            <div className="ticker__inner">
-              {tickerItems.map((item) => (
-                <span key={item} className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                  {item}
-                </span>
-              ))}
             </div>
+          </div>
+
+          <div className="md:hidden space-y-2 pb-1">
+            <div className="px-0.5">
+              <div className="flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 px-3 py-1.5 text-sm transition focus-within:border-sky-500/60">
+                <span className="text-slate-500">🔍</span>
+                <input
+                  className="bg-transparent flex-1 focus:outline-none text-slate-200 placeholder:text-slate-500"
+                  placeholder="Cerca thread o stanze…"
+                />
+              </div>
+            </div>
+            <nav className="px-0.5">
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {navItems.map((item) => (
+                  <NavLink
+                    key={`${item.label}-mobile`}
+                    to={item.to}
+                    end={item.exact}
+                    className={({ isActive }) => {
+                      const active = item.match
+                        ? item.match(location.pathname)
+                        : isActive;
+                      return `${navLinkBase} ${
+                        active ? navLinkActive : navLinkInactive
+                      }`;
+                    }}
+                  >
+                    <span className="text-white/80">
+                      <NavItemIcon type={item.icon} />
+                    </span>
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            </nav>
           </div>
         </div>
       </div>
