@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export default function SettingsPage() {
   const limitId = 'limit-select';
   const intenseModeId = 'intense-mode';
@@ -19,6 +21,22 @@ export default function SettingsPage() {
           intenzionale.
         </p>
       </header>
+
+      <div className="glass-panel p-4 sm:p-5 space-y-2 text-sm">
+        <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
+          Vuoi più controllo?
+        </p>
+        <p className="text-slate-300">
+          Sessione mindful, radar e slider dell’algoritmo ora vivono nella nuova
+          pagina dedicata.
+        </p>
+        <Link
+          to="/app/settings/esperienza"
+          className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] rounded-2xl border border-white/15 px-3 py-1.5 text-slate-200 hover:border-accent/60"
+        >
+          Vai agli strumenti avanzati →
+        </Link>
+      </div>
 
       <section className="grid gap-4 md:grid-cols-2 text-sm">
         <div className="glass-panel p-4 sm:p-5 space-y-4">

@@ -24,21 +24,10 @@ export default function RoomPage() {
     text: '#e0f2fe',
   };
   const accentGradient = `linear-gradient(120deg, ${theme.primary}, ${theme.secondary})`;
-
-  const cultureNotes = [
-    {
-      title: 'Energia',
-      detail: room.tags.join(' · '),
-    },
-    {
-      title: 'Host',
-      detail: 'Pionio-dev (mock) • live 5 sere su 7',
-    },
-    {
-      title: 'Rituale',
-      detail: 'Due thread lunghi + check-out audio da 3 min',
-    },
-  ];
+  const tagsPreview =
+    room?.tags?.length > 0
+      ? room.tags.slice(0, 2).map((tag) => `#${tag}`).join(' · ')
+      : 'Senza tag';
 
   if (!room) {
     return (
@@ -78,34 +67,42 @@ export default function RoomPage() {
 
   return (
     <div className="space-y-5">
-      <header
-        className="glass-panel p-4 sm:p-5 space-y-3 relative overflow-hidden"
-        style={{ boxShadow: `0 25px 55px ${theme.glow}` }}
-      >
+      <header className="glass-panel p-4 sm:p-5 space-y-3 relative overflow-hidden">
         <div
           aria-hidden="true"
-          className="absolute inset-0 opacity-20"
+          className="absolute inset-0 opacity-15"
           style={{ background: accentGradient }}
         />
         <div className="relative space-y-3">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <button
-              type="button"
-              onClick={handleBack}
-              className="text-[11px] text-slate-400 hover:text-white text-left"
-            >
-              ← Torna al feed
-            </button>
-            <span className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-              Stanza
-            </span>
-          </div>
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="text-[11px] text-slate-400 hover:text-white text-left"
+          >
+            ← Torna al feed
+          </button>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
+                Stanza
+              </p>
               <h1 className="text-2xl font-semibold text-white">{room.name}</h1>
-              <p className="text-sm text-slate-400 mt-1 max-w-2xl">
+              <p className="text-sm text-slate-400 mt-1 line-clamp-2">
                 {room.description}
               </p>
+              <div className="flex flex-wrap gap-2 text-[11px] text-slate-400 mt-3">
+                <span className="px-2 py-1 rounded-2xl bg-slate-950/40 border border-white/10">
+                  {room.members} membri
+                </span>
+                {room.isPrivate && (
+                  <span className="px-2 py-1 rounded-2xl bg-slate-950/40 border border-white/10">
+                    Privata
+                  </span>
+                )}
+                <span className="px-2 py-1 rounded-2xl bg-slate-950/40 border border-white/10">
+                  {tagsPreview}
+                </span>
+              </div>
             </div>
             <button
               type="button"
@@ -117,29 +114,6 @@ export default function RoomPage() {
             >
               + Nuovo thread
             </button>
-          </div>
-          <div className="flex flex-wrap gap-2 text-[11px] text-slate-400">
-            <span className="px-2 py-1 rounded-2xl bg-slate-950/40 border border-white/10">
-              {room.members} membri
-            </span>
-            {room.isPrivate && (
-              <span className="px-2 py-1 rounded-2xl bg-slate-950/40 border border-white/10">
-                Privata
-              </span>
-            )}
-            {room.tags.map((tag) => (
-              <span
-                key={tag}
-                className="px-2 py-1 rounded-2xl border"
-                style={{
-                  borderColor: theme.primary,
-                  color: theme.text,
-                  backgroundColor: `${theme.primary}20`,
-                }}
-              >
-                #{tag}
-              </span>
-            ))}
           </div>
         </div>
       </header>
@@ -165,21 +139,6 @@ export default function RoomPage() {
             ))}
           </div>
         )}
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-3">
-        {cultureNotes.map((note) => (
-          <div
-            key={note.title}
-            className="glass-panel p-4 space-y-1 border"
-            style={{ borderColor: `${theme.primary}50` }}
-          >
-            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
-              {note.title}
-            </p>
-            <p className="text-sm text-white">{note.detail}</p>
-          </div>
-        ))}
       </section>
 
       <Modal

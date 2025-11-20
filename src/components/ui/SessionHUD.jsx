@@ -5,9 +5,17 @@ const tickerMessages = [
   'Ultimo thread profondo: “Dev Lab / Rami automatici”',
 ];
 
-export default function SessionHUD({ floating = true }) {
+export default function SessionHUD({
+  floating = true,
+  className = '',
+  fullWidth = false,
+}) {
   const card = (
-    <div className="glass-panel w-full max-w-sm p-4 space-y-3 border border-white/15 shadow-glow">
+    <div
+      className={`glass-panel w-full ${
+        fullWidth ? '' : 'max-w-sm'
+      } p-4 space-y-3 border border-white/15 shadow-glow`}
+    >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
@@ -52,10 +60,12 @@ export default function SessionHUD({ floating = true }) {
   );
 
   if (!floating) {
-    return card;
+    return <div className={className}>{card}</div>;
   }
 
   return (
-    <div className="hidden lg:block fixed bottom-6 right-6 z-40">{card}</div>
+    <div className={`hidden lg:block fixed bottom-6 right-6 z-40 ${className}`}>
+      {card}
+    </div>
   );
 }

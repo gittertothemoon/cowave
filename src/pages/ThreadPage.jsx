@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppState } from '../state/AppStateContext.jsx';
 import PostComposer from '../components/threads/PostComposer.jsx';
@@ -7,10 +6,7 @@ import PostNode from '../components/threads/PostNode.jsx';
 export default function ThreadPage() {
   const { threadId } = useParams();
   const navigate = useNavigate();
-  const { threads, postsByThread, createPost, rooms } = useAppState();
-  const treeStartRef = useRef(null);
-  const treeEndRef = useRef(null);
-
+  const { threads, postsByThread, createPost, rooms, personas } = useAppState();
   const thread = threads.find((t) => t.id === threadId);
   const posts = postsByThread[threadId] ?? [];
   const threadRoom = rooms.find((r) => r.id === thread?.roomId);
@@ -20,12 +16,6 @@ export default function ThreadPage() {
     glow: 'rgba(59,130,246,0.35)',
   };
   const accentGradient = `linear-gradient(120deg, ${theme.primary}, ${theme.secondary})`;
-  const prompts = [
-    'Porta un caso reale o una storia vissuta.',
-    'Quale metrica usi per capire se la proposta funziona?',
-    'Che contro-argomento vale la pena esplorare?',
-  ];
-
   if (!thread) {
     return <p className="text-sm text-red-400">Thread non trovato.</p>;
   }
@@ -34,12 +24,9 @@ export default function ThreadPage() {
     createPost(threadId, { content, parentId, personaId: thread.personaId });
   }
 
+  const personaLabel =
+    personas.find((p) => p.id === thread?.personaId)?.label ?? 'Persona attiva';
   const treeRoot = buildTree(posts);
-  const scrollTreeIntoView = (nodeRef, block = 'start') => {
-    if (nodeRef?.current) {
-      nodeRef.current.scrollIntoView({ behavior: 'smooth', block });
-    }
-  };
 
   return (
     <div className="space-y-5">
@@ -60,101 +47,49 @@ export default function ThreadPage() {
           <h1 className="text-2xl font-semibold mt-1 text-white">
             {thread.title}
           </h1>
+          <p className="text-xs text-slate-500 mt-2">
+            {threadRoom?.name ?? 'Stanza'} • {personaLabel}
+          </p>
         </div>
       </header>
 
-      <section className="grid gap-5 items-start lg:grid-cols-[2fr,1fr]">
-        <div className="space-y-4">
-          <div
-            className="glass-panel p-5 border"
-            style={{ borderColor: `${theme.primary}55` }}
-          >
-            <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 mb-3">
-              Radice del thread
-            </p>
-            <PostComposer
-              parentId={null}
-              onSubmit={handleNewPost}
-              accentGradient={accentGradient}
-            />
-          </div>
-
-          <div className="glass-panel p-5 space-y-3">
-            <div className="flex flex-wrap items-center gap-3 justify-between">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
-                Rami della conversazione
-              </p>
-              <div className="flex flex-wrap gap-2 text-[11px]">
-                <button
-                  type="button"
-                  onClick={() => scrollTreeIntoView(treeStartRef, 'start')}
-                  className="px-3 py-1.5 rounded-2xl border border-white/10 text-slate-300 hover:border-accent/60 transition"
-                >
-                  Vai all’inizio
-                </button>
-                <button
-                  type="button"
-                  onClick={() => scrollTreeIntoView(treeEndRef, 'end')}
-                  className="px-3 py-1.5 rounded-2xl border border-white/10 text-slate-300 hover:border-accent/60 transition"
-                >
-                  Vai all’ultimo
-                </button>
-              </div>
-            </div>
-            <div ref={treeStartRef} aria-hidden="true" />
-            {treeRoot.length === 0 ? (
-              <p className="text-sm text-slate-400">
-                Ancora nessun ramo. Rispondi alla radice per farlo crescere.
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {treeRoot.map((node) => (
-                  <ThreadTreeNode
-                    key={node.post.id}
-                    node={node}
-                    onReply={handleNewPost}
-                    accentGradient={accentGradient}
-                    depth={0}
-                  />
-                ))}
-              </div>
-            )}
-            <div ref={treeEndRef} aria-hidden="true" />
-          </div>
+      <section className="space-y-4">
+        <div
+          className="glass-panel p-5 border"
+          style={{ borderColor: `${theme.primary}55` }}
+        >
+          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 mb-3">
+            Radice del thread
+          </p>
+          <PostComposer
+            parentId={null}
+            onSubmit={handleNewPost}
+            accentGradient={accentGradient}
+          />
         </div>
 
-        <aside className="space-y-4">
-          <div
-            className="glass-panel p-5 space-y-2 border"
-            style={{ borderColor: `${theme.primary}40` }}
-          >
-            <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
-              Info sul thread
+        <div className="glass-panel p-5 space-y-3">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
+            Risposte
+          </p>
+          {treeRoot.length === 0 ? (
+            <p className="text-sm text-slate-400">
+              Ancora nessun ramo. Rispondi alla radice per farlo crescere.
             </p>
-            <div className="grid gap-2 text-sm text-slate-300">
-              <p>Profondità stimata: {thread.depth}</p>
-              <p>Rami attivi: {thread.branches}</p>
-              <p>Energia: {thread.energy}</p>
-            </div>
-            <p className="text-[11px] text-slate-400">
-              Presto troverai qui equilibrio comfort/sfida, ritmo e contributi da
-              mettere in evidenza.
-            </p>
-          </div>
-          <div className="glass-panel p-4 space-y-2 text-sm text-slate-300">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-accent">
-              Prompt per contribuire
-            </p>
-            <ul className="space-y-2">
-              {prompts.map((prompt) => (
-                <li key={prompt} className="flex items-start gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent mt-1.5" />
-                  <span>{prompt}</span>
-                </li>
+          ) : (
+            <div className="space-y-4">
+              {treeRoot.map((node) => (
+                <ThreadTreeNode
+                  key={node.post.id}
+                  node={node}
+                  onReply={handleNewPost}
+                  accentGradient={accentGradient}
+                  depth={0}
+                />
               ))}
-            </ul>
-          </div>
-        </aside>
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );

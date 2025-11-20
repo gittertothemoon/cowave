@@ -7,24 +7,18 @@ const algorithmPresets = [
   {
     id: 'comfort',
     title: 'Comfort',
-    description: 'Per iniziare con stimoli morbidi e contenuti brevi.',
+    description: 'Ritmo morbido, thread brevi e stanze familiari.',
   },
   {
     id: 'balanced',
     title: 'Bilanciato',
-    description: 'Mix equilibrato di novità, comfort e sfide moderate.',
+    description: 'Mix equo tra novità, comfort e stimoli medi.',
   },
   {
     id: 'growth',
     title: 'Crescita',
-    description: 'Più novità, più profondità, thread lunghi e intensi.',
+    description: 'Più profondità, nuove stanze e thread lunghi.',
   },
-];
-
-const introBullets = [
-  'Unisciti a stanze curate da host reali o aprine di nuove.',
-  'Ogni thread è un albero: scegli quali rami nutrire.',
-  'Regola l’algoritmo per decidere che tipo di stimoli vuoi.',
 ];
 
 export default function OnboardingPage() {
@@ -49,9 +43,12 @@ export default function OnboardingPage() {
   const [roomError, setRoomError] = useState('');
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [customPersonaName, setCustomPersonaName] = useState('');
+  const [customPersonaTagline, setCustomPersonaTagline] = useState('');
   const [customPersonaError, setCustomPersonaError] = useState('');
   const selectionLimit = 3;
   const customPersonaFormId = 'custom-persona-form';
+  const nickname =
+    currentUser?.nickname?.trim().split(' ')?.[0] || currentUser?.nickname || 'Tu';
 
   const roomsInfo = useMemo(
     () => rooms.map((room) => ({ ...room, tags: room.tags ?? [] })),
@@ -66,10 +63,11 @@ export default function OnboardingPage() {
       setCustomPersonaError('Dai un nome alla tua persona.');
       return;
     }
-    const newId = addCustomPersona(customPersonaName);
+    const newId = addCustomPersona(customPersonaName, customPersonaTagline);
     if (newId) {
       setSelectedPersonaId(newId);
       setCustomPersonaName('');
+      setCustomPersonaTagline('');
       setCustomPersonaError('');
       setShowCustomForm(false);
     }
@@ -85,9 +83,7 @@ export default function OnboardingPage() {
         return next;
       }
       if (prev.length >= selectionLimit) {
-        setRoomError(
-          `Puoi seguire al massimo ${selectionLimit} stanze in partenza.`
-        );
+        setRoomError(`Puoi scegliere al massimo ${selectionLimit} stanze ora.`);
         return prev;
       }
       setRoomError('');
@@ -127,37 +123,15 @@ export default function OnboardingPage() {
               <p className="text-sm font-semibold text-white">CoWave</p>
               <p className="text-xs text-slate-400">
                 {currentUser?.nickname
-                  ? `${currentUser.nickname}, cuciamo il tuo spazio coerente`
-                  : 'Benvenuto nel tuo rituale sociale consapevole'}
+                  ? `${currentUser.nickname}, bastano tre scelte`
+                  : 'Bastano tre scelte per iniziare'}
               </p>
             </div>
           </div>
           <div className="text-[11px] uppercase tracking-[0.3em] text-slate-400">
-            Onboarding • 1 sola volta
+            Onboarding • unico passaggio
           </div>
         </header>
-
-        <section className="glass-panel p-5 sm:p-6 space-y-4">
-          <p className="text-sm text-accent uppercase tracking-[0.3em]">
-            Prima di iniziare
-          </p>
-          <h1 className="text-3xl font-semibold text-white">
-            Allinea CoWave al tuo modo di collaborare
-          </h1>
-          <p className="text-sm text-slate-300">
-            CoWave è una rete a stanze dove i thread crescono come alberi e
-            l’algoritmo è sotto il tuo controllo. In tre passi scegliamo mondi,
-            persona e vibrazione con cui iniziare.
-          </p>
-          <ul className="space-y-2 text-sm text-slate-200">
-            {introBullets.map((bullet) => (
-              <li key={bullet} className="flex items-start gap-3">
-                <span className="text-accent text-base leading-none">✺</span>
-                <span>{bullet}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
 
         <section className="glass-panel p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -172,8 +146,8 @@ export default function OnboardingPage() {
             Scegli le tue stanze iniziali
           </h2>
           <p className="text-sm text-slate-300">
-            Seleziona tra 1 e {selectionLimit} stanze da seguire subito. Potrai aggiungerne
-            altre o crearne di nuove dopo l’ingresso.
+            Seleziona da 1 a {selectionLimit} stanze curate: il feed partirà solo da qui e
+            potrai aggiornarle in qualsiasi momento.
           </p>
           {roomError && (
             <p
@@ -242,14 +216,13 @@ export default function OnboardingPage() {
             Step 2
           </div>
           <h2 className="text-2xl font-semibold text-white">
-            Scegli come vuoi presentarti
+            Scegli la tua persona iniziale
           </h2>
           <p className="text-sm text-slate-300">
-            Su CoWave puoi attivare personas diverse per ruoli e toni differenti.
-            Scegli quella con cui inizierai: sarà l’identità mostrata nei thread
-            appena entri.
+            {nickname}, con quale tono vuoi apparire nei primi thread? Puoi
+            cambiare o creare nuove personas quando vuoi.
           </p>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {personas.map((persona) => {
               const isSelected = persona.id === selectedPersonaId;
               return (
@@ -295,7 +268,7 @@ export default function OnboardingPage() {
                     Crea persona personalizzata
                   </p>
                   <p className="text-[11px] text-slate-400">
-                    Dai un nome al tono che vuoi usare.
+                    Nome + linea opzionale, tutto in pochi secondi.
                   </p>
                 </div>
                 <button
@@ -317,12 +290,19 @@ export default function OnboardingPage() {
                   <input
                     type="text"
                     className="w-full bg-slate-900/70 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent text-slate-100"
-                    placeholder="Es. Guida notturna, Facilitatrice"
+                    placeholder="Es. Guida notturna"
                     value={customPersonaName}
                     onChange={(e) => {
                       setCustomPersonaName(e.target.value);
                       setCustomPersonaError('');
                     }}
+                  />
+                  <input
+                    type="text"
+                    className="w-full bg-slate-900/70 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent text-slate-100"
+                    placeholder="Linea opzionale (es. tono caldo e lento)"
+                    value={customPersonaTagline}
+                    onChange={(e) => setCustomPersonaTagline(e.target.value)}
                   />
                   {customPersonaError && (
                     <p
@@ -355,11 +335,11 @@ export default function OnboardingPage() {
             Step 3
           </div>
           <h2 className="text-2xl font-semibold text-white">
-            Imposta la vibrazione dell’algoritmo
+            Imposta la vibrazione del feed
           </h2>
           <p className="text-sm text-slate-300">
-            Decidi il tono con cui CoWave ti proporrà thread, highlight e rituali.
-            Potrai cambiarlo in qualunque momento da Impostazioni.
+            Tre preset chiari per decidere come dosare comfort, novità e ritmo.
+            Potrai spostarli in seguito dagli Strumenti avanzati.
           </p>
           <div className="grid gap-3 sm:grid-cols-3">
             {algorithmPresets.map((preset) => {
@@ -390,7 +370,7 @@ export default function OnboardingPage() {
 
         <footer className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border border-white/10 rounded-3xl px-4 sm:px-5 py-4 bg-slate-950/70 backdrop-blur-xl">
           <div className="text-sm text-slate-300">
-            Al termine entrerai nel feed con le stanze, la persona e il preset che hai scelto.
+            Al termine entri nel feed con queste scelte. Tutto resta modificabile.
           </div>
           <button
             type="button"
@@ -409,7 +389,7 @@ export default function OnboardingPage() {
                 : {}
             }
           >
-            Completa onboarding
+            Entra in CoWave
           </button>
         </footer>
       </div>

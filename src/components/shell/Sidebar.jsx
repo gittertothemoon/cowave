@@ -1,9 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useAppState } from '../../state/AppStateContext.jsx';
-import Modal from '../ui/Modal.jsx';
-import AlgorithmControls from '../ui/AlgorithmControls.jsx';
-import SessionHUD from '../ui/SessionHUD.jsx';
+import CreateRoomModal from '../rooms/CreateRoomModal.jsx';
 
 const MOBILE_DRAWER_ID = 'cowave-sidebar-drawer';
 
@@ -72,22 +70,20 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
           isMobile ? 'text-sm' : ''
         }`}
       >
-        <div className="space-y-4">
-          <SessionHUD floating={false} />
-          <AlgorithmControls />
-        </div>
-
-        <div className="rounded-2xl border border-white/10 px-3.5 py-3 bg-slate-950/40 space-y-2">
+        <div className="rounded-2xl border border-white/10 px-4 py-4 bg-slate-950/40 space-y-3">
           <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
-            Rituale di oggi
+            Strumenti avanzati
           </p>
           <p className="text-sm text-slate-100">
-            Blocchi da 28 minuti, pausa respiro guidata e recap serale.
+            Timer mindful, radar e slider dell’algoritmo vivono qui.
           </p>
-          <div className="flex items-center gap-2 text-[11px] text-slate-400">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-signal-pulse" />
-            <span>4/6 blocchi completati</span>
-          </div>
+          <button
+            type="button"
+            onClick={() => handleNavigate('/app/settings/esperienza')}
+            className="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] text-slate-200 hover:border-accent/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+          >
+            Apri pagina
+          </button>
         </div>
 
         <div>
@@ -237,92 +233,5 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
         onClose={() => setIsCreateRoomOpen(false)}
       />
     </>
-  );
-}
-
-function CreateRoomModal({ open, onClose }) {
-  const { createRoom } = useAppState();
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [tags, setTags] = useState('');
-
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    createRoom({
-      name: name.trim(),
-      description: description.trim(),
-      isPrivate,
-      tags: tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean),
-    });
-    setName('');
-    setDescription('');
-    setIsPrivate(false);
-    setTags('');
-    onClose();
-  }
-
-  return (
-    <Modal open={open} onClose={onClose} title="Crea una nuova stanza">
-      <form onSubmit={handleSubmit} className="space-y-2">
-        <div className="space-y-1">
-          <label className="text-[11px] text-slate-300">Nome stanza</label>
-          <input
-            type="text"
-            className="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Es. Creators Lab, Deep Talk…"
-            required
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-[11px] text-slate-300">Descrizione</label>
-          <textarea
-            rows={2}
-            className="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent resize-none"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Descrivi il tono e gli obiettivi della stanza…"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-[11px] text-slate-300">
-            Tag (separati da virgola)
-          </label>
-          <input
-            type="text"
-            className="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            placeholder="es. coding, mindset, adult…"
-          />
-        </div>
-        <div className="flex items-center justify-between pt-1">
-          <label className="flex items-center gap-2 text-[11px] text-slate-300">
-            <input
-              type="checkbox"
-              className="accent-accent"
-              checked={isPrivate}
-              onChange={(e) => setIsPrivate(e.target.checked)}
-            />
-            Stanza privata
-          </label>
-          <button
-            type="submit"
-            className="text-[11px] uppercase tracking-[0.2em] px-3.5 py-1.5 rounded-2xl text-slate-950 font-semibold shadow-glow hover:opacity-95 transition"
-            style={{
-              backgroundImage: 'linear-gradient(120deg, #a78bfa, #38bdf8)',
-            }}
-          >
-            Crea stanza
-          </button>
-        </div>
-      </form>
-    </Modal>
   );
 }

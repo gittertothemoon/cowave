@@ -7,6 +7,7 @@ import RoomPage from './pages/RoomPage.jsx';
 import ThreadPage from './pages/ThreadPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
+import AdvancedToolsPage from './pages/AdvancedToolsPage.jsx';
 import OnboardingPage from './pages/OnboardingPage.jsx';
 import { useAppState } from './state/AppStateContext.jsx';
 import ProtectedRoute from './routes/ProtectedRoute.jsx';
@@ -62,6 +63,7 @@ export default function App() {
           element={<ProfilePage activePersonaId={activePersonaId} />}
         />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="settings/esperienza" element={<AdvancedToolsPage />} />
         <Route path="*" element={<Navigate to="/app" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

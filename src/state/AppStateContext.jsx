@@ -86,9 +86,10 @@ export function AppStateProvider({ children }) {
     }));
   }
 
-  function addCustomPersona(name) {
+  function addCustomPersona(name, tagline = '') {
     const cleaned = name.trim();
     if (!cleaned) return null;
+    const description = tagline.trim();
     const palette = [
       'bg-emerald-500',
       'bg-sky-500',
@@ -101,7 +102,7 @@ export function AppStateProvider({ children }) {
     const persona = {
       id,
       title: cleaned,
-      description: 'Persona personalizzata',
+      description: description || 'Persona personalizzata',
       color,
     };
     setCustomPersonas((prev) => [...prev, persona]);
