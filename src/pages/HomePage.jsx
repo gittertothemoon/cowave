@@ -23,13 +23,25 @@ const highlightMoments = [
 ];
 
 export default function HomePage() {
-  const { threads, rooms } = useAppState();
+  const { threads, rooms, followedRoomIds } = useAppState();
   const [energyFilter, setEnergyFilter] = useState('all');
+  const accentPalette = ['#38bdf8', '#a78bfa', '#34d399', '#f472b6'];
+  const followedRooms =
+    followedRoomIds.length > 0
+      ? rooms.filter((room) => followedRoomIds.includes(room.id))
+      : rooms;
+  const visibleThreads = useMemo(() => {
+    if (!followedRoomIds.length) return threads;
+    return threads.filter((thread) => followedRoomIds.includes(thread.roomId));
+  }, [threads, followedRoomIds]);
 
   const filteredThreads = useMemo(() => {
-    if (energyFilter === 'all') return threads;
-    return threads.filter((thread) => thread.energy === energyFilter);
-  }, [threads, energyFilter]);
+    if (energyFilter === 'all') return visibleThreads;
+    return visibleThreads.filter((thread) => thread.energy === energyFilter);
+  }, [visibleThreads, energyFilter]);
+
+  const getRoomAccent = (room, index) =>
+    room.theme?.primary ?? accentPalette[index % accentPalette.length];
 
   return (
     <div className="space-y-5">
@@ -44,7 +56,7 @@ export default function HomePage() {
             </h1>
             <p className="text-sm text-slate-400 mt-1 max-w-2xl">
               Ogni card è un albero di conversazione. Niente scroll infinito:
-              solo thread scelti dalle stanze che segui.
+              solo thread scelti dalle stanze che segui o scopri da subito.
             </p>
           </div>
           <div className="inline-flex items-center gap-2 text-[11px] text-slate-400 bg-slate-950/40 border border-white/10 rounded-2xl px-3 py-2 w-full sm:w-auto justify-center">
@@ -75,8 +87,8 @@ export default function HomePage() {
         <div className="space-y-3">
           {filteredThreads.length === 0 ? (
             <div className="glass-panel p-5 text-sm text-slate-400">
-              Nessun thread con questa energia ora. Cambia filtro o avvia tu il
-              prossimo.
+              Nessun thread nelle stanze che segui con questa energia ora. Cambia
+              filtro o avvia tu il prossimo.
             </div>
           ) : (
             filteredThreads.map((thread) => (
@@ -102,21 +114,28 @@ export default function HomePage() {
                 Stanze in evidenza
               </p>
               <span className="text-[11px] text-slate-500">
-                {rooms.length} attive
+                {followedRooms.length} curate
               </span>
             </div>
             <ul className="space-y-2">
-              {rooms.map((room) => (
-                <li
-                  key={room.id}
-                  className="rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm"
-                >
-                  <p className="font-semibold text-white">{room.name}</p>
-                  <p className="text-[12px] text-slate-400 line-clamp-2">
-                    {room.description}
-                  </p>
-                </li>
-              ))}
+              {followedRooms.map((room, index) => {
+                const accent = getRoomAccent(room, index);
+                return (
+                  <li
+                    key={room.id}
+                    className="rounded-2xl border px-3 py-2 text-sm"
+                    style={{
+                      borderColor: `${accent}35`,
+                      backgroundImage: `linear-gradient(90deg, ${accent}12, rgba(15,23,42,0.8))`,
+                    }}
+                  >
+                    <p className="font-semibold text-white">{room.name}</p>
+                    <p className="text-[12px] text-slate-400 line-clamp-2">
+                      {room.description}
+                    </p>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 

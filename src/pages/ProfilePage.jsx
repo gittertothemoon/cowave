@@ -1,4 +1,4 @@
-import { personas } from '../mockData.js';
+import { useAppState } from '../state/AppStateContext.jsx';
 
 const rituals = [
   {
@@ -16,6 +16,7 @@ const rituals = [
 ];
 
 export default function ProfilePage({ activePersonaId }) {
+  const { personas } = useAppState();
   const activePersona = personas.find((p) => p.id === activePersonaId);
 
   return (

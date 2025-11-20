@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from '../components/ui/Logo.jsx';
 import { useAppState } from '../state/AppStateContext.jsx';
 import { setAuthenticated } from '../utils/auth.js';
@@ -14,7 +14,7 @@ export default function AuthPage({ onAuth }) {
   const location = useLocation();
   const navigate = useNavigate();
   const isLogin = location.pathname.includes('login');
-  const { isOnboarded, resetOnboarding } = useAppState();
+  const { isOnboarded, resetOnboarding, updateCurrentUser } = useAppState();
 
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [errors, setErrors] = useState({});
@@ -52,6 +52,14 @@ export default function AuthPage({ onAuth }) {
 
     if (!isLogin) {
       resetOnboarding();
+      updateCurrentUser({
+        nickname: form.name.trim() || 'Tu',
+        email: form.email.trim(),
+      });
+    } else {
+      updateCurrentUser({
+        email: form.email.trim(),
+      });
     }
     // AUTH: set fake authenticated state for protected pages
     setAuthenticated();
@@ -85,7 +93,9 @@ export default function AuthPage({ onAuth }) {
             <span className="text-base leading-none">←</span>
             Torna alla landing
           </button>
-          <Logo withWordmark size={44} />
+          <Link to="/" aria-label="Torna alla landing">
+            <Logo withWordmark size={44} />
+          </Link>
           <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">
             {isLogin ? 'Accesso' : 'Registrazione'}
           </p>
@@ -104,7 +114,7 @@ export default function AuthPage({ onAuth }) {
                 <label className="text-xs text-slate-300">Nome o nickname</label>
                 <input
                   type="text"
-                  className="w-full bg-slate-950/60 border border-white/10 rounded-2xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-accent text-slate-100"
+                  className="w-full bg-slate-950/60 border border-white/10 rounded-2xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-accent text-slate-100 text-base"
                   value={form.name}
                   onChange={(e) => handleChange('name', e.target.value)}
                   placeholder="Es. Pionio"
@@ -118,7 +128,7 @@ export default function AuthPage({ onAuth }) {
               <label className="text-xs text-slate-300">Email</label>
               <input
                 type="email"
-                className="w-full bg-slate-950/60 border border-white/10 rounded-2xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-accent text-slate-100"
+                className="w-full bg-slate-950/60 border border-white/10 rounded-2xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-accent text-slate-100 text-base"
                 value={form.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 placeholder="tu@email.com"
@@ -131,7 +141,7 @@ export default function AuthPage({ onAuth }) {
               <label className="text-xs text-slate-300">Password</label>
               <input
                 type="password"
-                className="w-full bg-slate-950/60 border border-white/10 rounded-2xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-accent text-slate-100"
+                className="w-full bg-slate-950/60 border border-white/10 rounded-2xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-accent text-slate-100 text-base"
                 value={form.password}
                 onChange={(e) => handleChange('password', e.target.value)}
                 placeholder="●●●●●●●●"

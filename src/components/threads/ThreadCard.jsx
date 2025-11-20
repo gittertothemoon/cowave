@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import { personas, rooms } from '../../mockData.js';
+import { useAppState } from '../../state/AppStateContext.jsx';
 
 export default function ThreadCard({ thread }) {
   const navigate = useNavigate();
+  const { personas, rooms } = useAppState();
   const persona = personas.find((p) => p.id === thread.personaId);
   const room = rooms.find((r) => r.id === thread.roomId);
   const theme = room?.theme ?? {
@@ -67,7 +68,7 @@ export default function ThreadCard({ thread }) {
             {persona?.label?.[0] ?? 'P'}
           </span>
           <p className="text-[11px] text-slate-500 text-left sm:text-right">
-            {thread.author}
+            {persona?.label ?? thread.author}
           </p>
         </div>
       </div>

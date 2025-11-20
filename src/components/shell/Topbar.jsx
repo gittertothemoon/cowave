@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAppState } from '../../state/AppStateContext.jsx';
 import Logo from '../ui/Logo.jsx';
 import { useLogout } from '../../hooks/useLogout.js';
@@ -10,8 +10,15 @@ export default function Topbar({
   onToggleSidebar,
 }) {
   const navigate = useNavigate();
-  const { personas } = useAppState();
+  const location = useLocation();
+  const { personas, rooms, followedRoomIds } = useAppState();
   const logout = useLogout();
+
+  const followedRooms = followedRoomIds?.length
+    ? rooms.filter((room) => followedRoomIds.includes(room.id))
+    : rooms;
+  const roomsNavTarget =
+    followedRooms[0]?.id ?? rooms[0]?.id ?? 'room-dev';
 
   const currentPersona =
     personas.find((p) => p.id === activePersonaId) ?? personas[0];
@@ -25,11 +32,38 @@ export default function Topbar({
     'Highlight Dev Lab: “Workflow senza feed”',
   ];
 
+  const navLinkBase =
+    'inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition';
+  const navLinkActive = 'bg-sky-500 text-slate-900 shadow-sm';
+  const navLinkInactive =
+    'text-slate-400 hover:text-slate-100 hover:bg-slate-800';
+
   const navItems = [
-    { label: 'Feed', to: '/app', icon: 'feed' },
-    { label: 'Stanze', to: '/app/rooms/room-dev', icon: 'rooms' },
-    { label: 'Profilo', to: '/app/profile', icon: 'profile' },
-    { label: 'Impostazioni', to: '/app/settings', icon: 'settings' },
+    {
+      label: 'Feed',
+      to: '/app',
+      icon: 'feed',
+      exact: true,
+      match: (path) => path === '/app',
+    },
+    {
+      label: 'Stanze',
+      to: `/app/rooms/${roomsNavTarget}`,
+      icon: 'rooms',
+      match: (path) => path.startsWith('/app/rooms'),
+    },
+    {
+      label: 'Profilo',
+      to: '/app/profile',
+      icon: 'profile',
+      match: (path) => path.startsWith('/app/profile'),
+    },
+    {
+      label: 'Impostazioni',
+      to: '/app/settings',
+      icon: 'settings',
+      match: (path) => path.startsWith('/app/settings'),
+    },
   ];
 
   const sessionStats = [
@@ -39,180 +73,218 @@ export default function Topbar({
   ];
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/5 bg-gradient-to-b from-surfaceAlt/90 via-surface/85 to-surface/70 backdrop-blur-2xl shadow-soft">
-      <div className="absolute inset-0 opacity-60 pointer-events-none bg-[radial-gradient(circle_at_top,_rgba(167,139,250,0.18),_transparent_60%)]" />
-      <div className="relative max-w-6xl mx-auto flex flex-col gap-4 px-4 sm:px-8 py-3">
-        <div className="flex items-center gap-3 flex-wrap justify-between">
-          <button
-            className="md:hidden text-slate-100 hover:text-white p-2 rounded-xl border border-white/10"
-            onClick={onToggleSidebar}
-            aria-label="Apri menu laterale"
-          >
-            ☰
-          </button>
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 pr-2 md:pr-4 md:border-r border-white/10 -ml-1 sm:-ml-2">
-            <Logo size={34} className="-ml-1" />
-            <div className="text-[11px] uppercase tracking-[0.3em] text-slate-400">
-              CoWave
-              <span className="ml-2 px-1.5 py-0.5 rounded-full bg-white/5 text-[10px] tracking-[0.2em]">
-                beta
-              </span>
-            </div>
-          </div>
-          <div className="flex-1 hidden sm:flex items-center gap-3 min-w-0">
-            <div className="flex-1 bg-slate-900/60 border border-white/10 rounded-2xl px-3 py-1.5 items-center gap-2 text-xs focus-within:border-accent/60 transition flex">
-              <span className="text-slate-500">⌘K</span>
-              <input
-                className="bg-transparent flex-1 min-w-0 focus:outline-none text-slate-200 placeholder:text-slate-500"
-                placeholder="Cerca stanze, thread o persone…"
-              />
-              <span className="text-[10px] text-slate-500">⌘K ovunque</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-[11px] text-slate-400 sm:ml-auto">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="hidden sm:inline">Sessione mindful in corso</span>
-          </div>
-          <button className="hidden sm:flex items-center justify-center w-9 h-9 rounded-full border border-white/10 text-slate-300 hover:text-white">
-            <NotificationIcon />
-          </button>
-
-          <div className="relative ml-auto">
+    <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+      <div className="mx-auto w-full max-w-6xl px-3 sm:px-4 lg:px-6">
+        <div className="flex h-14 items-center gap-2">
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setPersonaMenuOpen((prev) => !prev)}
-              className="flex items-center gap-2 text-xs bg-slate-900/60 border border-white/10 rounded-2xl px-2.5 py-1.5 hover:border-accent/70 transition"
+              className="inline-flex items-center justify-center rounded-md p-2 text-slate-200 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 md:hidden"
+              onClick={onToggleSidebar}
+              aria-label="Apri menu stanze"
             >
-              <span className="h-7 w-7 rounded-full bg-gradient-to-br from-accent to-accentBlue flex items-center justify-center text-[10px] font-semibold text-slate-950">
-                {currentPersona?.label?.[0] ?? 'P'}
-              </span>
-              <div className="hidden sm:block text-left">
-                <p className="text-[11px] text-slate-400 leading-tight">
-                  Persona attiva
-                </p>
-                <p className="text-[11px] font-medium">
-                  {currentPersona?.label ?? 'Tu'}
-                </p>
+              <div className="space-y-1">
+                <span className="block h-0.5 w-5 bg-slate-200" />
+                <span className="block h-0.5 w-5 bg-slate-200" />
+                <span className="block h-0.5 w-5 bg-slate-200" />
               </div>
             </button>
+            <Link
+              to="/app"
+              className="flex items-center gap-2 text-slate-200"
+            >
+              <Logo size={32} className="-ml-1" />
+              <div className="hidden sm:flex flex-col leading-tight">
+                <span className="text-[10px] uppercase tracking-[0.3em] text-slate-400">
+                  CoWave
+                </span>
+                <span className="text-[10px] text-slate-500">beta privata</span>
+              </div>
+            </Link>
+          </div>
 
-            {personaMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-slate-950/90 border border-white/10 rounded-2xl shadow-soft py-1.5 text-xs z-40 backdrop-blur-xl">
-                {personas.map((p) => (
+          <div className="hidden md:flex flex-1 items-center gap-3 pl-2">
+            <div className="flex-1 bg-slate-900/80 border border-slate-800 rounded-2xl px-3 py-1.5 items-center gap-2 text-xs focus-within:border-sky-500/60 transition flex">
+              <span className="text-slate-500">⌘K</span>
+              <input
+                className="bg-transparent flex-1 min-w-0 focus:outline-none text-slate-200 placeholder:text-slate-500 text-sm"
+                placeholder="Cerca stanze, thread o persone…"
+              />
+              <span className="text-[10px] text-slate-500">ricerca</span>
+            </div>
+            <div className="hidden lg:flex items-center gap-2 text-[11px] text-slate-400">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              Sessione mindful in corso
+            </div>
+            <button className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-700 text-slate-300 hover:text-white">
+              <NotificationIcon />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 ml-auto">
+            <button
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-800 text-slate-300 hover:text-white md:hidden"
+              aria-label="Notifiche"
+            >
+              <NotificationIcon />
+            </button>
+            <div className="relative">
+              <button
+                onClick={() => setPersonaMenuOpen((prev) => !prev)}
+                className="inline-flex items-center gap-2 text-xs bg-slate-900/70 border border-slate-800 rounded-2xl px-2.5 py-1.5 hover:border-sky-500/70 transition"
+              >
+                <span className="h-7 w-7 rounded-full bg-gradient-to-br from-accent to-accentBlue flex items-center justify-center text-[10px] font-semibold text-slate-950">
+                  {currentPersona?.label?.[0] ?? 'P'}
+                </span>
+                <div className="hidden md:block text-left">
+                  <p className="text-[11px] text-slate-400 leading-tight">
+                    Persona attiva
+                  </p>
+                  <p className="text-[11px] font-medium">
+                    {currentPersona?.label ?? 'Tu'}
+                  </p>
+                </div>
+              </button>
+
+              {personaMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-slate-950 border border-slate-800 rounded-2xl shadow-soft py-1.5 text-xs z-40 backdrop-blur-xl">
+                  {personas.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        onPersonaChange?.(p.id);
+                        setPersonaMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-white/5 ${
+                        p.id === currentPersona?.id
+                          ? 'text-accent'
+                          : 'text-slate-200'
+                      }`}
+                    >
+                      <span className="h-6 w-6 rounded-full bg-slate-800 flex items-center justify-center text-[10px] uppercase font-semibold">
+                        {p.label[0]}
+                      </span>
+                      <span className="truncate">{p.label}</span>
+                    </button>
+                  ))}
                   <button
-                    key={p.id}
                     type="button"
                     onClick={() => {
-                      onPersonaChange?.(p.id);
+                      navigate('/app/profile');
                       setPersonaMenuOpen(false);
                     }}
-                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-white/5 ${
-                      p.id === currentPersona?.id
-                        ? 'text-accent'
-                        : 'text-slate-200'
-                    }`}
+                    className="w-full px-3 py-1.5 text-left text-[11px] text-slate-400 hover:bg-white/5 border-t border-white/5"
                   >
-                    <span className="h-6 w-6 rounded-full bg-slate-800 flex items-center justify-center text-[10px] uppercase font-semibold">
-                      {p.label[0]}
-                    </span>
-                    <span>{p.label}</span>
+                    Gestisci personas
                   </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigate('/app/profile');
-                    setPersonaMenuOpen(false);
-                  }}
-                  className="w-full px-3 py-1.5 text-left text-[11px] text-slate-400 hover:bg-white/5 border-t border-white/5"
-                >
-                  Gestisci personas
-                </button>
-              </div>
-            )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      setPersonaMenuOpen(false);
+                    }}
+                    className="w-full px-3 py-1.5 text-left text-[11px] text-rose-300 hover:bg-white/5 border-t border-white/5"
+                  >
+                    Esci
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-        <div className="w-full sm:hidden">
-          <div className="bg-slate-900/60 border border-white/10 rounded-2xl px-3 py-1.5 text-xs flex items-center gap-2 focus-within:border-accent/60 transition">
+
+        <div className="md:hidden w-full pb-3">
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl px-3 py-1.5 text-sm flex items-center gap-2 focus-within:border-sky-500/60 transition">
             <span className="text-slate-500">🔍</span>
             <input
-              className="bg-transparent flex-1 focus:outline-none text-slate-200 placeholder:text-slate-500 text-sm"
+              className="bg-transparent flex-1 focus:outline-none text-slate-200 placeholder:text-slate-500"
               placeholder="Cerca thread o stanze…"
             />
           </div>
         </div>
-      </div>
-      <div className="border-t border-white/5 px-4 sm:px-8 py-3 flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
-        <nav className="w-full grid grid-cols-2 gap-2 text-center md:flex md:flex-wrap md:items-center md:gap-2">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `px-3 py-1.5 rounded-2xl text-[12px] uppercase tracking-[0.2em] transition flex items-center justify-center gap-2 ${
-                  isActive
-                    ? 'bg-white/10 text-white border border-white/20'
-                    : 'text-slate-400 border border-transparent hover:text-white'
-                }`
-              }
-            >
-              <span className="text-white/80">
-                <NavItemIcon type={item.icon} />
-              </span>
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="w-full grid grid-cols-2 gap-2 md:flex md:flex-wrap md:justify-end md:gap-2">
-          {sessionStats.map((stat) => (
-            <div
-              key={stat.label}
-              className="px-3 py-1.5 rounded-2xl border border-white/10 text-xs text-slate-300"
-            >
-              <p className="uppercase tracking-[0.2em] text-[10px] text-slate-500">
-                {stat.label}
-              </p>
-              <p className="text-white font-semibold">{stat.value}</p>
-              <p className="text-[10px] text-slate-500">{stat.detail}</p>
-            </div>
-          ))}
-          <div className="flex items-center gap-2 col-span-2 justify-between md:justify-end md:gap-2">
-            <button className="focus-pill hidden sm:flex">
-              <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
-              Radar
-            </button>
-            <button
-              onClick={() => navigate('/app/rooms/room-dev')}
-              className="text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 rounded-2xl text-slate-950 font-semibold shadow-glow w-full sm:w-auto text-center"
-              style={{
-                backgroundImage: 'linear-gradient(120deg, #a78bfa, #38bdf8)',
-              }}
-            >
-              Nuova stanza
-            </button>
-            <button
-              type="button"
-              onClick={logout}
-              className="text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 rounded-2xl border border-white/10 text-slate-300 hover:text-white transition w-full sm:w-auto text-center"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
 
-      <div className="hidden md:block border-t border-white/5 px-4 sm:px-8 py-1">
-        <div className="ticker text-[11px] text-slate-400">
-          <div className="ticker__inner">
-            {tickerItems.map((item) => (
-              <span key={item} className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                {item}
-              </span>
+        <div className="py-3 space-y-3">
+          <nav className="flex flex-wrap gap-2 overflow-x-auto pb-1">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.label}
+                to={item.to}
+                end={item.exact}
+                className={({ isActive }) => {
+                  const active = item.match
+                    ? item.match(location.pathname)
+                    : isActive;
+                  return `${navLinkBase} ${
+                    active ? navLinkActive : navLinkInactive
+                  }`;
+                }}
+              >
+                <span className="text-white/80">
+                  <NavItemIcon type={item.icon} />
+                </span>
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-[11px] text-slate-400 sm:hidden">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              Sessione mindful attiva
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-2">
+              <button className="focus-pill hidden lg:inline-flex">
+                <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+                Radar
+              </button>
+              <button
+                onClick={() => navigate(`/app/rooms/${roomsNavTarget}`)}
+                className="text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 rounded-2xl text-slate-950 font-semibold shadow-glow w-full sm:w-auto text-center"
+                style={{
+                  backgroundImage: 'linear-gradient(120deg, #a78bfa, #38bdf8)',
+                }}
+              >
+                Nuova stanza
+              </button>
+              <button
+                type="button"
+                onClick={logout}
+                className="hidden md:inline-flex text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 rounded-2xl border border-slate-800 text-slate-300 hover:text-white transition text-center"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+
+          <div className="hidden lg:grid grid-cols-3 gap-2">
+            {sessionStats.map((stat) => (
+              <div
+                key={stat.label}
+                className="px-3 py-1.5 rounded-2xl border border-slate-800 text-xs text-slate-300"
+              >
+                <p className="uppercase tracking-[0.2em] text-[10px] text-slate-500">
+                  {stat.label}
+                </p>
+                <p className="text-white font-semibold">{stat.value}</p>
+                <p className="text-[10px] text-slate-500">{stat.detail}</p>
+              </div>
             ))}
           </div>
         </div>
-      </div>
 
+        <div className="hidden lg:block border-t border-slate-800/80 py-1">
+          <div className="ticker text-[11px] text-slate-400">
+            <div className="ticker__inner">
+              {tickerItems.map((item) => (
+                <span key={item} className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </header>
   );
 }

@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../components/ui/Logo.jsx';
 import { useAppState } from '../state/AppStateContext.jsx';
-import { useLogout } from '../hooks/useLogout.js';
 
 const algorithmPresets = [
   {
@@ -30,13 +29,14 @@ const introBullets = [
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
-  const logout = useLogout();
   const {
     rooms,
     personas,
     completeOnboarding,
     algorithmPreset,
     primaryPersonaId,
+    addCustomPersona,
+    currentUser,
   } = useAppState();
 
   const defaultPersonaId = primaryPersonaId ?? personas[0]?.id ?? null;
@@ -44,6 +44,9 @@ export default function OnboardingPage() {
   const [selectedPersonaId, setSelectedPersonaId] = useState(defaultPersonaId);
   const [selectedPreset, setSelectedPreset] = useState(algorithmPreset);
   const [roomError, setRoomError] = useState('');
+  const [showCustomForm, setShowCustomForm] = useState(false);
+  const [customPersonaName, setCustomPersonaName] = useState('');
+  const [customPersonaError, setCustomPersonaError] = useState('');
 
   const roomsInfo = useMemo(
     () => rooms.map((room) => ({ ...room, tags: room.tags ?? [] })),
@@ -52,6 +55,20 @@ export default function OnboardingPage() {
 
   const canComplete =
     selectedRooms.length >= 1 && selectedPersonaId && !!selectedPreset;
+
+  function handleCustomPersonaCreate() {
+    if (!customPersonaName.trim()) {
+      setCustomPersonaError('Dai un nome alla tua persona.');
+      return;
+    }
+    const newId = addCustomPersona(customPersonaName);
+    if (newId) {
+      setSelectedPersonaId(newId);
+      setCustomPersonaName('');
+      setCustomPersonaError('');
+      setShowCustomForm(false);
+    }
+  }
 
   function toggleRoom(roomId) {
     setSelectedRooms((prev) => {
@@ -102,20 +119,15 @@ export default function OnboardingPage() {
             <div>
               <p className="text-sm font-semibold text-white">CoWave</p>
               <p className="text-xs text-slate-400">
-                Benvenuto nel tuo rituale sociale consapevole
+                {currentUser?.nickname
+                  ? `${currentUser.nickname}, cuciamo il tuo spazio coerente`
+                  : 'Benvenuto nel tuo rituale sociale consapevole'}
               </p>
             </div>
           </div>
           <div className="text-[11px] uppercase tracking-[0.3em] text-slate-400">
             Onboarding • 1 sola volta
           </div>
-          <button
-            type="button"
-            onClick={logout}
-            className="text-xs uppercase tracking-[0.3em] px-4 py-1.5 rounded-2xl border border-white/10 text-slate-300 hover:text-white hover:border-white/30 transition"
-          >
-            Logout
-          </button>
         </header>
 
         <section className="glass-panel p-5 sm:p-6 space-y-4">
@@ -245,13 +257,70 @@ export default function OnboardingPage() {
                         {persona.label}
                       </p>
                       <p className="text-[11px] text-slate-400">
-                        Persona curata per i tuoi thread.
+                        {persona.description}
                       </p>
                     </div>
                   </div>
                 </button>
               );
             })}
+            <div
+              className={`rounded-2xl border px-4 py-4 text-left transition bg-slate-950/60 ${
+                showCustomForm
+                  ? 'border-accent/60 shadow-glow'
+                  : 'border-white/10 hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    Crea persona personalizzata
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Dai un nome al tono che vuoi usare.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCustomForm((prev) => !prev);
+                    setCustomPersonaError('');
+                  }}
+                  className="rounded-full border border-white/10 w-8 h-8 text-lg text-white"
+                  aria-label="Apri form persona personalizzata"
+                >
+                  {showCustomForm ? '−' : '+'}
+                </button>
+              </div>
+              {showCustomForm && (
+                <div className="mt-3 space-y-2">
+                  <input
+                    type="text"
+                    className="w-full bg-slate-900/70 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent text-slate-100"
+                    placeholder="Es. Guida notturna, Facilitatrice"
+                    value={customPersonaName}
+                    onChange={(e) => {
+                      setCustomPersonaName(e.target.value);
+                      setCustomPersonaError('');
+                    }}
+                  />
+                  {customPersonaError && (
+                    <p className="text-xs text-rose-300">{customPersonaError}</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleCustomPersonaCreate}
+                    className="w-full text-sm font-semibold rounded-2xl px-3 py-2 text-slate-950 shadow-glow"
+                    style={{
+                      backgroundImage:
+                        'linear-gradient(120deg, #a78bfa, #38bdf8)',
+                    }}
+                  >
+                    Salva persona
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </section>
 

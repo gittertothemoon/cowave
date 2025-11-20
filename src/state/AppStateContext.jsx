@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
   personas as initialPersonas,
   rooms as initialRooms,
@@ -7,21 +7,106 @@ import {
 } from '../mockData.js';
 
 const AppStateContext = createContext(null);
+const USER_STORAGE_KEY = 'cowave-user';
+const CUSTOM_PERSONAS_KEY = 'cowave-custom-personas';
+const defaultUser = { nickname: 'Tu', email: '' };
 
 export function AppStateProvider({ children }) {
+  const [currentUser, setCurrentUser] = useState(() => {
+    if (typeof window === 'undefined') return defaultUser;
+    try {
+      const stored = window.localStorage.getItem(USER_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : defaultUser;
+    } catch {
+      return defaultUser;
+    }
+  });
+  const [customPersonas, setCustomPersonas] = useState(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const stored = window.localStorage.getItem(CUSTOM_PERSONAS_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
   const [rooms, setRooms] = useState(initialRooms);
   const [threads, setThreads] = useState(initialThreads);
   const [postsByThread, setPostsByThread] = useState(initialPostsByThread);
   const [isOnboarded, setIsOnboarded] = useState(false);
   const [initialRoomIds, setInitialRoomIds] = useState([]);
+  const [followedRoomIds, setFollowedRoomIds] = useState([]);
   const [primaryPersonaId, setPrimaryPersonaId] = useState(null);
   const [algorithmPreset, setAlgorithmPreset] = useState('balanced');
   const [activePersonaId, setActivePersonaId] = useState(
     initialPersonas[0]?.id ?? null
   );
 
-  // In futuro se vuoi potrai creare anche nuove personas
-  const personas = initialPersonas;
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        USER_STORAGE_KEY,
+        JSON.stringify(currentUser ?? defaultUser)
+      );
+    } catch {
+      // ignore storage errors
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        CUSTOM_PERSONAS_KEY,
+        JSON.stringify(customPersonas)
+      );
+    } catch {
+      // ignore storage errors
+    }
+  }, [customPersonas]);
+
+  const personas = useMemo(() => {
+    const displayName = currentUser?.nickname?.trim() || 'Tu';
+    const baseList = initialPersonas.map((persona) => ({
+      ...persona,
+      label: `${displayName} – ${persona.title}`,
+    }));
+    const customList = customPersonas.map((persona) => ({
+      ...persona,
+      label: `${displayName} – ${persona.title}`,
+    }));
+    return [...baseList, ...customList];
+  }, [currentUser?.nickname, customPersonas]);
+
+  function updateCurrentUser(updates) {
+    setCurrentUser((prev) => ({
+      ...prev,
+      ...updates,
+    }));
+  }
+
+  function addCustomPersona(name) {
+    const cleaned = name.trim();
+    if (!cleaned) return null;
+    const palette = [
+      'bg-emerald-500',
+      'bg-sky-500',
+      'bg-fuchsia-500',
+      'bg-amber-500',
+      'bg-cyan-500',
+    ];
+    const id = `persona-${Date.now()}`;
+    const color = palette[customPersonas.length % palette.length];
+    const persona = {
+      id,
+      title: cleaned,
+      description: 'Persona personalizzata',
+      color,
+    };
+    setCustomPersonas((prev) => [...prev, persona]);
+    return id;
+  }
 
   function createRoom({ name, description, isPrivate = false, tags = [] }) {
     const id = `room-${Date.now()}`;
@@ -34,6 +119,9 @@ export function AppStateProvider({ children }) {
       members: 1,
     };
     setRooms((prev) => [...prev, newRoom]);
+    setFollowedRoomIds((prev) =>
+      prev.includes(id) ? prev : [...prev, id]
+    );
     return id;
   }
 
@@ -49,7 +137,7 @@ export function AppStateProvider({ children }) {
       id,
       roomId,
       title,
-      author: 'Tu',
+      author: currentUser?.nickname || 'Tu',
       personaId,
       createdAt: new Date().toISOString(),
       depth: 1,
@@ -65,7 +153,7 @@ export function AppStateProvider({ children }) {
     const newPost = {
       id: `p-${Date.now()}`,
       parentId,
-      author: 'Tu',
+      author: currentUser?.nickname || 'Tu',
       personaId: personaId ?? personas[0]?.id ?? 'dev',
       createdAt: new Date().toISOString(),
       content,
@@ -86,6 +174,7 @@ export function AppStateProvider({ children }) {
     algorithmPreset: preset = 'balanced',
   }) {
     setInitialRoomIds(selectedRoomIds);
+    setFollowedRoomIds(selectedRoomIds);
     setPrimaryPersonaId(personaId);
     setAlgorithmPreset(preset);
     if (personaId) {
@@ -97,6 +186,7 @@ export function AppStateProvider({ children }) {
   function resetOnboarding() {
     setIsOnboarded(false);
     setInitialRoomIds([]);
+    setFollowedRoomIds([]);
     setPrimaryPersonaId(null);
     setAlgorithmPreset('balanced');
     setActivePersonaId(initialPersonas[0]?.id ?? null);
@@ -110,15 +200,20 @@ export function AppStateProvider({ children }) {
       postsByThread,
       isOnboarded,
       initialRoomIds,
+      followedRoomIds,
       primaryPersonaId,
       algorithmPreset,
       activePersonaId,
+      currentUser,
       createRoom,
       createThread,
       createPost,
       setActivePersonaId,
       completeOnboarding,
       resetOnboarding,
+      updateCurrentUser,
+      addCustomPersona,
+      setFollowedRoomIds,
     }),
     [
       rooms,
@@ -126,9 +221,12 @@ export function AppStateProvider({ children }) {
       postsByThread,
       isOnboarded,
       initialRoomIds,
+      followedRoomIds,
       primaryPersonaId,
       algorithmPreset,
       activePersonaId,
+      personas,
+      currentUser,
     ]
   );
 

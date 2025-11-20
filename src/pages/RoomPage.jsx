@@ -178,7 +178,7 @@ export default function RoomPage() {
             <label className="text-[11px] text-slate-300">Titolo</label>
             <input
               type="text"
-              className="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-accent"
+              className="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Es. Workflow senza feed, rituali serali…"
@@ -191,7 +191,7 @@ export default function RoomPage() {
             </label>
             <textarea
               rows={3}
-              className="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-accent resize-none"
+              className="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent resize-none"
               value={snippet}
               onChange={(e) => setSnippet(e.target.value)}
               placeholder="Descrivi il punto di partenza o la tensione che vuoi esplorare…"
@@ -202,7 +202,7 @@ export default function RoomPage() {
               Tipo di energia
             </label>
             <select
-              className="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-accent"
+              className="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
               value={energy}
               onChange={(e) => setEnergy(e.target.value)}
             >

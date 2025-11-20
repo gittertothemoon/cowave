@@ -1,7 +1,28 @@
 export const personas = [
-  { id: 'dev', label: 'Pionio-dev', color: 'bg-emerald-500' },
-  { id: 'rap', label: 'Pionio-rap', color: 'bg-fuchsia-500' },
-  { id: 'think', label: 'Pionio-thinker', color: 'bg-sky-500' },
+  {
+    id: 'dev',
+    title: 'Dev builder',
+    description: 'Per condividere progetti, codice e idee tecniche.',
+    color: 'bg-emerald-500',
+  },
+  {
+    id: 'creator',
+    title: 'Creator lab',
+    description: 'Per contenuti creativi, social e media.',
+    color: 'bg-fuchsia-500',
+  },
+  {
+    id: 'deep',
+    title: 'Deep talk',
+    description: 'Per riflessioni personali e conversazioni profonde.',
+    color: 'bg-sky-500',
+  },
+  {
+    id: 'host',
+    title: 'Host mindful',
+    description: 'Per curare rituali e stanze con tono accogliente.',
+    color: 'bg-amber-400',
+  },
 ];
 
 export const rooms = [
@@ -68,7 +89,7 @@ export const threads = [
     roomId: 'room-mental',
     title: 'Come evitare di farsi mangiare dai social',
     author: 'Pionio-thinker',
-    personaId: 'think',
+    personaId: 'deep',
     createdAt: '2025-11-12T18:30:00Z',
     depth: 4,
     energy: 'riflessivo',
@@ -113,7 +134,7 @@ export const postsByThread = {
       id: 'p4',
       parentId: null,
       author: 'Pionio-thinker',
-      personaId: 'think',
+      personaId: 'deep',
       createdAt: '2025-11-12T18:30:00Z',
       content:
         'Se potessi spostare slider tipo: %contenuti che mi sfidano vs %comfort, cambierebbe tutto.',

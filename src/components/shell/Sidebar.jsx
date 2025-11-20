@@ -6,10 +6,23 @@ import AlgorithmControls from '../ui/AlgorithmControls.jsx';
 import SessionHUD from '../ui/SessionHUD.jsx';
 
 export default function Sidebar({ variant = 'desktop', open = false, onClose }) {
-  const { rooms } = useAppState();
+  const { rooms, followedRoomIds } = useAppState();
   const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
   const navigate = useNavigate();
   const isMobile = variant === 'mobile';
+  const accentPalette = ['#38bdf8', '#a78bfa', '#34d399', '#f472b6', '#fb7185'];
+  const followedSet = new Set(followedRoomIds ?? []);
+  const primaryRooms =
+    followedRoomIds.length > 0
+      ? rooms.filter((room) => followedSet.has(room.id))
+      : rooms;
+  const exploreRooms =
+    followedRoomIds.length > 0
+      ? rooms.filter((room) => !followedSet.has(room.id))
+      : [];
+
+  const getRoomAccent = (room, index) =>
+    room.theme?.primary ?? accentPalette[index % accentPalette.length];
 
   const supportLinks = [
     { label: 'Spazio sicurezza', hint: 'linee guida' },
@@ -24,14 +37,18 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
   };
 
   const content = (
-    <div className="flex h-full flex-col bg-surface/95 md:bg-transparent">
+    <div
+      className={`flex h-full flex-col ${
+        isMobile ? 'bg-slate-950 text-slate-100' : 'bg-surface/95 md:bg-transparent'
+      }`}
+    >
       {isMobile && (
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <p className="text-sm font-semibold text-white">Naviga CoWave</p>
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white text-base"
+            className="rounded-md p-1.5 text-slate-400 hover:text-white hover:bg-slate-900/60"
             aria-label="Chiudi menu"
           >
             ✕
@@ -79,35 +96,73 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
           </div>
 
           <ul className="space-y-1.5">
-            {rooms.map((room) => (
-              <li key={room.id}>
-                <button
-                  onClick={() => handleNavigate(`/app/rooms/${room.id}`)}
-                  className="w-full text-left px-3 py-2.5 rounded-2xl border hover:border-accent/50 hover:bg-slate-900/60 transition flex items-start gap-3"
-                  style={{
-                    borderColor: `${room.theme?.primary ?? '#334155'}30`,
-                    background: `linear-gradient(120deg, ${
-                      room.theme?.primary ?? '#475569'
-                    }14, transparent)`,
-                  }}
-                >
-                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-gradient-to-br from-accent to-accentBlue flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold truncate text-slate-100">
-                      {room.name}
-                    </p>
-                    <p className="text-[11px] text-slate-400 truncate">
-                      {room.members} membri •{' '}
-                      {room.isPrivate ? 'Privata' : 'Aperta'}
-                    </p>
-                  </div>
-                  <span className="text-[11px] text-slate-500">
-                    {room.tags[0] ? `#${room.tags[0]}` : '—'}
-                  </span>
-                </button>
-              </li>
-            ))}
+            {primaryRooms.map((room, index) => {
+              const accent = getRoomAccent(room, index);
+              return (
+                <li key={room.id}>
+                  <button
+                    onClick={() => handleNavigate(`/app/rooms/${room.id}`)}
+                    className="w-full text-left px-3 py-2.5 rounded-2xl border transition flex items-start gap-3"
+                    style={{
+                      borderColor: `${accent}40`,
+                      boxShadow: `0 0 0 1px ${accent}20`,
+                      backgroundImage: `linear-gradient(120deg, ${accent}18, rgba(15,23,42,0.65))`,
+                    }}
+                  >
+                    <span
+                      className="mt-1 h-2.5 w-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: accent }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold truncate text-slate-100">
+                        {room.name}
+                      </p>
+                      <p className="text-[11px] text-slate-400 truncate">
+                        {room.members} membri •{' '}
+                        {room.isPrivate ? 'Privata' : 'Aperta'}
+                      </p>
+                    </div>
+                    <span className="text-[11px] text-slate-500">
+                      {room.tags[0] ? `#${room.tags[0]}` : '—'}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
+          {exploreRooms.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                Esplora altre stanze
+              </p>
+              <ul className="space-y-1.5">
+                {exploreRooms.slice(0, 3).map((room, index) => {
+                  const accent = getRoomAccent(
+                    room,
+                    index + primaryRooms.length
+                  );
+                  return (
+                    <li key={room.id}>
+                      <button
+                        onClick={() => handleNavigate(`/app/rooms/${room.id}`)}
+                        className="w-full text-left px-3 py-2 rounded-2xl border border-slate-800 bg-slate-950/40 text-xs text-slate-300 hover:border-white/20 transition"
+                        style={{
+                          boxShadow: `inset 0 0 0 1px ${accent}20`,
+                        }}
+                      >
+                        {room.name}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+          {followedRoomIds.length === 0 && (
+            <p className="text-[11px] text-slate-500 px-1 mt-3">
+              Seguirai le stanze preferite durante l’onboarding iniziale.
+            </p>
+          )}
         </div>
       </nav>
 
@@ -140,29 +195,18 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
         </aside>
       )}
 
-      {variant === 'mobile' && (
-        <div
-          className={`fixed inset-0 z-40 md:hidden transition duration-300 ${
-            open ? 'pointer-events-auto' : 'pointer-events-none'
-          }`}
-          aria-hidden={!open}
-        >
+      {variant === 'mobile' && open && (
+        <div className="fixed inset-0 z-40 flex md:hidden">
           <div
-            className={`absolute inset-0 bg-black/60 transition-opacity duration-300 ${
-              open ? 'opacity-100' : 'opacity-0'
-            }`}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
             aria-hidden="true"
           />
           <aside
-            className={`absolute left-0 top-0 bottom-0 w-full max-w-xs sm:max-w-sm bg-surface/95 border-r border-white/10 shadow-soft flex flex-col transition-transform duration-300 ${
-              open ? 'translate-x-0' : '-translate-x-full'
-            }`}
+            className="relative z-50 flex h-full w-72 max-w-[80%] flex-col border-r border-slate-800 bg-slate-950 shadow-soft"
             role="dialog"
             aria-modal="true"
             aria-label="Menu principale"
-            aria-hidden={!open}
-            inert={!open ? '' : undefined}
           >
             {content}
           </aside>
@@ -210,7 +254,7 @@ function CreateRoomModal({ open, onClose }) {
           <label className="text-[11px] text-slate-300">Nome stanza</label>
           <input
             type="text"
-            className="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-accent"
+            className="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Es. Creators Lab, Deep Talk…"
@@ -221,7 +265,7 @@ function CreateRoomModal({ open, onClose }) {
           <label className="text-[11px] text-slate-300">Descrizione</label>
           <textarea
             rows={2}
-            className="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-accent resize-none"
+            className="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent resize-none"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Descrivi il tono e gli obiettivi della stanza…"
@@ -233,7 +277,7 @@ function CreateRoomModal({ open, onClose }) {
           </label>
           <input
             type="text"
-            className="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-accent"
+            className="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             placeholder="es. coding, mindset, adult…"
