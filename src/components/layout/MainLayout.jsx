@@ -44,7 +44,10 @@ export default function MainLayout({
           onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
           isSidebarOpen={isSidebarOpen}
         />
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 pb-12 pt-5 overflow-y-auto">
+        <main
+          data-scroll-container
+          className="flex-1 px-4 sm:px-6 lg:px-8 pb-12 pt-5 overflow-y-auto"
+        >
           <div className="w-full max-w-6xl mx-auto space-y-5">{children}</div>
         </main>
       </div>
