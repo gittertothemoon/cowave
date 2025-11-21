@@ -1,34 +1,32 @@
 import { Link } from 'react-router-dom';
-import Logo from '../components/ui/Logo.jsx';
+import CoWaveLogo from '../components/CoWaveLogo.jsx';
+import {
+  buttonPrimaryClass,
+  buttonSecondaryClass,
+  cardBaseClass,
+  eyebrowClass,
+  bodyTextClass,
+} from '../components/ui/primitives.js';
 
 const featureCards = [
   {
-    title: 'Stanze curate',
-    bullets: [
-      'Segui solo gli spazi che ti servono.',
-      'Crea stanze nuove quando vuoi.',
-    ],
+    title: 'Stanze tematiche',
+    bullets: ['Segui solo gli spazi che ti servono.', 'Apri stanze nuove con regole chiare.'],
   },
   {
     title: 'Thread ad albero',
-    bullets: [
-      'Conversazioni a rami, non un feed infinito.',
-      'Apri solo i rami che ti interessano.',
-    ],
+    bullets: ['Conversazioni a rami, non un feed infinito.', 'Apri solo i rami che ti interessano.'],
   },
   {
-    title: 'Controllo del feed',
-    bullets: [
-      'Personas e preset chiari prima di iniziare.',
-      'Comfort, novità e ritmo sono dichiarati.',
-    ],
+    title: 'Feed sotto controllo',
+    bullets: ['Persona e preset scelti prima di entrare.', 'Comfort, bilanciato o crescita: decidi tu.'],
   },
 ];
 
 const differencePoints = [
-  'Niente scroll senza senso: ogni thread ha un inizio e un finale.',
+  'Ogni thread ha un inizio e una chiusura: niente scroll senza fine.',
   'La tua persona attiva è sempre visibile e modificabile.',
-  'Le impostazioni dell’algoritmo sono semplici e sempre revocabili.',
+  'Algoritmo trasparente: preset chiari e slider sempre revocabili.',
 ];
 
 export default function LandingPage() {
@@ -44,25 +42,16 @@ export default function LandingPage() {
       />
       <div className="relative z-10">
         <header className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between gap-4">
-          <Link to="/" className="flex items-center gap-2 text-slate-200">
-            <Logo size={36} />
-            <span className="text-[10px] uppercase tracking-[0.35em] text-slate-400">
-              CoWave
-            </span>
+          <Link to="/" className="flex items-center gap-3 text-slate-200" aria-label="CoWave">
+            <CoWaveLogo size={38} variant="full" />
           </Link>
           <div className="flex items-center gap-2 text-sm">
-            <Link
-              to="/auth/login"
-              className="px-4 py-2 rounded-full border border-white/15 text-slate-200 hover:border-accent/50 transition"
-            >
+            <Link to="/auth/login" className={`${buttonSecondaryClass} rounded-full`}>
               Accedi
             </Link>
             <Link
               to="/auth/register"
-              className="px-4 py-2 rounded-full text-slate-950 font-semibold"
-              style={{
-                backgroundImage: 'linear-gradient(120deg, #a78bfa, #38bdf8)',
-              }}
+              className={`${buttonPrimaryClass} rounded-full`}
             >
               Inizia ora
             </Link>
@@ -72,30 +61,29 @@ export default function LandingPage() {
         <main className="max-w-6xl mx-auto px-4 sm:px-6 space-y-16 pb-20">
           <section className="py-12 lg:py-20 grid gap-10 lg:grid-cols-[1.05fr,0.95fr] items-center">
             <div className="space-y-6">
-              <p className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.4em] text-slate-400">
+              <p className={`${eyebrowClass} inline-flex items-center gap-2`}>
                 Beta privata
-                <span className="text-slate-500 text-[10px] tracking-[0.3em]">
+                <span className="text-slate-500 text-[10px] tracking-[0.24em]">
                   Accesso su invito
                 </span>
               </p>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight text-white">
-                Conversazioni lente in stanze, senza rumore di fondo.
+                CoWave: il social a stanze dove le conversazioni restano chiare.
               </h1>
               <p className="text-base sm:text-lg text-slate-300 max-w-2xl">
-                CoWave è una SPA a stanze. Scegli gli spazi iniziali, la tua
-                persona e come vuoi che arrivi il feed. Tutto il resto resta
-                fuori.
+                Entra in stanze tematiche, segui i thread come rami e decidi tu che tipo
+                di contenuti arrivano nel feed.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <Link
                   to="/auth/register"
-                  className="inline-flex items-center justify-center px-5 py-3 rounded-3xl text-sm font-semibold bg-gradient-to-r from-accent to-accentBlue text-slate-950 shadow-glow w-full sm:w-auto text-center"
+                  className={`${buttonPrimaryClass} w-full sm:w-auto rounded-3xl px-5 py-3 text-base`}
                 >
                   Inizia ora
                 </Link>
                 <Link
                   to="/auth/login"
-                  className="inline-flex items-center justify-center px-5 py-3 rounded-3xl text-sm font-medium border border-white/15 hover:border-accent/60 bg-slate-950/40 w-full sm:w-auto text-center"
+                  className={`${buttonSecondaryClass} w-full sm:w-auto rounded-3xl px-5 py-3 border-white/15`}
                 >
                   Accedi
                 </Link>
@@ -104,20 +92,17 @@ export default function LandingPage() {
 
             <div className="relative w-full">
               <div className="absolute -inset-12 bg-gradient-to-tr from-accent/25 via-purple-500/20 to-fuchsia-500/25 blur-3xl opacity-60 animate-pulse-soft" />
-              <div className="relative rounded-3xl border border-white/10 bg-slate-950/70 p-5 space-y-5 backdrop-blur">
-                <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">
+              <div className={`${cardBaseClass} relative rounded-3xl p-5 space-y-5`}>
+                <p className={eyebrowClass}>
                   Tre passi e sei dentro
                 </p>
                 <ol className="space-y-3 text-sm text-slate-200 list-decimal list-inside">
-                  <li>Scegli 1–3 stanze curate.</li>
-                  <li>Scegli la persona con cui vuoi apparire.</li>
-                  <li>
-                    Imposta il preset del feed (Comfort, Bilanciato o Crescita).
-                  </li>
+                  <li>Seleziona 1–3 stanze curate.</li>
+                  <li>Indica la persona con cui vuoi apparire.</li>
+                  <li>Imposta il preset del feed: Comfort, Bilanciato o Crescita.</li>
                 </ol>
                 <p className="text-[12px] text-slate-400">
-                  Nessun feed infinito: trovi solo i thread generati dalle stanze
-                  che segui.
+                  Trovi solo i thread generati dalle stanze che segui, senza feed infinito.
                 </p>
               </div>
             </div>
@@ -125,22 +110,20 @@ export default function LandingPage() {
 
           <section className="space-y-6">
             <div className="text-center space-y-2">
-              <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">
-                Cosa trovi dentro
-              </p>
+              <p className={eyebrowClass}>Cosa trovi dentro</p>
               <h2 className="text-3xl font-semibold text-white">
-                Solo gli elementi essenziali
+                Conversazioni ordinate, feed intenzionale
               </h2>
-              <p className="text-sm text-slate-400 max-w-2xl mx-auto">
-                Stanze, thread e controllo dell’algoritmo. Il resto vive negli
-                strumenti avanzati, fuori dal feed principale.
+              <p className={`${bodyTextClass} max-w-2xl mx-auto`}>
+                Stanze, thread ad albero e controllo dell’algoritmo. Gli strumenti più
+                tecnici restano separati per non sporcare il feed.
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-3">
               {featureCards.map((card) => (
                 <article
                   key={card.title}
-                  className="rounded-3xl border border-white/10 bg-slate-950/60 p-5 space-y-3"
+                  className={`${cardBaseClass} p-5 sm:p-6 space-y-3`}
                 >
                   <p className="text-lg font-semibold text-white">
                     {card.title}
@@ -158,12 +141,10 @@ export default function LandingPage() {
             </div>
           </section>
 
-          <section className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/10 space-y-4">
-            <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">
-              Come è diverso
-            </p>
+          <section className={`${cardBaseClass} p-6 sm:p-8 rounded-3xl space-y-4`}>
+            <p className={eyebrowClass}>Perché è diverso</p>
             <h3 className="text-2xl font-semibold text-white">
-              Una UX unica, pensata per utenti normali
+              Conversazioni più intenzionali, meno rumore
             </h3>
             <ul className="space-y-2 text-sm text-slate-300">
               {differencePoints.map((point) => (
@@ -177,22 +158,22 @@ export default function LandingPage() {
 
           <section className="max-w-4xl mx-auto text-center space-y-4">
             <h3 className="text-3xl font-semibold text-white">
-              Pronto a provare CoWave?
+              Pronto a entrare in CoWave?
             </h3>
-            <p className="text-sm text-slate-400">
-              Registrati, completa l’onboarding in tre passi e atterra direttamente
-              sul feed delle tue stanze.
+            <p className={`${bodyTextClass} text-base`}>
+              Registrati, fai l’onboarding in tre passi e atterra direttamente sul feed
+              delle tue stanze.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3">
               <Link
                 to="/auth/register"
-                className="inline-flex items-center justify-center px-6 py-3 rounded-3xl text-sm font-semibold bg-gradient-to-r from-accent to-accentBlue text-slate-950 shadow-glow"
+                className={`${buttonPrimaryClass} rounded-3xl px-6 py-3 text-base`}
               >
                 Inizia ora
               </Link>
               <Link
                 to="/auth/login"
-                className="inline-flex items-center justify-center px-6 py-3 rounded-3xl text-sm font-medium border border-white/15 hover:border-accent/60 bg-slate-950/40"
+                className={`${buttonSecondaryClass} rounded-3xl px-6 py-3 border-white/15`}
               >
                 Accedi
               </Link>

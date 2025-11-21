@@ -1,6 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Logo from '../components/ui/Logo.jsx';
+import CoWaveLogo from '../components/CoWaveLogo.jsx';
+import {
+  buttonPrimaryClass,
+  cardBaseClass,
+  eyebrowClass,
+  pageTitleClass,
+  bodyTextClass,
+  inputBaseClass,
+} from '../components/ui/primitives.js';
 import { useAppState } from '../state/AppStateContext.jsx';
 
 const algorithmPresets = [
@@ -116,38 +124,38 @@ export default function OnboardingPage() {
         }}
       />
       <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-8 py-8 flex flex-col gap-8">
-        <header className="flex items-center justify-between flex-wrap gap-4 border border-white/10 rounded-3xl px-4 sm:px-5 py-4 bg-slate-950/70 backdrop-blur-xl shadow-2xl shadow-slate-900/40">
+        <header
+          className={`${cardBaseClass} flex items-center justify-between flex-wrap gap-4 rounded-3xl px-4 sm:px-5 py-4 shadow-2xl shadow-slate-900/40`}
+        >
           <div className="flex items-center gap-3">
-            <Logo size={40} />
-            <div>
+            <CoWaveLogo size={40} variant="icon" />
+            <div className="leading-tight">
               <p className="text-sm font-semibold text-white">CoWave</p>
               <p className="text-xs text-slate-400">
                 {currentUser?.nickname
-                  ? `${currentUser.nickname}, bastano tre scelte`
-                  : 'Bastano tre scelte per iniziare'}
+                  ? `${currentUser.nickname}, tre scelte e sei nel feed`
+                  : 'Tre scelte e sei nel feed'}
               </p>
             </div>
           </div>
-          <div className="text-[11px] uppercase tracking-[0.3em] text-slate-400">
-            Onboarding • unico passaggio
+          <div className={`${eyebrowClass} text-[10px] sm:text-[11px] text-slate-300`}>
+            Onboarding • 3 passi rapidi
           </div>
         </header>
 
-        <section className="glass-panel p-5 sm:p-6 space-y-4">
+        <section className={`${cardBaseClass} p-5 sm:p-6 space-y-4`}>
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-              Step 1
-            </p>
+            <p className={eyebrowClass}>Step 1</p>
             <p className="text-xs text-slate-400">
               {selectedRooms.length}/{selectionLimit} selezionate
             </p>
           </div>
-          <h2 className="text-2xl font-semibold text-white">
+          <h2 className={`${pageTitleClass} text-2xl`}>
             Scegli le tue stanze iniziali
           </h2>
-          <p className="text-sm text-slate-300">
-            Seleziona da 1 a {selectionLimit} stanze curate: il feed partirà solo da qui e
-            potrai aggiornarle in qualsiasi momento.
+          <p className={bodyTextClass}>
+            Scegli da 1 a {selectionLimit} stanze curate: il feed parte da qui e puoi
+            aggiornarle quando vuoi.
           </p>
           {roomError && (
             <p
@@ -166,9 +174,9 @@ export default function OnboardingPage() {
                   key={room.id}
                   type="button"
                   onClick={() => toggleRoom(room.id)}
-                  className={`text-left rounded-2xl border px-4 py-4 transition bg-slate-950/60 backdrop-blur ${
+                  className={`text-left rounded-2xl border px-4 py-4 transition-colors bg-slate-950/60 backdrop-blur ${
                     isSelected
-                      ? 'border-accent/80 bg-accent/15 shadow-glow'
+                      ? 'border-accent/70 bg-accent/15 shadow-glow'
                       : 'border-white/10 hover:border-white/25'
                   }`}
                   aria-pressed={isSelected}
@@ -211,16 +219,14 @@ export default function OnboardingPage() {
           </div>
         </section>
 
-        <section className="glass-panel p-5 sm:p-6 space-y-4">
-          <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
-            Step 2
-          </div>
-          <h2 className="text-2xl font-semibold text-white">
+        <section className={`${cardBaseClass} p-5 sm:p-6 space-y-4`}>
+          <div className={eyebrowClass}>Step 2</div>
+          <h2 className={`${pageTitleClass} text-2xl`}>
             Scegli la tua persona iniziale
           </h2>
-          <p className="text-sm text-slate-300">
-            {nickname}, con quale tono vuoi apparire nei primi thread? Puoi
-            cambiare o creare nuove personas quando vuoi.
+          <p className={bodyTextClass}>
+            {nickname}, con quale tono vuoi apparire nei primi thread? Puoi cambiare o
+            creare nuove personas quando vuoi.
           </p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {personas.map((persona) => {
@@ -230,7 +236,7 @@ export default function OnboardingPage() {
                   key={persona.id}
                   type="button"
                   onClick={() => setSelectedPersonaId(persona.id)}
-                  className={`rounded-2xl border px-4 py-4 text-left transition bg-slate-950/60 ${
+                  className={`rounded-2xl border px-4 py-4 text-left transition-colors bg-slate-950/60 ${
                     isSelected
                       ? 'border-accent/80 bg-accent/15 shadow-glow'
                       : 'border-white/10 hover:border-white/20'
@@ -256,7 +262,7 @@ export default function OnboardingPage() {
               );
             })}
             <div
-              className={`rounded-2xl border px-4 py-4 text-left transition bg-slate-950/60 ${
+              className={`rounded-2xl border px-4 py-4 text-left transition-colors bg-slate-950/60 ${
                 showCustomForm
                   ? 'border-accent/60 shadow-glow'
                   : 'border-white/10 hover:border-white/20'
@@ -268,7 +274,7 @@ export default function OnboardingPage() {
                     Crea persona personalizzata
                   </p>
                   <p className="text-[11px] text-slate-400">
-                    Nome + linea opzionale, tutto in pochi secondi.
+                    Nome e linea opzionale: bastano pochi secondi.
                   </p>
                 </div>
                 <button
@@ -289,7 +295,7 @@ export default function OnboardingPage() {
                 <div id={customPersonaFormId} className="mt-3 space-y-2">
                   <input
                     type="text"
-                    className="w-full bg-slate-900/70 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent text-slate-100"
+                    className={inputBaseClass}
                     placeholder="Es. Guida notturna"
                     value={customPersonaName}
                     onChange={(e) => {
@@ -299,7 +305,7 @@ export default function OnboardingPage() {
                   />
                   <input
                     type="text"
-                    className="w-full bg-slate-900/70 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent text-slate-100"
+                    className={inputBaseClass}
                     placeholder="Linea opzionale (es. tono caldo e lento)"
                     value={customPersonaTagline}
                     onChange={(e) => setCustomPersonaTagline(e.target.value)}
@@ -316,11 +322,7 @@ export default function OnboardingPage() {
                   <button
                     type="button"
                     onClick={handleCustomPersonaCreate}
-                    className="w-full text-sm font-semibold rounded-2xl px-3 py-2 text-slate-950 shadow-glow"
-                    style={{
-                      backgroundImage:
-                        'linear-gradient(120deg, #a78bfa, #38bdf8)',
-                    }}
+                    className={`${buttonPrimaryClass} w-full text-sm font-semibold rounded-2xl px-3 py-2`}
                   >
                     Salva persona
                   </button>
@@ -330,16 +332,14 @@ export default function OnboardingPage() {
           </div>
         </section>
 
-        <section className="glass-panel p-5 sm:p-6 space-y-4">
-          <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
-            Step 3
-          </div>
-          <h2 className="text-2xl font-semibold text-white">
-            Imposta la vibrazione del feed
+        <section className={`${cardBaseClass} p-5 sm:p-6 space-y-4`}>
+          <div className={eyebrowClass}>Step 3</div>
+          <h2 className={`${pageTitleClass} text-2xl`}>
+            Imposta il ritmo del feed
           </h2>
-          <p className="text-sm text-slate-300">
-            Tre preset chiari per decidere come dosare comfort, novità e ritmo.
-            Potrai spostarli in seguito dagli Strumenti avanzati.
+          <p className={bodyTextClass}>
+            Tre preset chiari per dosare comfort, novità e ritmo. Puoi cambiarli in ogni
+            momento dagli Strumenti avanzati.
           </p>
           <div className="grid gap-3 sm:grid-cols-3">
             {algorithmPresets.map((preset) => {
@@ -349,7 +349,7 @@ export default function OnboardingPage() {
                   key={preset.id}
                   type="button"
                   onClick={() => setSelectedPreset(preset.id)}
-                  className={`rounded-2xl border px-4 py-4 text-left transition bg-slate-950/60 ${
+                  className={`rounded-2xl border px-4 py-4 text-left transition-colors bg-slate-950/60 ${
                     isSelected
                       ? 'border-accentBlue/80 bg-accentBlue/15 shadow-glow'
                       : 'border-white/10 hover:border-white/20'
@@ -368,26 +368,21 @@ export default function OnboardingPage() {
           </div>
         </section>
 
-        <footer className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border border-white/10 rounded-3xl px-4 sm:px-5 py-4 bg-slate-950/70 backdrop-blur-xl">
+        <footer
+          className={`${cardBaseClass} flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl px-4 sm:px-5 py-4`}
+        >
           <div className="text-sm text-slate-300">
-            Al termine entri nel feed con queste scelte. Tutto resta modificabile.
+            Entrerai nel feed con queste scelte. Tutto resta modificabile.
           </div>
           <button
             type="button"
             onClick={handleSubmit}
             disabled={!canComplete}
-            className={`px-6 py-3 rounded-2xl text-sm font-semibold transition w-full sm:w-auto text-center ${
+            className={`w-full sm:w-auto text-center ${
               canComplete
-                ? 'text-slate-950 shadow-glow'
-                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                ? `${buttonPrimaryClass} text-white rounded-2xl px-6 py-3`
+                : 'rounded-2xl px-6 py-3 bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800'
             }`}
-            style={
-              canComplete
-                ? {
-                    backgroundImage: 'linear-gradient(120deg, #a78bfa, #38bdf8)',
-                  }
-                : {}
-            }
           >
             Entra in CoWave
           </button>

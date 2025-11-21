@@ -1,8 +1,18 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ThreadCard from '../components/threads/ThreadCard.jsx';
 import { useAppState } from '../state/AppStateContext.jsx';
 import Modal from '../components/ui/Modal.jsx';
+import {
+  buttonPrimaryClass,
+  buttonGhostClass,
+  cardBaseClass,
+  eyebrowClass,
+  pageTitleClass,
+  bodyTextClass,
+  inputBaseClass,
+  labelClass,
+} from '../components/ui/primitives.js';
 
 export default function RoomPage() {
   const { roomId } = useParams();
@@ -16,6 +26,7 @@ export default function RoomPage() {
   const [title, setTitle] = useState('');
   const [snippet, setSnippet] = useState('');
   const [energy, setEnergy] = useState('costruttivo');
+  const titleInputRef = useRef(null);
 
   const theme = room?.theme ?? {
     primary: '#a78bfa',
@@ -65,29 +76,38 @@ export default function RoomPage() {
     navigate(`/app/threads/${id}`);
   }
 
+  useEffect(() => {
+    if (isNewThreadOpen) {
+      window.setTimeout(() => {
+        titleInputRef.current?.focus();
+      }, 0);
+    }
+  }, [isNewThreadOpen]);
+
   return (
     <div className="space-y-5">
-      <header className="glass-panel p-4 sm:p-5 space-y-3 relative overflow-hidden">
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 opacity-15"
-          style={{ background: accentGradient }}
-        />
+      <header
+        className={`${cardBaseClass} p-4 sm:p-5 space-y-3 relative overflow-hidden`}
+        style={{
+          background: `linear-gradient(120deg, ${theme.primary}26, ${theme.secondary}26), #0b1020`,
+          borderColor: `${theme.primary}30`,
+        }}
+      >
         <div className="relative space-y-3">
           <button
             type="button"
             onClick={handleBack}
-            className="text-[11px] text-slate-400 hover:text-white text-left"
-          >
-            ← Torna al feed
-          </button>
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
-                Stanza
+            className={`${buttonGhostClass} text-[11px] px-0 py-0 text-left`}
+        >
+          ← Torna al feed
+        </button>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className={eyebrowClass}>
+              Stanza
               </p>
-              <h1 className="text-2xl font-semibold text-white">{room.name}</h1>
-              <p className="text-sm text-slate-400 mt-1 line-clamp-2">
+              <h1 className={`${pageTitleClass} text-2xl`}>{room.name}</h1>
+              <p className={`${bodyTextClass} mt-1 line-clamp-2`}>
                 {room.description}
               </p>
               <div className="flex flex-wrap gap-2 text-[11px] text-slate-400 mt-3">
@@ -107,30 +127,26 @@ export default function RoomPage() {
             <button
               type="button"
               onClick={() => setIsNewThreadOpen(true)}
-              className="w-full md:w-auto inline-flex items-center justify-center gap-2 text-sm px-4 py-2 rounded-2xl text-slate-950 font-semibold shadow-glow"
-              style={{
-                backgroundImage: accentGradient,
-              }}
+              className={`${buttonPrimaryClass} w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2`}
+              style={{ backgroundImage: accentGradient }}
             >
-              + Nuovo thread
+              Crea thread
             </button>
           </div>
         </div>
       </header>
 
-      <section className="glass-panel p-4 sm:p-5 space-y-4">
+      <section className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
-            Thread della stanza
-          </p>
+          <p className={eyebrowClass}>Thread della stanza</p>
           <span className="text-[11px] text-slate-500">
             {roomThreads.length} attivi
           </span>
         </div>
 
         {roomThreads.length === 0 ? (
-          <p className="text-sm text-slate-400">
-            Nessun thread ancora. Inizia tu e dai forma al primo ramo.
+          <p className={bodyTextClass}>
+            Nessun thread ancora. Scrivi tu il primo spunto e fai partire la stanza.
           </p>
         ) : (
           <div className="space-y-4">
@@ -146,36 +162,39 @@ export default function RoomPage() {
         onClose={() => setIsNewThreadOpen(false)}
         title="Nuovo thread nella stanza"
       >
-        <form onSubmit={handleCreateThread} className="space-y-2 text-xs">
+        <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300 mb-3">
+          Crea uno spunto breve e chiaro: chi entra capirà subito il tono del thread.
+        </div>
+        <form onSubmit={handleCreateThread} className="space-y-4 text-slate-100">
           <div className="space-y-1">
-            <label className="text-[11px] text-slate-300">Titolo</label>
+            <label className={labelClass}>Titolo</label>
             <input
               type="text"
-              className="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+              ref={titleInputRef}
+              className={inputBaseClass}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Es. Workflow senza feed, rituali serali…"
+              placeholder="Es. Flusso senza feed, rituali serali…"
               required
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[11px] text-slate-300">
-              Spunto iniziale
-            </label>
+            <label className={labelClass}>Spunto iniziale</label>
             <textarea
-              rows={3}
-              className="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent resize-none"
+              rows={4}
+              className={`${inputBaseClass} resize-none`}
               value={snippet}
               onChange={(e) => setSnippet(e.target.value)}
               placeholder="Descrivi il punto di partenza o la tensione che vuoi esplorare…"
             />
+            <p className="text-[11px] text-slate-400">
+              2-3 frasi: cosa vuoi esplorare e perché interessa questa stanza.
+            </p>
           </div>
           <div className="space-y-1">
-            <label className="text-[11px] text-slate-300">
-              Tipo di energia
-            </label>
+            <label className={labelClass}>Energia del thread</label>
             <select
-              className="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+              className={inputBaseClass}
               value={energy}
               onChange={(e) => setEnergy(e.target.value)}
             >
@@ -185,10 +204,17 @@ export default function RoomPage() {
               <option value="giocoso">Giocoso</option>
             </select>
           </div>
-          <div className="flex justify-end pt-1">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setIsNewThreadOpen(false)}
+              className={`${buttonGhostClass} w-full sm:w-auto text-sm px-2 py-2`}
+            >
+              Annulla
+            </button>
             <button
               type="submit"
-              className="text-sm px-4 py-2 rounded-2xl bg-gradient-to-r from-accent to-accentBlue text-slate-950 font-semibold hover:opacity-90 shadow-glow"
+              className={`${buttonPrimaryClass} w-full sm:w-auto text-sm px-4 py-2 rounded-2xl text-center`}
             >
               Crea thread
             </button>

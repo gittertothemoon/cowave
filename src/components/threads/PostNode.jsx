@@ -1,3 +1,5 @@
+import { cardMutedClass, bodyTextClass } from '../ui/primitives.js';
+
 export default function PostNode({ post, childrenNodes, depth = 0 }) {
   const clampedDepth = Math.min(depth, 4);
   const paddingLeft = 0.85 + clampedDepth * 0.35;
@@ -15,7 +17,7 @@ export default function PostNode({ post, childrenNodes, depth = 0 }) {
         marginLeft: `${marginLeft}rem`,
       }}
     >
-      <div className="mb-2 rounded-2xl border border-white/10 bg-slate-950/50 px-3 py-2 shadow-inner">
+      <div className={`${cardMutedClass} mb-2 px-3 py-2 shadow-inner`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-slate-400">
           <p className="font-medium text-slate-200 leading-tight">
             {post.author}
@@ -24,7 +26,7 @@ export default function PostNode({ post, childrenNodes, depth = 0 }) {
             {formattedDate}
           </time>
         </div>
-        <p className="text-sm text-slate-100 whitespace-pre-wrap mt-2">
+        <p className={`${bodyTextClass} text-sm whitespace-pre-wrap mt-2`}>
           {post.content}
         </p>
       </div>

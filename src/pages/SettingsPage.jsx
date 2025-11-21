@@ -1,4 +1,13 @@
 import { Link } from 'react-router-dom';
+import {
+  buttonSecondaryClass,
+  cardBaseClass,
+  cardMutedClass,
+  eyebrowClass,
+  pageTitleClass,
+  bodyTextClass,
+  inputBaseClass,
+} from '../components/ui/primitives.js';
 
 export default function SettingsPage() {
   const limitId = 'limit-select';
@@ -9,37 +18,29 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-5">
-      <header className="glass-panel p-4 sm:p-5 space-y-2">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">
-          Impostazioni
-        </p>
-        <h1 className="text-2xl font-semibold text-white">
-          Sessione e sicurezza
-        </h1>
-        <p className="text-sm text-slate-400 max-w-2xl">
-          Imposta limiti chiari, filtri e promemoria per mantenere ogni sessione
-          intenzionale.
+      <header className={`${cardBaseClass} p-4 sm:p-5 space-y-2`}>
+        <p className={eyebrowClass}>Impostazioni</p>
+        <h1 className={`${pageTitleClass} text-2xl`}>Sessione e sicurezza</h1>
+        <p className={`${bodyTextClass} max-w-2xl`}>
+          Limiti chiari, filtri e promemoria per mantenere ogni sessione intenzionale.
         </p>
       </header>
 
-      <div className="glass-panel p-4 sm:p-5 space-y-2 text-sm">
-        <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
-          Vuoi più controllo?
-        </p>
-        <p className="text-slate-300">
-          Sessione mindful, radar e slider dell’algoritmo ora vivono nella nuova
-          pagina dedicata.
+      <div className={`${cardMutedClass} p-4 sm:p-5 space-y-2 text-sm`}>
+        <p className={eyebrowClass}>Vuoi più controllo?</p>
+        <p className={bodyTextClass}>
+          Sessione mindful, radar e slider dell’algoritmo sono negli Strumenti avanzati.
         </p>
         <Link
           to="/app/settings/esperienza"
-          className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] rounded-2xl border border-white/15 px-3 py-1.5 text-slate-200 hover:border-accent/60"
+          className={`${buttonSecondaryClass} inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] rounded-2xl border-white/15 px-3 py-1.5`}
         >
           Vai agli strumenti avanzati →
         </Link>
       </div>
 
       <section className="grid gap-4 md:grid-cols-2 text-sm">
-        <div className="glass-panel p-4 sm:p-5 space-y-4">
+        <div className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <label
               htmlFor={limitId}
@@ -49,7 +50,7 @@ export default function SettingsPage() {
             </label>
             <select
               id={limitId}
-              className="bg-slate-950/70 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-200 w-full sm:w-auto"
+              className={`${inputBaseClass} w-full sm:w-auto`}
               defaultValue="30 minuti"
             >
               <option>30 minuti</option>
@@ -89,7 +90,7 @@ export default function SettingsPage() {
             </label>
             <select
               id={reminderId}
-              className="bg-slate-950/70 border border-white/10 rounded-xl px-3 py-2 text-sm w-full sm:w-auto"
+              className={`${inputBaseClass} w-full sm:w-auto`}
               defaultValue="Ogni 20 min"
             >
               <option>Ogni 20 min</option>
@@ -99,7 +100,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="glass-panel p-4 sm:p-5 space-y-4">
+        <div className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <label
               htmlFor={nsfwId}
@@ -132,20 +133,20 @@ export default function SettingsPage() {
               In arrivo
             </p>
             <p className="text-xs text-slate-400">
-              A breve potrai esportare queste impostazioni come preset e
-              condividerle con i co-host.
+              Potrai esportare queste impostazioni come preset e condividerle con i co-host.
             </p>
           </div>
         </div>
       </section>
 
-      <section className="glass-panel p-4 sm:p-5 space-y-3 text-sm">
-        <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
-          Programma break suggerito
-        </p>
+      <section className={`${cardBaseClass} p-4 sm:p-5 space-y-3 text-sm`}>
+        <p className={eyebrowClass}>Programma break suggerito</p>
         <div className="grid md:grid-cols-3 gap-3">
           {['Mattino', 'Pomeriggio', 'Sera'].map((slot) => (
-            <div key={slot} className="rounded-2xl border border-white/10 px-3 py-3 bg-slate-950/40">
+            <div
+              key={slot}
+              className="rounded-2xl border border-white/10 px-3 py-3 bg-slate-950/50"
+            >
               <p className="text-xs text-slate-500 uppercase tracking-[0.2em]">
                 {slot}
               </p>

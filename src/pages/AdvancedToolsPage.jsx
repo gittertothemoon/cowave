@@ -2,17 +2,23 @@ import { useMemo } from 'react';
 import { useAppState } from '../state/AppStateContext.jsx';
 import SessionHUD from '../components/ui/SessionHUD.jsx';
 import AlgorithmControls from '../components/ui/AlgorithmControls.jsx';
+import {
+  cardBaseClass,
+  eyebrowClass,
+  pageTitleClass,
+  bodyTextClass,
+} from '../components/ui/primitives.js';
 
 const quickActions = [
-  { label: 'Lancia stanza pop-up', desc: 'focus room da 30 minuti' },
-  { label: 'Crea highlight vocale', desc: 'clip audio da 90 secondi' },
+  { label: 'Avvia stanza lampo', desc: 'sessione da 30 minuti' },
+  { label: 'Crea highlight vocale', desc: 'clip audio di 90 secondi' },
   { label: 'Invita co-host', desc: 'apri uno slot per un ospite' },
 ];
 
 const highlightMoments = [
-  'Dev Lab • workflow “senza feed” votato top della settimana.',
-  'Deep Talk • branch “stanchezza digitale” ha raggiunto 12 livelli.',
-  'Creators 18+ Lab • nuovo rituale serale sperimentale.',
+  'Dev Lab • il flusso “senza feed” è tra i migliori della settimana.',
+  'Deep Talk • il ramo “stanchezza digitale” ha raggiunto 12 livelli.',
+  'Creators 18+ Lab • nuovo rituale serale in test.',
 ];
 
 export default function AdvancedToolsPage() {
@@ -24,27 +30,22 @@ export default function AdvancedToolsPage() {
 
   return (
     <div className="space-y-5">
-      <header className="glass-panel p-4 sm:p-5 space-y-2">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">
-          Strumenti
-        </p>
-        <h1 className="text-2xl font-semibold text-white">Strumenti avanzati</h1>
-        <p className="text-sm text-slate-400 max-w-2xl">
-          Timer mindful, radar, preset dell’algoritmo e rituali sperimentali
-          vivono qui. Il feed resta pulito: regola da questa pagina tutto ciò che
-          è intenso o sperimentale.
+      <header className={`${cardBaseClass} p-4 sm:p-5 space-y-2`}>
+        <p className={eyebrowClass}>Strumenti</p>
+        <h1 className={`${pageTitleClass} text-2xl`}>Strumenti avanzati</h1>
+        <p className={`${bodyTextClass} max-w-2xl`}>
+          Timer mindful, radar, preset dell’algoritmo e rituali sperimentali sono qui.
+          Il feed resta pulito: regola da questa pagina ciò che è più intenso o tecnico.
         </p>
       </header>
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.6fr)]">
         <div className="space-y-4">
-          <div className="glass-panel p-4 sm:p-5 space-y-4">
+          <div className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
-                  Sessione mindful
-                </p>
-                <p className="text-sm text-slate-300">
+                <p className={eyebrowClass}>Sessione mindful</p>
+                <p className={bodyTextClass}>
                   Gestisci timer, streak e recap consapevoli.
                 </p>
               </div>
@@ -55,13 +56,11 @@ export default function AdvancedToolsPage() {
             <SessionHUD floating={false} className="max-w-none" fullWidth />
           </div>
 
-          <div className="glass-panel p-4 sm:p-5 space-y-3">
+          <div className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
-                  Controllo algoritmo
-                </p>
-                <p className="text-sm text-slate-300">
+                <p className={eyebrowClass}>Controllo algoritmo</p>
+                <p className={bodyTextClass}>
                   Regola manualmente comfort vs novità vs ritmo.
                 </p>
               </div>
@@ -78,11 +77,9 @@ export default function AdvancedToolsPage() {
         </div>
 
         <aside className="space-y-4">
-          <div className="glass-panel p-4 space-y-2">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
-              Radar stanze
-            </p>
-            <p className="text-sm text-slate-300">
+          <div className={`${cardBaseClass} p-4 space-y-2`}>
+            <p className={eyebrowClass}>Radar stanze</p>
+            <p className={bodyTextClass}>
               Ricevi promemoria quando una stanza supera i limiti mindful o
               quando un thread esplode in nuovi rami.
             </p>
@@ -101,10 +98,8 @@ export default function AdvancedToolsPage() {
             </ul>
           </div>
 
-          <div className="glass-panel p-4 space-y-3">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
-              Azioni veloci
-            </p>
+          <div className={`${cardBaseClass} p-4 space-y-3`}>
+            <p className={eyebrowClass}>Azioni veloci</p>
             <ul className="space-y-2 text-sm">
               {quickActions.map((action) => (
                 <li
@@ -121,10 +116,8 @@ export default function AdvancedToolsPage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <div className="glass-panel p-4 sm:p-5 space-y-3">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-accent">
-            Momenti iconici
-          </p>
+        <div className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}>
+          <p className={`${eyebrowClass} text-accent`}>Momenti iconici</p>
           <ul className="space-y-2 text-sm text-slate-300">
             {highlightMoments.map((moment) => (
               <li key={moment} className="flex items-start gap-2">
@@ -134,11 +127,9 @@ export default function AdvancedToolsPage() {
             ))}
           </ul>
         </div>
-        <div className="glass-panel p-4 sm:p-5 space-y-2">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
-            Rituale quotidiano
-          </p>
-          <p className="text-sm text-slate-300">
+        <div className={`${cardBaseClass} p-4 sm:p-5 space-y-2`}>
+          <p className={eyebrowClass}>Rituale quotidiano</p>
+          <p className={bodyTextClass}>
             Blocchi da 28 minuti, pausa respiro guidata e recap serale con
             co-host. Modifica qui e condividi le routine con le tue stanze.
           </p>

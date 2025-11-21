@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../../state/AppStateContext.jsx';
+import { cardBaseClass, bodyTextClass } from '../ui/primitives.js';
 
 export default function ThreadCard({ thread }) {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ export default function ThreadCard({ thread }) {
 
   return (
     <article
-      className="relative glass-panel glass-panel--interactive p-4 sm:p-5 cursor-pointer overflow-hidden group"
+      className={`${cardBaseClass} glass-panel--interactive relative p-4 sm:p-5 cursor-pointer overflow-hidden group`}
       onClick={handleNavigation}
       tabIndex={0}
       role="link"
@@ -80,7 +81,7 @@ export default function ThreadCard({ thread }) {
         </div>
       </div>
 
-      <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+      <p className={`${bodyTextClass} mt-3 line-clamp-2`}>
         {thread.rootSnippet}
       </p>
 
@@ -93,7 +94,7 @@ export default function ThreadCard({ thread }) {
           <time dateTime={thread.createdAt}>{readableDate}</time>
         </span>
         <span className="text-slate-300 flex items-center gap-1 sm:ml-auto">
-          Continua il ramo ↗
+          Apri il thread ↗
         </span>
       </div>
     </article>

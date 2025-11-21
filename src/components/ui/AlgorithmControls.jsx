@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { cardBaseClass } from './primitives.js';
 
 export default function AlgorithmControls({ compact }) {
   const [novelty, setNovelty] = useState(60); // nuovo vs familiari
@@ -26,7 +27,7 @@ export default function AlgorithmControls({ compact }) {
   }
 
   return (
-    <div className="glass-panel glass-panel--interactive px-3.5 py-3 space-y-3">
+    <div className={`${cardBaseClass} glass-panel--interactive px-3.5 py-3 space-y-3`}>
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[10px] uppercase tracking-[0.35em] text-slate-400">
@@ -36,7 +37,7 @@ export default function AlgorithmControls({ compact }) {
         </div>
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-emerald-400/40 bg-emerald-500/10 text-[10px] uppercase tracking-[0.2em] text-emerald-200">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse" />
-          live
+          attivo
         </span>
       </div>
       <div className="space-y-4">

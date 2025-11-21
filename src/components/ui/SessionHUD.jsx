@@ -1,7 +1,9 @@
+import { cardBaseClass, eyebrowClass } from './primitives.js';
+
 const tickerMessages = [
-  '13 stanze mindful live',
+  '13 stanze attive con timer',
   '2 richieste di accesso in attesa',
-  'Preset attuale: comfort 45%',
+  'Preset attuale: Comfort 45%',
   'Ultimo thread profondo: “Dev Lab / Rami automatici”',
 ];
 
@@ -12,20 +14,18 @@ export default function SessionHUD({
 }) {
   const card = (
     <div
-      className={`glass-panel w-full ${
+      className={`${cardBaseClass} w-full ${
         fullWidth ? '' : 'max-w-sm'
-      } p-4 space-y-3 border border-white/15 shadow-glow`}
+      } p-4 space-y-3 shadow-glow`}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
-            Sessione
-          </p>
+          <p className={eyebrowClass}>Sessione</p>
           <p className="text-sm text-white font-semibold">Focus intenzionale</p>
         </div>
         <span className="focus-pill">
           <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-          Live
+          Attiva
         </span>
       </div>
       <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-400">

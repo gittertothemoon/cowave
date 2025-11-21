@@ -2,6 +2,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAppState } from '../state/AppStateContext.jsx';
 import PostComposer from '../components/threads/PostComposer.jsx';
 import PostNode from '../components/threads/PostNode.jsx';
+import {
+  buttonGhostClass,
+  cardBaseClass,
+  eyebrowClass,
+  pageTitleClass,
+  bodyTextClass,
+} from '../components/ui/primitives.js';
 
 export default function ThreadPage() {
   const { threadId } = useParams();
@@ -31,20 +38,18 @@ export default function ThreadPage() {
   return (
     <div className="space-y-5">
       <header
-        className="glass-panel p-4 sm:p-5 space-y-2 border"
+        className={`${cardBaseClass} p-4 sm:p-5 space-y-2 border`}
         style={{ borderColor: `${theme.primary}55` }}
       >
         <button
           onClick={() => navigate(-1)}
-          className="text-[11px] text-slate-400 hover:text-white w-fit"
+          className={`${buttonGhostClass} text-[11px] px-0 py-0 w-fit`}
         >
           ← Torna alla stanza
         </button>
         <div>
-          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">
-            Thread
-          </p>
-          <h1 className="text-2xl font-semibold mt-1 text-white">
+          <p className={eyebrowClass}>Thread</p>
+          <h1 className={`${pageTitleClass} mt-1 text-2xl`}>
             {thread.title}
           </h1>
           <p className="text-xs text-slate-500 mt-2">
@@ -55,12 +60,10 @@ export default function ThreadPage() {
 
       <section className="space-y-4">
         <div
-          className="glass-panel p-5 border"
+          className={`${cardBaseClass} p-5 border`}
           style={{ borderColor: `${theme.primary}55` }}
         >
-          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 mb-3">
-            Radice del thread
-          </p>
+          <p className={`${eyebrowClass} mb-3`}>Radice del thread</p>
           <PostComposer
             parentId={null}
             onSubmit={handleNewPost}
@@ -68,13 +71,11 @@ export default function ThreadPage() {
           />
         </div>
 
-        <div className="glass-panel p-5 space-y-3">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
-            Risposte
-          </p>
+        <div className={`${cardBaseClass} p-5 space-y-3`}>
+          <p className={eyebrowClass}>Risposte</p>
           {treeRoot.length === 0 ? (
-            <p className="text-sm text-slate-400">
-              Ancora nessun ramo. Rispondi alla radice per farlo crescere.
+            <p className={bodyTextClass}>
+              Nessuna risposta ancora. Aggiungi un ramo e porta avanti la conversazione.
             </p>
           ) : (
             <div className="space-y-4">

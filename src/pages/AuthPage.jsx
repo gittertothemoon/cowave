@@ -1,13 +1,24 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import Logo from '../components/ui/Logo.jsx';
+import CoWaveLogo from '../components/CoWaveLogo.jsx';
+import {
+  buttonPrimaryClass,
+  buttonSecondaryClass,
+  cardBaseClass,
+  cardMutedClass,
+  eyebrowClass,
+  pageTitleClass,
+  bodyTextClass,
+  inputBaseClass,
+  labelClass,
+} from '../components/ui/primitives.js';
 import { useAppState } from '../state/AppStateContext.jsx';
 import { setAuthenticated } from '../utils/auth.js';
 
 const insights = [
-  'Thread ramificati anziché commenti in fila.',
-  'Timer mindful e preset algoritmo sempre visibili.',
-  'Personas multiple per ruoli e toni diversi.',
+  'Thread ad albero: segui solo i rami che ti servono.',
+  'Preset algoritmo sempre visibili e modificabili.',
+  'Più personas per separare toni e contesti.',
 ];
 
 export default function AuthPage({ onAuth }) {
@@ -27,7 +38,7 @@ export default function AuthPage({ onAuth }) {
   function validate() {
     const nextErrors = {};
     if (!isLogin && !form.name.trim()) {
-      nextErrors.name = 'Inserisci un nome o nickname.';
+      nextErrors.name = 'Inserisci un nickname.';
     }
     if (!form.email.trim()) {
       nextErrors.email = 'L’email è obbligatoria.';
@@ -37,7 +48,7 @@ export default function AuthPage({ onAuth }) {
     if (!form.password.trim()) {
       nextErrors.password = 'La password è obbligatoria.';
     } else if (form.password.length < 6) {
-      nextErrors.password = 'Minimo 6 caratteri.';
+      nextErrors.password = 'La password è troppo corta (minimo 6 caratteri).';
     }
     return nextErrors;
   }
@@ -84,40 +95,44 @@ export default function AuthPage({ onAuth }) {
       />
 
       <div className="relative w-full max-w-4xl mx-auto grid gap-6 lg:grid-cols-[0.85fr,1.15fr] text-slate-100">
-        <div className="glass-panel p-5 sm:p-8 rounded-3xl border border-white/10 space-y-4">
+        <div className={`${cardBaseClass} p-5 sm:p-8 rounded-3xl space-y-4`}>
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white transition w-fit px-3 py-1.5 rounded-2xl border border-white/10 bg-slate-950/40"
+            className={`${buttonSecondaryClass} rounded-full text-xs px-3.5 py-1.5 bg-slate-950/60 border-white/15 w-fit`}
           >
             <span className="text-base leading-none">←</span>
-            Torna alla landing
+            Torna alla pagina iniziale
           </button>
-          <Link to="/" aria-label="Torna alla landing">
-            <Logo withWordmark size={44} />
+          <Link
+            to="/"
+            aria-label="Torna alla landing"
+            className="w-full flex justify-center"
+          >
+            <CoWaveLogo variant="full" size={44} />
           </Link>
-          <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">
+          <p className={eyebrowClass}>
             {isLogin ? 'Accesso' : 'Registrazione'}
           </p>
-          <h1 className="text-2xl font-semibold text-white">
-            {isLogin ? 'Bentornato in CoWave' : 'Entra con la tua identità'}
+          <h1 className={`${pageTitleClass} text-2xl`}>
+            {isLogin ? 'Accedi a CoWave' : 'Crea il tuo account CoWave'}
           </h1>
-          <p className="text-sm text-slate-400">
+          <p className={bodyTextClass}>
             {isLogin
-              ? 'Se hai già completato l’onboarding tornerai subito al feed. Se manca qualcosa, ripartiremo dai tre passi di allineamento.'
-              : 'Dopo la registrazione ti guidiamo in tre passi rapidi: stanze da seguire, persona primaria e preset algoritmo.'}
+              ? 'Se hai già un account, entra e riprendi le conversazioni nelle tue stanze.'
+              : 'Dopo la registrazione ti guidiamo in tre passi rapidi: stanze da seguire, persona primaria e preset del feed.'}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-3 text-sm">
             {!isLogin && (
               <div className="space-y-1">
-                <label className="text-xs text-slate-300">Nome o nickname</label>
+                <label className={labelClass}>Nickname</label>
                 <input
                   type="text"
-                  className="w-full bg-slate-950/60 border border-white/10 rounded-2xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-accent text-slate-100 text-base"
+                  className={inputBaseClass}
                   value={form.name}
                   onChange={(e) => handleChange('name', e.target.value)}
-                  placeholder="Es. Pionio"
+                  placeholder="Scegli come vuoi apparire su CoWave"
                 />
                 {errors.name && (
                   <p className="text-xs text-rose-300">{errors.name}</p>
@@ -125,26 +140,26 @@ export default function AuthPage({ onAuth }) {
               </div>
             )}
             <div className="space-y-1">
-              <label className="text-xs text-slate-300">Email</label>
+              <label className={labelClass}>Email</label>
               <input
                 type="email"
-                className="w-full bg-slate-950/60 border border-white/10 rounded-2xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-accent text-slate-100 text-base"
+                className={inputBaseClass}
                 value={form.email}
                 onChange={(e) => handleChange('email', e.target.value)}
-                placeholder="tu@email.com"
+                placeholder="nome@email.com"
               />
               {errors.email && (
                 <p className="text-xs text-rose-300">{errors.email}</p>
               )}
             </div>
             <div className="space-y-1">
-              <label className="text-xs text-slate-300">Password</label>
+              <label className={labelClass}>Password</label>
               <input
                 type="password"
-                className="w-full bg-slate-950/60 border border-white/10 rounded-2xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-accent text-slate-100 text-base"
+                className={inputBaseClass}
                 value={form.password}
                 onChange={(e) => handleChange('password', e.target.value)}
-                placeholder="●●●●●●●●"
+                placeholder="Almeno 6 caratteri"
               />
               {errors.password && (
                 <p className="text-xs text-rose-300">{errors.password}</p>
@@ -153,7 +168,7 @@ export default function AuthPage({ onAuth }) {
 
             <button
               type="submit"
-              className="w-full mt-2 bg-gradient-to-r from-accent to-accentBlue text-white text-sm font-semibold py-3 rounded-2xl transition hover:opacity-95"
+              className={`${buttonPrimaryClass} w-full mt-2 rounded-2xl py-3 text-base text-white shadow-[0_18px_40px_rgba(56,189,248,0.28)] ring-1 ring-white/10`}
             >
               {isLogin ? 'Accedi' : 'Registrati'}
             </button>
@@ -171,10 +186,8 @@ export default function AuthPage({ onAuth }) {
           </p>
         </div>
 
-        <div className="glass-panel p-5 sm:p-8 rounded-3xl border border-white/10 space-y-5 bg-slate-950/60 backdrop-blur">
-          <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">
-            Perché CoWave
-          </p>
+        <div className={`${cardMutedClass} p-5 sm:p-8 rounded-3xl space-y-5`}>
+          <p className={eyebrowClass}>Perché CoWave</p>
           <ul className="space-y-3 text-sm text-slate-300">
             {insights.map((item) => (
               <li key={item} className="flex items-start gap-2">
@@ -185,14 +198,11 @@ export default function AuthPage({ onAuth }) {
           </ul>
           <div className="rounded-2xl border border-white/10 px-4 py-3 text-xs text-slate-400 bg-slate-950/50">
             <p className="text-sm text-white font-semibold">Cosa succede dopo?</p>
-            <p>
-              Ti portiamo al percorso di onboarding. Se l’hai già completato, CoWave ti
-              riapre direttamente la home con le tue stanze e personas.
-            </p>
+            <p>Ti portiamo all’onboarding. Se è già completato, entri direttamente nel feed delle tue stanze.</p>
           </div>
           <div className="rounded-2xl border border-white/10 px-4 py-3 text-xs text-slate-400 bg-slate-950/50">
             <p className="text-sm text-white font-semibold">Tempo stimato</p>
-            <p>Onboarding: 1 minuto. Sessioni consigliate: blocchi da 28 minuti.</p>
+            <p>Onboarding: circa 1 minuto. Sessioni consigliate: blocchi da 28 minuti.</p>
           </div>
         </div>
       </div>

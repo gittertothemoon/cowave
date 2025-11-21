@@ -75,7 +75,7 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
             Strumenti avanzati
           </p>
           <p className="text-sm text-slate-100">
-            Timer mindful, radar e slider dell’algoritmo vivono qui.
+            Timer mindful, radar e slider dell’algoritmo sono qui.
           </p>
           <button
             type="button"
@@ -181,8 +181,8 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
 
       <div className="px-4 sm:px-5 py-4 border-t border-white/5 text-[11px] text-slate-500 space-y-3">
         <div>
-          <p>Progettato per sessioni sane, non per binge infinito.</p>
-          <p className="text-slate-400">13 stanze live in questo momento</p>
+          <p>Pensato per sessioni intenzionali, non per binge infinito.</p>
+          <p className="text-slate-400">13 stanze attive in questo momento</p>
         </div>
         <div className="space-y-1">
           {supportLinks.map((link) => (

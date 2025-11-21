@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAppState } from '../../state/AppStateContext.jsx';
-import Logo from '../ui/Logo.jsx';
+import CoWaveLogo from '../CoWaveLogo.jsx';
 import { useLogout } from '../../hooks/useLogout.js';
 
 export default function Topbar({
@@ -54,10 +54,10 @@ export default function Topbar({
   }, [personaMenuOpen]);
 
   const navLinkBase =
-    'inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition whitespace-nowrap';
-  const navLinkActive = 'bg-sky-500 text-slate-900 shadow-sm';
+    'inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap';
+  const navLinkActive = 'bg-sky-500 text-slate-950 shadow-sm';
   const navLinkInactive =
-    'text-slate-400 hover:text-slate-100 hover:bg-slate-800';
+    'text-slate-400 hover:text-slate-100 hover:bg-slate-900/70';
 
   const navItems = [
     {
@@ -94,7 +94,7 @@ export default function Topbar({
           <div className="flex h-14 items-center gap-2">
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-md p-2 text-slate-200 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 md:hidden"
+              className="inline-flex items-center justify-center rounded-xl p-2 text-slate-200 hover:bg-slate-900/70 border border-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 md:hidden transition"
               onClick={onToggleSidebar}
               aria-controls="cowave-sidebar-drawer"
               aria-expanded={isSidebarOpen}
@@ -108,15 +108,10 @@ export default function Topbar({
             </button>
             <Link
               to="/app"
-              className="hidden md:flex items-center gap-2 text-slate-200"
+              className="hidden md:flex items-center gap-2 text-slate-200 -ml-7"
+              aria-label="Vai alla home CoWave"
             >
-              <Logo size={32} className="-ml-1" />
-              <div className="flex flex-col leading-tight">
-                <span className="text-[10px] uppercase tracking-[0.3em] text-slate-400">
-                  CoWave
-                </span>
-                <span className="text-[10px] text-slate-500">beta privata</span>
-              </div>
+              <CoWaveLogo size={30} className="-ml-1.5" variant="full" />
             </Link>
             <div className="flex flex-1 justify-center md:hidden">
               <Link
@@ -124,7 +119,7 @@ export default function Topbar({
                 className="flex items-center gap-2 text-slate-100"
                 aria-label="Vai alla home CoWave"
               >
-                <Logo size={28} />
+                <CoWaveLogo size={28} variant="icon" />
                 <span className="text-sm font-semibold tracking-tight">
                   CoWave
                 </span>
@@ -138,22 +133,22 @@ export default function Topbar({
               >
                 Cerca in CoWave
               </label>
-              <div className="flex w-full max-w-md items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 px-3 py-1.5 text-xs transition focus-within:border-sky-500/60">
+              <div className="flex w-full max-w-md items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 px-3 py-1.5 text-sm transition focus-within:border-sky-500/60 focus-within:ring-1 focus-within:ring-sky-500/40">
                 <span className="text-slate-500">⌘K</span>
                 <input
                   id="desktop-search"
                   type="search"
-                  className="bg-transparent flex-1 min-w-0 focus:outline-none text-slate-200 placeholder:text-slate-500 text-sm"
+                  className="bg-transparent flex-1 min-w-0 focus:outline-none text-slate-200 placeholder:text-slate-500 text-base"
                   placeholder="Cerca stanze, thread o persone…"
                 />
                 <span className="text-[10px] text-slate-500">ricerca</span>
               </div>
             </div>
 
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-2 md:gap-3 pr-1 sm:pr-2 lg:pr-3">
               <button
                 type="button"
-                className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-800 text-slate-300 hover:text-white md:hidden"
+                className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-800 bg-slate-900/70 text-slate-300 hover:text-white md:hidden transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70"
                 aria-label="Notifiche"
               >
                 <NotificationIcon />
@@ -182,7 +177,7 @@ export default function Topbar({
               </nav>
               <button
                 type="button"
-                className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-800 text-slate-300 hover:text-white"
+                className="hidden md:inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-800 bg-slate-900/70 text-slate-300 hover:text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70"
                 aria-label="Notifiche"
               >
                 <NotificationIcon />
@@ -191,7 +186,7 @@ export default function Topbar({
                 <button
                   type="button"
                   onClick={() => setPersonaMenuOpen((prev) => !prev)}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/70 px-2 py-1.5 text-xs hover:border-sky-500/70 transition md:px-2.5"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/70 px-2 py-1.5 text-xs hover:border-sky-500/70 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 md:px-2.5"
                   aria-haspopup="menu"
                   aria-expanded={personaMenuOpen}
                   aria-controls="persona-menu"
@@ -267,14 +262,14 @@ export default function Topbar({
 
           <div className="md:hidden space-y-2 pb-1">
             <div className="px-0.5">
-              <div className="flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 px-3 py-1.5 text-sm transition focus-within:border-sky-500/60">
+              <div className="flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 px-3 py-1.5 text-base transition focus-within:border-sky-500/60 focus-within:ring-1 focus-within:ring-sky-500/40">
                 <span className="text-slate-500" aria-hidden="true">
                   🔍
                 </span>
                 <input
                   type="search"
                   aria-label="Cerca thread o stanze"
-                  className="bg-transparent flex-1 focus:outline-none text-slate-200 placeholder:text-slate-500"
+                  className="bg-transparent flex-1 focus:outline-none text-slate-200 placeholder:text-slate-500 text-base"
                   placeholder="Cerca thread o stanze…"
                 />
               </div>

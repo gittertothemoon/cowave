@@ -1,25 +1,25 @@
 export const personas = [
   {
     id: 'dev',
-    title: 'Dev builder',
+    title: 'Sviluppo',
     description: 'Per condividere progetti, codice e idee tecniche.',
     color: 'bg-emerald-500',
   },
   {
     id: 'creator',
-    title: 'Creator lab',
+    title: 'Laboratorio creator',
     description: 'Per contenuti creativi, social e media.',
     color: 'bg-fuchsia-500',
   },
   {
     id: 'deep',
-    title: 'Deep talk',
+    title: 'Conversazioni profonde',
     description: 'Per riflessioni personali e conversazioni profonde.',
     color: 'bg-sky-500',
   },
   {
     id: 'host',
-    title: 'Host mindful',
+    title: 'Host accogliente',
     description: 'Per curare rituali e stanze con tono accogliente.',
     color: 'bg-amber-400',
   },

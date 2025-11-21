@@ -9,6 +9,7 @@ import {
 const AppStateContext = createContext(null);
 const USER_STORAGE_KEY = 'cowave-user';
 const CUSTOM_PERSONAS_KEY = 'cowave-custom-personas';
+const ONBOARDING_WELCOME_KEY = 'cowave-just-finished-onboarding';
 const defaultUser = { nickname: 'Tu', email: '' };
 
 export function AppStateProvider({ children }) {
@@ -38,6 +39,16 @@ export function AppStateProvider({ children }) {
   const [followedRoomIds, setFollowedRoomIds] = useState([]);
   const [primaryPersonaId, setPrimaryPersonaId] = useState(null);
   const [algorithmPreset, setAlgorithmPreset] = useState('balanced');
+  const [justFinishedOnboarding, setJustFinishedOnboarding] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return (
+        window.localStorage.getItem(ONBOARDING_WELCOME_KEY) === 'true'
+      );
+    } catch {
+      return false;
+    }
+  });
   const [activePersonaId, setActivePersonaId] = useState(
     initialPersonas[0]?.id ?? null
   );
@@ -65,6 +76,19 @@ export function AppStateProvider({ children }) {
       // ignore storage errors
     }
   }, [customPersonas]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      if (justFinishedOnboarding) {
+        window.localStorage.setItem(ONBOARDING_WELCOME_KEY, 'true');
+      } else {
+        window.localStorage.removeItem(ONBOARDING_WELCOME_KEY);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [justFinishedOnboarding]);
 
   const personas = useMemo(() => {
     const displayName = currentUser?.nickname?.trim() || 'Tu';
@@ -181,11 +205,13 @@ export function AppStateProvider({ children }) {
     if (personaId) {
       setActivePersonaId(personaId);
     }
+    setJustFinishedOnboarding(true);
     setIsOnboarded(true);
   }
 
   function resetOnboarding() {
     setIsOnboarded(false);
+    setJustFinishedOnboarding(false);
     setInitialRoomIds([]);
     setFollowedRoomIds([]);
     setPrimaryPersonaId(null);
@@ -206,6 +232,7 @@ export function AppStateProvider({ children }) {
       algorithmPreset,
       activePersonaId,
       currentUser,
+      justFinishedOnboarding,
       createRoom,
       createThread,
       createPost,
@@ -215,6 +242,7 @@ export function AppStateProvider({ children }) {
       updateCurrentUser,
       addCustomPersona,
       setFollowedRoomIds,
+      setJustFinishedOnboarding,
     }),
     [
       rooms,
@@ -228,6 +256,7 @@ export function AppStateProvider({ children }) {
       activePersonaId,
       personas,
       currentUser,
+      justFinishedOnboarding,
     ]
   );
 
