@@ -9,8 +9,18 @@ import {
 const AppStateContext = createContext(null);
 const USER_STORAGE_KEY = 'cowave-user';
 const CUSTOM_PERSONAS_KEY = 'cowave-custom-personas';
+const ONBOARDING_KEY = 'cowave:isOnboarded';
 const ONBOARDING_WELCOME_KEY = 'cowave-just-finished-onboarding';
 const defaultUser = { nickname: 'Tu', email: '' };
+
+function getInitialIsOnboarded() {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem(ONBOARDING_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
 
 export function AppStateProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(() => {
@@ -34,7 +44,7 @@ export function AppStateProvider({ children }) {
   const [rooms, setRooms] = useState(initialRooms);
   const [threads, setThreads] = useState(initialThreads);
   const [postsByThread, setPostsByThread] = useState(initialPostsByThread);
-  const [isOnboarded, setIsOnboarded] = useState(false);
+  const [isOnboarded, setIsOnboarded] = useState(getInitialIsOnboarded);
   const [initialRoomIds, setInitialRoomIds] = useState([]);
   const [followedRoomIds, setFollowedRoomIds] = useState([]);
   const [primaryPersonaId, setPrimaryPersonaId] = useState(null);
@@ -207,6 +217,13 @@ export function AppStateProvider({ children }) {
     }
     setJustFinishedOnboarding(true);
     setIsOnboarded(true);
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(ONBOARDING_KEY, 'true');
+      }
+    } catch {
+      // ignore storage errors
+    }
   }
 
   function resetOnboarding() {
@@ -217,6 +234,13 @@ export function AppStateProvider({ children }) {
     setPrimaryPersonaId(null);
     setAlgorithmPreset('balanced');
     setActivePersonaId(initialPersonas[0]?.id ?? null);
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(ONBOARDING_KEY);
+      }
+    } catch {
+      // ignore storage errors
+    }
   }
 
   const value = useMemo(
