@@ -14,8 +14,8 @@ export const bodyTextClass = 'text-sm text-slate-200';
 
 const buttonBase =
   'inline-flex items-center justify-center gap-2 rounded-2xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60';
-export const buttonPrimaryClass = `${buttonBase} px-4 py-2 bg-sky-500 text-slate-950 hover:bg-sky-400 shadow-[0_16px_40px_rgba(56,189,248,0.28)]`;
-export const buttonSecondaryClass = `${buttonBase} px-4 py-2 border border-slate-800 bg-slate-900/70 text-slate-100 hover:border-sky-500/60 hover:text-white`;
+export const buttonPrimaryClass = `${buttonBase} px-4 py-2 bg-sky-500 text-slate-950 hover:bg-sky-400 shadow-[0_16px_40px_rgba(56,189,248,0.28)] transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accent/30`;
+export const buttonSecondaryClass = `${buttonBase} px-4 py-2 border border-slate-800 bg-slate-900/70 text-slate-100 hover:border-sky-500/60 hover:text-white transition-transform duration-150 hover:-translate-y-0.5 hover:border-accent/60`;
 export const buttonGhostClass = `${buttonBase} px-3 py-1.5 bg-transparent text-slate-300 hover:text-white hover:bg-slate-900/60`;
 
 export const inputBaseClass =

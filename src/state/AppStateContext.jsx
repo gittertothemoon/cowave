@@ -81,6 +81,8 @@ export function AppStateProvider({ children }) {
   const [activePersonaId, setActivePersonaId] = useState(
     initialPersonas[0]?.id ?? null
   );
+  const [recentlyUnlockedAchievementId, setRecentlyUnlockedAchievementId] =
+    useState(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -158,7 +160,14 @@ export function AppStateProvider({ children }) {
         ],
       };
     });
+    if (unlocked) {
+      setRecentlyUnlockedAchievementId(achievementId);
+    }
     return unlocked;
+  }
+
+  function clearRecentlyUnlockedAchievement() {
+    setRecentlyUnlockedAchievementId(null);
   }
 
   function addCustomPersona(name, tagline = '') {
@@ -357,6 +366,8 @@ export function AppStateProvider({ children }) {
       addCustomPersona,
       setFollowedRoomIds,
       setJustFinishedOnboarding,
+      recentlyUnlockedAchievementId,
+      clearRecentlyUnlockedAchievement,
     }),
     [
       rooms,
@@ -371,6 +382,7 @@ export function AppStateProvider({ children }) {
       personas,
       currentUser,
       justFinishedOnboarding,
+      recentlyUnlockedAchievementId,
     ]
   );
 

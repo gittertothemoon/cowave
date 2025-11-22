@@ -9,6 +9,7 @@ import {
 } from '../components/ui/primitives.js';
 import { ACHIEVEMENTS } from '../features/achievements/achievementsConfig.js';
 import { useAchievements } from '../features/achievements/useAchievements.js';
+import AchievementIcon from '../features/achievements/AchievementIcon.jsx';
 
 const rituals = [
   {
@@ -135,10 +136,21 @@ export default function ProfilePage({ activePersonaId }) {
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="h-10 w-10 rounded-xl bg-slate-900/70 border border-white/10 flex items-center justify-center text-lg">
-                    <span aria-hidden="true">
-                      {unlocked ? achievement.icon ?? '🏅' : '🔒'}
-                    </span>
+                  <div
+                    className={`h-12 w-12 rounded-xl border flex items-center justify-center ${
+                      unlocked
+                        ? 'bg-gradient-to-br from-accent/20 via-accentSoft/20 to-accentBlue/25 border-accent/50 shadow-glow'
+                        : 'bg-slate-900/70 border-slate-800'
+                    }`}
+                  >
+                    <AchievementIcon
+                      achievementId={achievement.id}
+                      className={
+                        unlocked
+                          ? 'h-8 w-8 text-accent'
+                          : 'h-8 w-8 text-slate-500 opacity-50'
+                      }
+                    />
                   </div>
                   <span
                     className={`text-[11px] font-semibold uppercase tracking-[0.14em] rounded-full px-2 py-1 ${

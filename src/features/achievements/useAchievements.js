@@ -3,7 +3,12 @@ import { useAppState } from '../../state/AppStateContext.jsx';
 import { ACHIEVEMENTS } from './achievementsConfig.js';
 
 export function useAchievements() {
-  const { currentUser, unlockAchievement } = useAppState();
+  const {
+    currentUser,
+    unlockAchievement,
+    recentlyUnlockedAchievementId,
+    clearRecentlyUnlockedAchievement,
+  } = useAppState();
   const unlockedIds = currentUser?.unlockedAchievements ?? [];
   const unlockedSet = useMemo(
     () => new Set(unlockedIds),
@@ -30,5 +35,7 @@ export function useAchievements() {
     unlocked,
     locked,
     unlockAchievement: unlock,
+    recentlyUnlockedAchievementId,
+    clearRecentlyUnlockedAchievement,
   };
 }
