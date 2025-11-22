@@ -148,7 +148,7 @@ export default function ProfilePage({ activePersonaId }) {
                       className={
                         unlocked
                           ? 'h-8 w-8 text-accent'
-                          : 'h-8 w-8 text-slate-500 opacity-50'
+                          : 'h-8 w-8 text-slate-500 opacity-40 grayscale'
                       }
                     />
                   </div>

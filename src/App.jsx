@@ -11,63 +11,67 @@ import AdvancedToolsPage from './pages/AdvancedToolsPage.jsx';
 import OnboardingPage from './pages/OnboardingPage.jsx';
 import { useAppState } from './state/AppStateContext.jsx';
 import ProtectedRoute from './routes/ProtectedRoute.jsx';
+import AchievementCelebrationPortal from './features/achievements/AchievementCelebrationPortal.jsx';
 
 export default function App() {
   const { isOnboarded, activePersonaId, setActivePersonaId } = useAppState();
 
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/auth/*" element={<AuthPage />} />
-      <Route
-        path="/app/onboarding"
-        element={
-          <ProtectedRoute>
-            {isOnboarded ? (
-              <Navigate to="/app" replace />
-            ) : (
-              <OnboardingPage />
-            )}
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/app"
-        element={
-          <ProtectedRoute>
-            <OnboardedRoute isOnboarded={isOnboarded}>
-              <MainLayout
-                activePersonaId={activePersonaId}
-                onPersonaChange={setActivePersonaId}
-              >
-                <Outlet />
-              </MainLayout>
-            </OnboardedRoute>
-          </ProtectedRoute>
-        }
-      >
+    <>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/auth/*" element={<AuthPage />} />
         <Route
-          index
-          element={<HomePage activePersonaId={activePersonaId} />}
+          path="/app/onboarding"
+          element={
+            <ProtectedRoute>
+              {isOnboarded ? (
+                <Navigate to="/app" replace />
+              ) : (
+                <OnboardingPage />
+              )}
+            </ProtectedRoute>
+          }
         />
         <Route
-          path="rooms/:roomId"
-          element={<RoomPage activePersonaId={activePersonaId} />}
-        />
-        <Route
-          path="threads/:threadId"
-          element={<ThreadPage activePersonaId={activePersonaId} />}
-        />
-        <Route
-          path="profile"
-          element={<ProfilePage activePersonaId={activePersonaId} />}
-        />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="settings/esperienza" element={<AdvancedToolsPage />} />
-        <Route path="*" element={<Navigate to="/app" replace />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+          path="/app"
+          element={
+            <ProtectedRoute>
+              <OnboardedRoute isOnboarded={isOnboarded}>
+                <MainLayout
+                  activePersonaId={activePersonaId}
+                  onPersonaChange={setActivePersonaId}
+                >
+                  <Outlet />
+                </MainLayout>
+              </OnboardedRoute>
+            </ProtectedRoute>
+          }
+        >
+          <Route
+            index
+            element={<HomePage activePersonaId={activePersonaId} />}
+          />
+          <Route
+            path="rooms/:roomId"
+            element={<RoomPage activePersonaId={activePersonaId} />}
+          />
+          <Route
+            path="threads/:threadId"
+            element={<ThreadPage activePersonaId={activePersonaId} />}
+          />
+          <Route
+            path="profile"
+            element={<ProfilePage activePersonaId={activePersonaId} />}
+          />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="settings/esperienza" element={<AdvancedToolsPage />} />
+          <Route path="*" element={<Navigate to="/app" replace />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <AchievementCelebrationPortal />
+    </>
   );
 }
 

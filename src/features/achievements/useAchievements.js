@@ -8,6 +8,9 @@ export function useAchievements() {
     unlockAchievement,
     recentlyUnlockedAchievementId,
     clearRecentlyUnlockedAchievement,
+    pendingAchievementCelebrations,
+    queueAchievementCelebration,
+    shiftAchievementCelebration,
   } = useAppState();
   const unlockedIds = currentUser?.unlockedAchievements ?? [];
   const unlockedSet = useMemo(
@@ -37,5 +40,8 @@ export function useAchievements() {
     unlockAchievement: unlock,
     recentlyUnlockedAchievementId,
     clearRecentlyUnlockedAchievement,
+    pendingAchievementCelebrations,
+    queueAchievementCelebration,
+    shiftAchievementCelebration,
   };
 }

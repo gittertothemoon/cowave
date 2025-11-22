@@ -6,6 +6,7 @@ export default function PostNode({
   parentAuthor,
   actions,
   onToggleWave,
+  variant = 'reply',
 }) {
   const createdAt = new Date(post.createdAt);
   const formattedDate = createdAt.toLocaleString();
@@ -23,13 +24,27 @@ export default function PostNode({
       ? 'bg-sky-500/15 border-sky-400/70 text-sky-50 shadow-[0_8px_24px_rgba(56,189,248,0.18)] animate-wave-pulse'
       : 'border-slate-800 bg-slate-900/70 text-slate-200 hover:border-sky-500/50 hover:text-white',
   ].join(' ');
+  const isRoot = variant === 'root';
+  const containerClass = [
+    cardBaseClass,
+    'p-3 sm:p-4 space-y-3',
+    isRoot
+      ? 'border-accent/60 bg-slate-900/80 shadow-[0_20px_60px_rgba(59,130,246,0.12)]'
+      : 'border-slate-800/80 bg-slate-950/60',
+  ].join(' ');
+  const labelClassName = [
+    'inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold',
+    isRoot
+      ? 'border border-accent/50 bg-accent/15 text-accent'
+      : 'border border-slate-700 bg-slate-900/70 text-slate-300',
+  ].join(' ');
 
   return (
-    <article className={`${cardBaseClass} p-3 sm:p-4 space-y-3`}>
+    <article className={containerClass}>
       {label && (
-        <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
+        <span className={labelClassName}>
           {label}
-        </p>
+        </span>
       )}
       {parentAuthor && (
         <p className="text-[11px] text-slate-500">

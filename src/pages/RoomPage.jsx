@@ -151,6 +151,9 @@ export default function RoomPage() {
               <p className={`${bodyTextClass} mt-1 line-clamp-2`}>
                 {room.description}
               </p>
+              <p className="text-[12px] text-slate-400 mt-2 max-w-2xl">
+                In questa stanza raccogliamo thread su {room.name}. Apri un thread quando vuoi iniziare una nuova conversazione: le risposte vivono dentro il thread.
+              </p>
               <div className="flex flex-wrap gap-2 text-[11px] text-slate-400 mt-3">
                 <span className="px-2 py-1 rounded-2xl bg-slate-950/40 border border-white/10">
                   {room.members} membri
@@ -171,7 +174,7 @@ export default function RoomPage() {
               className={`${buttonPrimaryClass} w-full md:w-auto inline-flex items-center justify-center gap-2`}
               style={{ backgroundImage: accentGradient }}
             >
-              Crea thread
+              Crea un nuovo thread in questa stanza
             </button>
           </div>
         </div>
@@ -184,6 +187,9 @@ export default function RoomPage() {
             {roomThreads.length} attivi
           </span>
         </div>
+        <p className="text-[12px] text-slate-500">
+          Ogni thread è una conversazione autonoma: entra per leggere e rispondere. Se vuoi aprire un tema nuovo, crea qui un thread.
+        </p>
 
         {isRoomLoading ? (
           <div className="space-y-3" aria-live="polite" role="status">
@@ -211,7 +217,7 @@ export default function RoomPage() {
               onClick={() => setIsNewThreadOpen(true)}
               className={`${buttonPrimaryClass} mt-3 text-sm`}
             >
-              Crea thread
+              Crea un nuovo thread in questa stanza
             </button>
           </div>
         ) : (
@@ -226,7 +232,7 @@ export default function RoomPage() {
       <Modal
         open={isNewThreadOpen}
         onClose={closeNewThread}
-        title="Nuovo thread nella stanza"
+        title={`Nuovo thread in ${room.name}`}
       >
         <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300 mb-3">
           Crea uno spunto breve e chiaro: chi entra capirà subito il tono del thread.

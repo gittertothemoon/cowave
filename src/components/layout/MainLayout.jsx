@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Sidebar from '../shell/Sidebar.jsx';
 import Topbar from '../shell/Topbar.jsx';
-import { ACHIEVEMENT_MAP } from '../../features/achievements/achievementsConfig.js';
-import AchievementUnlockOverlay from '../../features/achievements/AchievementUnlockOverlay.jsx';
-import { useAppState } from '../../state/AppStateContext.jsx';
 
 export default function MainLayout({
   children,
@@ -12,16 +8,6 @@ export default function MainLayout({
   onPersonaChange,
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const navigate = useNavigate();
-  const {
-    recentlyUnlockedAchievementId,
-    clearRecentlyUnlockedAchievement,
-  } = useAppState();
-  const currentAchievement =
-    recentlyUnlockedAchievementId &&
-    ACHIEVEMENT_MAP[recentlyUnlockedAchievementId]
-      ? ACHIEVEMENT_MAP[recentlyUnlockedAchievementId]
-      : null;
 
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? 'hidden' : '';
@@ -65,14 +51,6 @@ export default function MainLayout({
           <div className="w-full max-w-6xl mx-auto space-y-5">{children}</div>
         </main>
       </div>
-      <AchievementUnlockOverlay
-        achievement={currentAchievement}
-        onClose={clearRecentlyUnlockedAchievement}
-        onViewProfile={() => {
-          clearRecentlyUnlockedAchievement();
-          navigate('/app/profile');
-        }}
-      />
     </div>
   );
 }

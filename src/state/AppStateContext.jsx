@@ -83,6 +83,10 @@ export function AppStateProvider({ children }) {
   );
   const [recentlyUnlockedAchievementId, setRecentlyUnlockedAchievementId] =
     useState(null);
+  const [
+    pendingAchievementCelebrations,
+    setPendingAchievementCelebrations,
+  ] = useState([]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -143,6 +147,20 @@ export function AppStateProvider({ children }) {
     );
   }
 
+  function queueAchievementCelebration(achievementId) {
+    if (!ACHIEVEMENT_IDS.includes(achievementId)) return;
+    setPendingAchievementCelebrations((prev) => {
+      if (prev.includes(achievementId)) return prev;
+      return [...prev, achievementId];
+    });
+  }
+
+  function shiftAchievementCelebration() {
+    setPendingAchievementCelebrations((prev) =>
+      prev.length ? prev.slice(1) : prev
+    );
+  }
+
   function unlockAchievement(achievementId) {
     if (!ACHIEVEMENT_IDS.includes(achievementId)) return false;
     let unlocked = false;
@@ -162,6 +180,7 @@ export function AppStateProvider({ children }) {
     });
     if (unlocked) {
       setRecentlyUnlockedAchievementId(achievementId);
+      queueAchievementCelebration(achievementId);
     }
     return unlocked;
   }
@@ -260,7 +279,7 @@ export function AppStateProvider({ children }) {
       const existing = prev[threadId] ?? [];
       return {
         ...prev,
-        [threadId]: [...existing, newPost],
+        [threadId]: [newPost, ...existing],
       };
     });
 
@@ -331,6 +350,7 @@ export function AppStateProvider({ children }) {
     setPrimaryPersonaId(null);
     setAlgorithmPreset('balanced');
     setActivePersonaId(initialPersonas[0]?.id ?? null);
+    setPendingAchievementCelebrations([]);
     try {
       if (typeof window !== 'undefined') {
         window.localStorage.removeItem(ONBOARDING_KEY);
@@ -368,6 +388,9 @@ export function AppStateProvider({ children }) {
       setJustFinishedOnboarding,
       recentlyUnlockedAchievementId,
       clearRecentlyUnlockedAchievement,
+      pendingAchievementCelebrations,
+      queueAchievementCelebration,
+      shiftAchievementCelebration,
     }),
     [
       rooms,
@@ -383,6 +406,7 @@ export function AppStateProvider({ children }) {
       currentUser,
       justFinishedOnboarding,
       recentlyUnlockedAchievementId,
+      pendingAchievementCelebrations,
     ]
   );
 

@@ -36,13 +36,12 @@ module.exports = {
       },
       keyframes: {
         scaleIn: {
-          from: { opacity: 0, transform: 'scale(0.95) translateY(8px)' },
-          to: { opacity: 1, transform: 'scale(1) translateY(0)' },
+          '0%': { opacity: '0', transform: 'scale(0.95) translateY(8px)' },
+          '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
         },
         pulseSoft: {
-          from: { transform: 'scale(1)', opacity: 0.9 },
-          '50%': { transform: 'scale(1.05)', opacity: 1 },
-          to: { transform: 'scale(1)', opacity: 0.9 },
+          '0%, 100%': { transform: 'scale(1)', opacity: '0.9' },
+          '50%': { transform: 'scale(1.05)', opacity: '1' },
         },
         'pulse-soft': {
           '0%, 100%': { opacity: 0.7, transform: 'scale(0.98)' },
@@ -56,6 +55,16 @@ module.exports = {
           '0%, 100%': { opacity: 0.9, transform: 'scale(1)' },
           '50%': { opacity: 1, transform: 'scale(1.02)' },
         },
+        confettiFall: {
+          '0%': {
+            transform: 'translate3d(0,-100%,0) rotate(0deg)',
+            opacity: '1',
+          },
+          '100%': {
+            transform: 'translate3d(0,100vh,0) rotate(360deg)',
+            opacity: '0',
+          },
+        },
       },
       animation: {
         scaleIn: 'scaleIn 0.22s ease-out',
@@ -64,6 +73,7 @@ module.exports = {
         'float-slow': 'float-slow 16s ease-in-out infinite',
         'signal-pulse': 'pulse-soft 5s ease-in-out infinite',
         softPulse: 'softPulse 8s ease-in-out infinite',
+        confettiFall: 'confettiFall 1.4s ease-out forwards',
       },
       dropShadow: {
         glow: '0 0 15px rgba(167,139,250,0.45)',

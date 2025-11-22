@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CoWaveLogo from '../components/CoWaveLogo.jsx';
 import {
@@ -10,6 +10,7 @@ import {
   inputBaseClass,
 } from '../components/ui/primitives.js';
 import { useAppState } from '../state/AppStateContext.jsx';
+import { computeRoomStats } from '../utils/roomStats.js';
 
 const algorithmPresets = [
   {
@@ -40,11 +41,39 @@ export default function OnboardingPage() {
     addCustomPersona,
     currentUser,
     initialRoomIds,
+    threads,
+    postsByThread,
   } = useAppState();
 
   const defaultPersonaId = primaryPersonaId ?? personas[0]?.id ?? null;
-  const [selectedRooms, setSelectedRooms] = useState(
-    initialRoomIds?.length ? initialRoomIds : []
+  const roomStats = useMemo(
+    () => computeRoomStats(rooms, threads, postsByThread),
+    [rooms, threads, postsByThread]
+  );
+  const roomsInfo = useMemo(
+    () =>
+      rooms.map((room) => ({
+        ...room,
+        tags: room.tags ?? [],
+        stats: roomStats[room.id] ?? {
+          threadCount: 0,
+          repliesCount: 0,
+          repliesLast24h: 0,
+        },
+      })),
+    [rooms, roomStats]
+  );
+  const recommendedRoomIds = useMemo(() => {
+    const sorted = [...roomsInfo].sort((a, b) => {
+      const repliesTodayDiff =
+        (b.stats?.repliesLast24h ?? 0) - (a.stats?.repliesLast24h ?? 0);
+      if (repliesTodayDiff !== 0) return repliesTodayDiff;
+      return (b.stats?.repliesCount ?? 0) - (a.stats?.repliesCount ?? 0);
+    });
+    return sorted.slice(0, 3).map((room) => room.id);
+  }, [roomsInfo]);
+  const [selectedRooms, setSelectedRooms] = useState(() =>
+    initialRoomIds?.length ? initialRoomIds : recommendedRoomIds
   );
   const [selectedPersonaId, setSelectedPersonaId] = useState(defaultPersonaId);
   const [selectedPreset, setSelectedPreset] = useState(algorithmPreset);
@@ -53,20 +82,24 @@ export default function OnboardingPage() {
   const [customPersonaName, setCustomPersonaName] = useState('');
   const [customPersonaTagline, setCustomPersonaTagline] = useState('');
   const [customPersonaError, setCustomPersonaError] = useState('');
-  const selectionLimit = 3;
+  const selectionLimit = 5;
+  const minSelection = 3;
   const customPersonaFormId = 'custom-persona-form';
   const focusRingClass =
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
   const nickname =
     currentUser?.nickname?.trim().split(' ')?.[0] || currentUser?.nickname || 'Tu';
 
-  const roomsInfo = useMemo(
-    () => rooms.map((room) => ({ ...room, tags: room.tags ?? [] })),
-    [rooms]
-  );
-
   const canComplete =
-    selectedRooms.length >= 1 && selectedPersonaId && !!selectedPreset;
+    selectedRooms.length >= minSelection && selectedPersonaId && !!selectedPreset;
+
+  useEffect(() => {
+    if (initialRoomIds?.length || selectedRooms.length > 0) return;
+    if (recommendedRoomIds.length) {
+      setSelectedRooms(recommendedRoomIds);
+      setRoomError('');
+    }
+  }, [initialRoomIds, recommendedRoomIds, selectedRooms.length]);
 
   function handleCustomPersonaCreate() {
     if (!customPersonaName.trim()) {
@@ -87,8 +120,10 @@ export default function OnboardingPage() {
     setSelectedRooms((prev) => {
       if (prev.includes(roomId)) {
         const next = prev.filter((id) => id !== roomId);
-        if (next.length === 0) {
-          setRoomError('Seleziona almeno una stanza per continuare.');
+        if (next.length < minSelection) {
+          setRoomError(`Seleziona almeno ${minSelection} stanze per continuare.`);
+        } else {
+          setRoomError('');
         }
         return next;
       }
@@ -96,7 +131,9 @@ export default function OnboardingPage() {
         setRoomError(`Puoi scegliere al massimo ${selectionLimit} stanze ora.`);
         return prev;
       }
-      setRoomError('');
+      if (prev.length + 1 >= minSelection) {
+        setRoomError('');
+      }
       return [...prev, roomId];
     });
   }
@@ -147,80 +184,93 @@ export default function OnboardingPage() {
 
         <main className="flex flex-col gap-8 mt-8">
           <section className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <p className={eyebrowClass}>Step 1</p>
-            <p className="text-xs text-slate-400">
-              {selectedRooms.length}/{selectionLimit} selezionate
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <p className={eyebrowClass}>Step 1</p>
+              <p className="text-xs text-slate-400">
+                {selectedRooms.length}/{selectionLimit} selezionate
+              </p>
+            </div>
+            <h2 className={`${pageTitleClass} text-2xl`}>
+              Scegli le tue stanze iniziali
+            </h2>
+            <p className={bodyTextClass}>
+              Scegli da {minSelection} a {selectionLimit} stanze curate: il feed parte qui e puoi
+              aggiornarle quando vuoi. Abbiamo selezionato tre stanze attive per farti
+              partire.
             </p>
-          </div>
-          <h2 className={`${pageTitleClass} text-2xl`}>
-            Scegli le tue stanze iniziali
-          </h2>
-          <p className={bodyTextClass}>
-            Scegli da 1 a {selectionLimit} stanze curate: il feed parte da qui e puoi
-            aggiornarle quando vuoi.
-          </p>
-          {roomError && (
-            <p
-              className="text-xs text-rose-300"
-              role="status"
-              aria-live="assertive"
-            >
-              {roomError}
-            </p>
-          )}
-          <div className="grid gap-3 sm:grid-cols-2">
-            {roomsInfo.map((room) => {
-              const isSelected = selectedRooms.includes(room.id);
-              return (
-                <button
-                  key={room.id}
-                  type="button"
-                  onClick={() => toggleRoom(room.id)}
-                  className={`text-left rounded-2xl border px-4 py-4 transition-colors bg-slate-950/60 backdrop-blur ${focusRingClass} ${
-                    isSelected
-                      ? 'border-accent/70 bg-accent/15 shadow-glow'
-                      : 'border-white/10 hover:border-white/25'
-                  }`}
-                  aria-pressed={isSelected}
-                  aria-label={`${isSelected ? 'Rimuovi' : 'Segui'} la stanza ${
-                    room.name
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-base font-semibold text-white">
-                        {room.name}
-                      </p>
-                      <p className="text-xs text-slate-400 mt-1 line-clamp-2">
-                        {room.description}
-                      </p>
-                    </div>
-                    <span
-                      className={`text-[11px] uppercase tracking-[0.2em] px-2 py-1 rounded-full ${
-                        isSelected
-                          ? 'bg-accent text-slate-950'
-                          : 'bg-white/5 text-slate-400'
-                      }`}
-                    >
-                      {isSelected ? 'Scelta' : 'Segui'}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1 mt-3" aria-hidden="true">
-                    {room.tags.map((tag) => (
+            {roomError && (
+              <p
+                className="text-xs text-rose-300"
+                role="status"
+                aria-live="assertive"
+              >
+                {roomError}
+              </p>
+            )}
+            <div className="grid max-h-[520px] overflow-y-auto pr-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {roomsInfo.map((room) => {
+                const stats = room.stats ?? {
+                  threadCount: 0,
+                  repliesCount: 0,
+                  repliesLast24h: 0,
+                };
+                const isSelected = selectedRooms.includes(room.id);
+                const isRecommended = recommendedRoomIds.includes(room.id);
+                return (
+                  <button
+                    key={room.id}
+                    type="button"
+                    onClick={() => toggleRoom(room.id)}
+                    className={`text-left rounded-2xl border px-4 py-4 transition-colors bg-slate-950/60 backdrop-blur ${focusRingClass} ${
+                      isSelected
+                        ? 'border-accent/70 bg-accent/15 shadow-glow'
+                        : 'border-white/10 hover:border-white/25'
+                    }`}
+                    aria-pressed={isSelected}
+                    aria-label={`${isSelected ? 'Rimuovi' : 'Segui'} la stanza ${
+                      room.name
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-base font-semibold text-white">
+                          {room.name}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                          {room.description}
+                        </p>
+                        <p className="text-[11px] text-slate-300 mt-2">
+                          {stats.threadCount} thread · {stats.repliesCount} risposte
+                          {stats.repliesLast24h
+                            ? ` (oggi ${stats.repliesLast24h})`
+                            : ''}
+                        </p>
+                      </div>
                       <span
-                        key={`${room.id}-${tag}`}
-                        className="text-[10px] px-2 py-1 rounded-full border border-white/10 bg-slate-900/70 text-slate-300"
+                        className={`text-[11px] uppercase tracking-[0.2em] px-2 py-1 rounded-full ${
+                          isSelected
+                            ? 'bg-accent text-slate-950'
+                            : 'bg-white/5 text-slate-400'
+                        }`}
                       >
-                        #{tag}
+                        {isSelected ? 'Scelta' : isRecommended ? 'Suggerita' : 'Segui'}
                       </span>
-                    ))}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-3" aria-hidden="true">
+                      {room.tags.map((tag) => (
+                        <span
+                          key={`${room.id}-${tag}`}
+                          className="text-[10px] px-2 py-1 rounded-full border border-white/10 bg-slate-900/70 text-slate-300"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
           <section className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
           <div className={eyebrowClass}>Step 2</div>

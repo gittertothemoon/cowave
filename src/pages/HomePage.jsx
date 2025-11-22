@@ -12,6 +12,7 @@ import {
   pageTitleClass,
   bodyTextClass,
 } from '../components/ui/primitives.js';
+import { computeRoomStats } from '../utils/roomStats.js';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function HomePage() {
     threads,
     followedRoomIds,
     rooms,
+    postsByThread,
     justFinishedOnboarding,
     setJustFinishedOnboarding,
   } = useAppState();
@@ -27,6 +29,19 @@ export default function HomePage() {
   const feedRef = useRef(null);
   const [feedError] = useState(null);
   const [isFeedLoading] = useState(false);
+  const roomStats = useMemo(
+    () => computeRoomStats(rooms, threads, postsByThread),
+    [rooms, threads, postsByThread]
+  );
+  const featuredRooms = useMemo(() => {
+    const score = (roomId) => {
+      const stats = roomStats[roomId] ?? {};
+      return (stats.repliesLast24h ?? 0) * 5 + (stats.repliesCount ?? 0);
+    };
+    return [...rooms]
+      .sort((a, b) => score(b.id) - score(a.id))
+      .slice(0, 6);
+  }, [roomStats, rooms]);
 
   const visibleThreads = useMemo(() => {
     if (!followedRoomIds.length) return [];
@@ -160,16 +175,84 @@ export default function HomePage() {
           Crea stanza
         </button>
         <p className="text-[11px] text-slate-500">
-          Vuoi controllare meglio il feed?{' '}
-          <Link
-            to="/app/settings/esperienza"
-            className="text-sky-400 hover:text-sky-300 underline"
-          >
-            Vai agli strumenti avanzati
-          </Link>
-          .
-        </p>
-      </div>
+        Vuoi controllare meglio il feed?{' '}
+        <Link
+          to="/app/settings/esperienza"
+          className="text-sky-400 hover:text-sky-300 underline"
+        >
+          Vai agli strumenti avanzati
+        </Link>
+        .
+      </p>
+    </div>
+
+      <section className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className={eyebrowClass}>Stanze vive</p>
+            <p className={`${bodyTextClass} text-sm`}>
+              Più scelta per iniziare: numeri reali da thread e risposte di oggi.
+            </p>
+          </div>
+          <span className="text-[11px] text-slate-500">
+            {rooms.length} stanze curate
+          </span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {featuredRooms.map((room) => {
+            const stats = roomStats[room.id] ?? {
+              threadCount: 0,
+              repliesCount: 0,
+              repliesLast24h: 0,
+            };
+            const isFollowed = followedRoomIds.includes(room.id);
+            return (
+              <Link
+                key={room.id}
+                to={`/app/rooms/${room.id}`}
+                className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 hover:border-accent/50 hover:-translate-y-0.5 transition transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                aria-label={`Apri la stanza ${room.name}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-base font-semibold text-white">
+                      {room.name}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                      {room.description}
+                    </p>
+                  </div>
+                  <span
+                    className={`text-[11px] uppercase tracking-[0.18em] px-2 py-1 rounded-full ${
+                      isFollowed
+                        ? 'bg-accent/90 text-slate-950'
+                        : 'bg-white/10 text-slate-300'
+                    }`}
+                  >
+                    {isFollowed ? 'Seguita' : 'Suggerita'}
+                  </span>
+                </div>
+                <p className="text-[12px] text-slate-200 mt-2">
+                  {stats.threadCount} thread · {stats.repliesCount} risposte{' '}
+                  {stats.repliesLast24h
+                    ? `(oggi ${stats.repliesLast24h})`
+                    : ''}
+                </p>
+                <div className="flex flex-wrap gap-1 mt-2 text-[10px] text-slate-400">
+                  {room.tags?.slice(0, 3).map((tag) => (
+                    <span
+                      key={`${room.id}-${tag}`}
+                      className="rounded-full border border-white/10 px-2 py-1"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
 
       <div className="space-y-3" ref={feedRef}>
         {feedError ? (

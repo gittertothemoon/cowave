@@ -91,8 +91,9 @@ export default function ThreadPage() {
 
   const personaLabel =
     personas.find((p) => p.id === thread?.personaId)?.label ?? 'Persona attiva';
-  const treeRoot = buildTree(posts);
-  const rootNode = treeRoot[0] ?? null;
+  const treeRoot = buildTreeSorted(posts);
+  const rootNode =
+    treeRoot.find((node) => node.post.parentId === null) ?? null;
   const firstLevelReplies = rootNode?.children ?? [];
   const repliesOnly = posts.filter((p) => p.parentId !== null);
   const repliesCount = repliesOnly.length;
@@ -131,8 +132,16 @@ export default function ThreadPage() {
         className={`${cardBaseClass} p-4 sm:p-5 space-y-2 border`}
         style={{ borderColor: `${theme.primary}55` }}
       >
-        <p className="text-[11px] text-slate-500">
-          Stanza &gt; {threadRoom?.name ?? 'Stanza'} &gt; {thread.title}
+        <p className="text-[11px] text-slate-500 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate(`/app/rooms/${thread.roomId}`)}
+            className={`${buttonGhostClass} px-0 py-0 h-auto text-[11px] text-slate-300`}
+          >
+            Stanza: {threadRoom?.name ?? 'Stanza'}
+          </button>
+          <span className="text-slate-700">→</span>
+          <span className="text-slate-400">Thread</span>
         </p>
         <h1 className={`${pageTitleClass} mt-1 text-2xl`}>
           {thread.title}
@@ -144,6 +153,9 @@ export default function ThreadPage() {
             : `${repliesCount} risposte`}
           {lastReplyText ? ` · Ultima risposta ${lastReplyText}` : ''}
         </p>
+        <p className="text-[12px] text-slate-500">
+          In questa pagina puoi leggere e rispondere al thread. Per aprire una nuova conversazione torna alla stanza e crea un nuovo thread.
+        </p>
       </header>
 
       <section className="space-y-4">
@@ -153,6 +165,7 @@ export default function ThreadPage() {
               <PostNode
                 post={rootNode.post}
                 label="Post iniziale"
+                variant="root"
                 onToggleWave={handleToggleWave}
                 actions={
                   <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
@@ -203,13 +216,16 @@ export default function ThreadPage() {
 
         <div className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
           <div className="space-y-1">
-            <p className={eyebrowClass}>Risposte</p>
+            <p className={eyebrowClass}>Risposte al thread</p>
             <p className="text-xs text-slate-500">
               {repliesCount > 0
                 ? `${repliesCount} ${
                     repliesCount === 1 ? 'risposta' : 'risposte'
                   } in questa discussione`
                 : 'Nessuna risposta ancora. Inizia tu la conversazione.'}
+            </p>
+            <p className="text-[11px] text-slate-600">
+              Le risposte più recenti sono in alto.
             </p>
           </div>
 
@@ -232,12 +248,43 @@ export default function ThreadPage() {
             </div>
           )}
         </div>
+
+        {rootNode && (
+          <div className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}>
+            <div className="space-y-1">
+              <p className={eyebrowClass}>Scrivi una risposta a questo thread</p>
+              <p className="text-xs text-slate-500">
+                Stai rispondendo a questo thread, non stai creando un nuovo thread.
+              </p>
+            </div>
+            <PostComposer
+              parentId={rootNode.post.id}
+              onSubmit={handleNewPost}
+              accentGradient={accentGradient}
+            />
+            <p className="text-[11px] text-slate-500">
+              Vuoi parlare di altro?{' '}
+              <button
+                type="button"
+                onClick={() => navigate(`/app/rooms/${thread.roomId}`)}
+                className="text-accent underline-offset-2 hover:underline"
+              >
+                Torna alla stanza e crea un nuovo thread
+              </button>
+              .
+            </p>
+          </div>
+        )}
       </section>
     </div>
   );
 }
 
-function buildTree(posts) {
+function buildTreeSorted(posts) {
+  const getTime = (post) => {
+    const time = new Date(post.createdAt).getTime();
+    return Number.isNaN(time) ? 0 : time;
+  };
   const map = {};
   posts.forEach((p) => {
     map[p.id] = { post: p, children: [] };
@@ -250,6 +297,19 @@ function buildTree(posts) {
       roots.push(map[p.id]);
     }
   });
+  const sortChildren = (node) => {
+    node.children.sort(
+      (a, b) =>
+        getTime(b.post) - getTime(a.post)
+    );
+    node.children.forEach(sortChildren);
+  };
+
+  roots.sort(
+    (a, b) =>
+      getTime(a.post) - getTime(b.post)
+  );
+  roots.forEach(sortChildren);
   return roots;
 }
 
@@ -282,7 +342,7 @@ function ReplyItem({
   const visualDepth = Math.min(depth, 2);
   const spacingClass =
     visualDepth > 0
-      ? 'mt-2 border-l border-slate-800 pl-3 sm:pl-4 space-y-2'
+      ? 'mt-3 border-l border-slate-800/80 pl-4 sm:pl-6 space-y-2'
       : 'space-y-2';
 
   return (
@@ -329,18 +389,23 @@ function ReplyItem({
       )}
 
       {hasChildren && showReplies && (
-        <div className="mt-2 space-y-2">
-          {children.map((child) => (
-            <ReplyItem
-              key={child.post.id}
-              node={child}
-              onReply={onReply}
-              onToggleWave={onToggleWave}
-              accentGradient={accentGradient}
-              depth={depth + 1}
-              parentAuthor={post.author}
-            />
-          ))}
+        <div className="mt-3 space-y-2">
+          <p className="text-[11px] text-slate-500">
+            Risposte a questo messaggio
+          </p>
+          <div className="space-y-2">
+            {children.map((child) => (
+              <ReplyItem
+                key={child.post.id}
+                node={child}
+                onReply={onReply}
+                onToggleWave={onToggleWave}
+                accentGradient={accentGradient}
+                depth={depth + 1}
+                parentAuthor={post.author}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>
