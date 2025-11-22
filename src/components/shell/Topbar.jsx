@@ -91,7 +91,16 @@ export default function Topbar({
     <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur">
       <div className="mx-auto w-full max-w-6xl px-3 sm:px-4 lg:px-6">
         <div className="flex flex-col gap-2 py-2">
-          <div className="flex h-14 items-center gap-3">
+          <div className="flex h-14 items-center gap-3 relative">
+            <div className="absolute inset-0 flex items-center justify-center md:hidden pointer-events-none">
+              <Link
+                to="/app"
+                className="pointer-events-auto flex items-center text-slate-100"
+                aria-label="Vai alla home CoWave"
+              >
+                <CoWaveLogo size={44} variant="icon" />
+              </Link>
+            </div>
             <button
               type="button"
               className="inline-flex items-center justify-center rounded-xl p-2.5 text-slate-200 hover:bg-slate-900/70 border border-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 md:hidden transition"
@@ -113,15 +122,6 @@ export default function Topbar({
             >
               <CoWaveLogo size={46} className="-ml-2.5" variant="full" />
             </Link>
-            <div className="flex flex-1 justify-center md:hidden">
-              <Link
-                to="/app"
-                className="flex items-center text-slate-100"
-                aria-label="Vai alla home CoWave"
-              >
-                <CoWaveLogo size={44} variant="icon" />
-              </Link>
-            </div>
 
             <div className="hidden md:flex flex-1 justify-center px-3 lg:px-8">
               <label
