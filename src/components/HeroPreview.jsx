@@ -203,7 +203,7 @@ export default function HeroPreview() {
   const activeState = heroStates[activeIndex];
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full pointer-events-none select-none" aria-hidden="true">
       <div className="rounded-3xl border border-slate-700/70 bg-slate-950/80 p-3 sm:p-4 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-md">
         <div
           className={`${cardBaseClass} relative overflow-hidden p-4 sm:p-5 space-y-4 min-h-[340px] sm:min-h-[400px]`}
