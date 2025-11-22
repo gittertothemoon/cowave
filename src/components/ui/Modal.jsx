@@ -6,6 +6,11 @@ export default function Modal({ open, onClose, title, children }) {
   const dialogRef = useRef(null);
   const prevFocusedRef = useRef(null);
   const previousOverflowRef = useRef('');
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -36,30 +41,46 @@ export default function Modal({ open, onClose, title, children }) {
     (firstFocusable ?? dialog)?.focus();
 
     function handleKeyDown(event) {
+      if (!open || !dialogRef.current) return;
+
       if (event.key === 'Escape') {
-        onClose?.();
+        event.stopPropagation();
+        event.preventDefault();
+        onCloseRef.current?.();
         return;
       }
 
-      if (event.key === 'Tab') {
-        if (focusableElements.length === 0) {
-          event.preventDefault();
-          dialog?.focus();
-          return;
-        }
+      if (event.key !== 'Tab') return;
 
-        if (event.shiftKey) {
-          if (
-            document.activeElement === firstFocusable ||
-            document.activeElement === dialog
-          ) {
-            event.preventDefault();
-            (lastFocusable ?? firstFocusable)?.focus();
-          }
-        } else if (document.activeElement === lastFocusable) {
+      const focusable = dialogRef.current
+        ? Array.from(
+            dialogRef.current.querySelectorAll(
+              'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            )
+          ).filter(
+            (el) =>
+              !el.hasAttribute('aria-hidden') &&
+              (el.offsetParent !== null || el.getClientRects().length > 0)
+          )
+        : [];
+
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialogRef.current.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey) {
+        if (document.activeElement === first) {
           event.preventDefault();
-          (firstFocusable ?? dialog)?.focus();
+          last.focus();
         }
+      } else if (document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
       }
     }
 
@@ -71,7 +92,7 @@ export default function Modal({ open, onClose, title, children }) {
         prevFocusedRef.current.focus();
       }
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
