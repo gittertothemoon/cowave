@@ -58,6 +58,10 @@ export default function PostNode({
         {post.content}
       </p>
 
+      {post.attachments?.length > 0 && (
+        <AttachmentPreview attachments={post.attachments} />
+      )}
+
       <div className="pt-1 flex flex-wrap items-center gap-3 justify-between">
         <div className="flex items-center gap-2">
           <button
@@ -78,6 +82,24 @@ export default function PostNode({
         {actions}
       </div>
     </article>
+  );
+}
+
+function AttachmentPreview({ attachments }) {
+  const imageAttachment = attachments.find(
+    (attachment) => attachment?.type === 'image'
+  );
+
+  if (!imageAttachment) return null;
+
+  return (
+    <div className="mt-1 overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60">
+      <img
+        src={imageAttachment.url}
+        alt={imageAttachment.name || 'Immagine allegata'}
+        className="aspect-video w-full object-cover"
+      />
+    </div>
   );
 }
 

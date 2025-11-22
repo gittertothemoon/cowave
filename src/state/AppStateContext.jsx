@@ -184,7 +184,10 @@ export function AppStateProvider({ children }) {
     return id;
   }
 
-  function createPost(threadId, { content, parentId = null, personaId }) {
+  function createPost(
+    threadId,
+    { content, parentId = null, personaId, attachments = [] }
+  ) {
     const newPost = {
       id: `p-${Date.now()}`,
       parentId,
@@ -194,6 +197,9 @@ export function AppStateProvider({ children }) {
       content,
       waveCount: 0,
       hasWaved: false,
+      attachments: attachments?.length
+        ? attachments.slice(0, 1)
+        : undefined,
     };
 
     setPostsByThread((prev) => {

@@ -80,8 +80,13 @@ export default function ThreadPage() {
     );
   }
 
-  function handleNewPost({ content, parentId }) {
-    createPost(threadId, { content, parentId, personaId: thread.personaId });
+  function handleNewPost({ content, parentId, attachments }) {
+    createPost(threadId, {
+      content,
+      parentId,
+      personaId: thread.personaId,
+      attachments,
+    });
   }
 
   const personaLabel =
