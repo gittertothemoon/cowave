@@ -18,6 +18,25 @@ const defaultUser = {
   unlockedAchievements: [],
 };
 
+function normalizeThreads(initialThreads, postsByThread) {
+  const repliesByThread = {};
+
+  const threadsWithInitialPost = initialThreads.map((thread) => {
+    const posts = postsByThread?.[thread.id] ?? [];
+    const initialPost = posts.find((p) => p.parentId === null) ?? null;
+    const replies = posts.filter((p) => p.parentId !== null);
+    repliesByThread[thread.id] = replies;
+
+    return {
+      ...thread,
+      initialPost,
+      rootSnippet: thread.rootSnippet || initialPost?.content || '',
+    };
+  });
+
+  return { threadsWithInitialPost, repliesByThread };
+}
+
 function normalizeUser(user) {
   const unlocked = Array.isArray(user?.unlockedAchievements)
     ? user.unlockedAchievements.filter((id) =>
@@ -42,6 +61,10 @@ function getInitialIsOnboarded() {
 }
 
 export function AppStateProvider({ children }) {
+  const { threadsWithInitialPost, repliesByThread } = useMemo(
+    () => normalizeThreads(initialThreads, initialPostsByThread),
+    []
+  );
   const [currentUser, setCurrentUser] = useState(() => {
     if (typeof window === 'undefined') return defaultUser;
     try {
@@ -61,8 +84,8 @@ export function AppStateProvider({ children }) {
     }
   });
   const [rooms, setRooms] = useState(initialRooms);
-  const [threads, setThreads] = useState(initialThreads);
-  const [postsByThread, setPostsByThread] = useState(initialPostsByThread);
+  const [threads, setThreads] = useState(threadsWithInitialPost);
+  const [postsByThread, setPostsByThread] = useState(repliesByThread);
   const [isOnboarded, setIsOnboarded] = useState(getInitialIsOnboarded);
   const [initialRoomIds, setInitialRoomIds] = useState([]);
   const [followedRoomIds, setFollowedRoomIds] = useState([]);
@@ -232,24 +255,44 @@ export function AppStateProvider({ children }) {
   function createThread({
     roomId,
     title,
+    initialContent,
     rootSnippet,
     personaId = personas[0]?.id ?? 'dev',
     energy = 'neutro',
   }) {
+    const cleanedTitle = title?.trim();
+    const cleanedInitialContent = initialContent?.trim();
+    if (!cleanedTitle || !cleanedInitialContent) return null;
     const id = `thread-${Date.now()}`;
+    const createdAt = new Date().toISOString();
+    const initialPost = {
+      id: `p-${Date.now()}`,
+      parentId: null,
+      author: currentUser?.nickname || 'Tu',
+      personaId,
+      createdAt,
+      content: cleanedInitialContent,
+      waveCount: 0,
+      hasWaved: false,
+    };
     const newThread = {
       id,
       roomId,
-      title,
+      title: cleanedTitle,
       author: currentUser?.nickname || 'Tu',
       personaId,
-      createdAt: new Date().toISOString(),
+      createdAt,
       depth: 1,
       energy,
-      rootSnippet,
+      rootSnippet: rootSnippet || cleanedInitialContent,
       branches: 0,
+      initialPost,
     };
     setThreads((prev) => [newThread, ...prev]);
+    setPostsByThread((prev) => ({
+      ...prev,
+      [id]: [],
+    }));
     unlockAchievement('FIRST_THREAD');
     return id;
   }
@@ -275,6 +318,24 @@ export function AppStateProvider({ children }) {
         : undefined,
     };
 
+    if (parentId === null) {
+      setThreads((prev) =>
+        prev.map((thread) => {
+          if (thread.id !== threadId || thread.initialPost) return thread;
+          return {
+            ...thread,
+            initialPost: newPost,
+            rootSnippet: thread.rootSnippet || newPost.content,
+          };
+        })
+      );
+      setPostsByThread((prev) => ({
+        ...prev,
+        [threadId]: prev[threadId] ?? [],
+      }));
+      return newPost.id;
+    }
+
     setPostsByThread((prev) => {
       const existing = prev[threadId] ?? [];
       return {
@@ -283,15 +344,39 @@ export function AppStateProvider({ children }) {
       };
     });
 
-    if (parentId !== null) {
-      unlockAchievement('FIRST_REPLY');
-      if (hasImageAttachment) {
-        unlockAchievement('FIRST_IMAGE_REPLY');
-      }
+    unlockAchievement('FIRST_REPLY');
+    if (hasImageAttachment) {
+      unlockAchievement('FIRST_IMAGE_REPLY');
     }
+    return newPost.id;
   }
 
   function toggleCommentWave(threadId, commentId) {
+    setThreads((prev) =>
+      prev.map((thread) => {
+        if (thread.id !== threadId) return thread;
+        if (!thread.initialPost || thread.initialPost.id !== commentId) {
+          return thread;
+        }
+        const safeCount = Number.isFinite(thread.initialPost.waveCount)
+          ? thread.initialPost.waveCount
+          : 0;
+        const nextHasWaved = !thread.initialPost.hasWaved;
+        const nextWaveCount = Math.max(
+          0,
+          safeCount + (nextHasWaved ? 1 : -1)
+        );
+        return {
+          ...thread,
+          initialPost: {
+            ...thread.initialPost,
+            hasWaved: nextHasWaved,
+            waveCount: nextWaveCount,
+          },
+        };
+      })
+    );
+
     setPostsByThread((prev) => {
       const existing = prev[threadId];
       if (!existing) return prev;

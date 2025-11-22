@@ -25,14 +25,15 @@ export default function RoomPage() {
 
   const [isNewThreadOpen, setIsNewThreadOpen] = useState(false);
   const [title, setTitle] = useState('');
-  const [snippet, setSnippet] = useState('');
+  const [initialContent, setInitialContent] = useState('');
   const [energy, setEnergy] = useState('costruttivo');
   const [threadError, setThreadError] = useState('');
+  const [initialContentError, setInitialContentError] = useState('');
   const [roomError] = useState(null);
   const [isRoomLoading] = useState(false);
   const titleInputRef = useRef(null);
   const titleId = useId();
-  const snippetId = useId();
+  const initialContentId = useId();
   const energyId = useId();
   const shouldOpenThread = location.state?.highlightCreateThread;
 
@@ -60,19 +61,30 @@ export default function RoomPage() {
 
   function handleCreateThread(e) {
     e.preventDefault();
-    if (!title.trim()) {
+    const trimmedTitle = title.trim();
+    const trimmedContent = initialContent.trim();
+    if (!trimmedTitle) {
       setThreadError('Inserisci un titolo per il thread.');
+      setInitialContentError('');
+      return;
+    }
+    if (!trimmedContent) {
+      setInitialContentError('Inserisci il testo del thread.');
+      setThreadError('');
       return;
     }
     const id = createThread({
       roomId: room.id,
-      title: title.trim(),
-      rootSnippet: snippet.trim(),
+      title: trimmedTitle,
+      initialContent: trimmedContent,
+      rootSnippet: trimmedContent,
       energy,
     });
+    if (!id) return;
     setThreadError('');
+    setInitialContentError('');
     setTitle('');
-    setSnippet('');
+    setInitialContent('');
     setEnergy('costruttivo');
     closeNewThread();
     navigate(`/app/threads/${id}`);
@@ -80,6 +92,7 @@ export default function RoomPage() {
 
   function closeNewThread() {
     setThreadError('');
+    setInitialContentError('');
     setIsNewThreadOpen(false);
   }
 
@@ -262,20 +275,30 @@ export default function RoomPage() {
             )}
           </div>
           <div className="space-y-1">
-            <label className={labelClass} htmlFor={snippetId}>
-              Spunto iniziale
+            <label className={labelClass} htmlFor={initialContentId}>
+              Testo del thread
             </label>
             <textarea
               rows={4}
               className={`${inputBaseClass} resize-none`}
-              value={snippet}
-              onChange={(e) => setSnippet(e.target.value)}
-              placeholder="Descrivi il punto di partenza o la tensione che vuoi esplorare…"
-              id={snippetId}
+              value={initialContent}
+              onChange={(e) => {
+                setInitialContent(e.target.value);
+                if (initialContentError) setInitialContentError('');
+              }}
+              placeholder="Scrivi il messaggio con cui vuoi aprire questa conversazione…"
+              id={initialContentId}
+              required
             />
-            <p className="text-[11px] text-slate-400">
-              2-3 frasi: cosa vuoi esplorare e perché interessa questa stanza.
-            </p>
+            {initialContentError ? (
+              <p className="text-xs text-red-400 mt-1">
+                {initialContentError}
+              </p>
+            ) : (
+              <p className="text-[11px] text-slate-400">
+                Questo sarà il primo messaggio del thread: rendilo chiaro per chi entra.
+              </p>
+            )}
           </div>
           <div className="space-y-1">
             <label className={labelClass} htmlFor={energyId}>

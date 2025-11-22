@@ -9,6 +9,7 @@ export default function PostComposer({
   parentId = null,
   onSubmit,
   accentGradient,
+  placeholder,
 }) {
   const [value, setValue] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
@@ -92,9 +93,10 @@ export default function PostComposer({
         rows={isReply ? 2 : 3}
         className={`${inputBaseClass} resize-none bg-slate-950/80`}
         placeholder={
-          isReply
+          placeholder ||
+          (isReply
             ? 'Scrivi una risposta a questo messaggio…'
-            : 'Scrivi il post iniziale del thread…'
+            : 'Scrivi il post iniziale del thread…')
         }
         value={value}
         onChange={(e) => setValue(e.target.value)}

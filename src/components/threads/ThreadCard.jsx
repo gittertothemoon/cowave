@@ -12,25 +12,34 @@ export default function ThreadCard({ thread }) {
     glow: 'rgba(59,130,246,0.35)',
   };
   const posts = postsByThread?.[thread.id] ?? [];
-  const replies = posts.filter((p) => p.parentId !== null);
+  const replies = posts;
   const repliesCount = replies.length;
+  const lastActivityTimestamps = [
+    ...replies.map((p) => new Date(p.createdAt).getTime()),
+  ];
+  if (thread.initialPost) {
+    lastActivityTimestamps.push(
+      new Date(thread.initialPost.createdAt).getTime()
+    );
+  }
+  if (thread.createdAt) {
+    lastActivityTimestamps.push(new Date(thread.createdAt).getTime());
+  }
+  const validActivityTimes = lastActivityTimestamps.filter(
+    (time) => !Number.isNaN(time)
+  );
   const lastActivityDate =
-    posts.length > 0
-      ? new Date(
-          Math.max(
-            ...posts.map((p) => new Date(p.createdAt).getTime())
-          )
-        )
-      : thread.createdAt
-        ? new Date(thread.createdAt)
-        : null;
+    validActivityTimes.length > 0
+      ? new Date(Math.max(...validActivityTimes))
+      : null;
   const lastActivityText = lastActivityDate
     ? formatRelativeTime(lastActivityDate)
     : '—';
   const cardLabel = `Apri thread ${thread.title} nella stanza ${room?.name ?? 'sconosciuta'}`;
   const previewText =
+    thread.initialPost?.content ||
     thread.rootSnippet ||
-    posts.find((p) => p.parentId === null)?.content ||
+    replies.find((p) => p.parentId === null)?.content ||
     'Nessun contenuto iniziale ancora.';
 
   return (

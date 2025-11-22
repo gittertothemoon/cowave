@@ -36,6 +36,15 @@ export function computeRoomStats(rooms = [], threads = [], postsByThread = {}) {
             : Math.max(stats.lastActivity, time);
       }
     });
+    if (thread.initialPost) {
+      const time = new Date(thread.initialPost.createdAt).getTime();
+      if (!Number.isNaN(time)) {
+        stats.lastActivity =
+          stats.lastActivity === null
+            ? time
+            : Math.max(stats.lastActivity, time);
+      }
+    }
     const threadTime = new Date(thread.createdAt).getTime();
     if (!Number.isNaN(threadTime)) {
       stats.lastActivity =

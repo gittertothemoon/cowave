@@ -1,11 +1,10 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppState } from '../state/AppStateContext.jsx';
 import PostComposer from '../components/threads/PostComposer.jsx';
 import PostNode from '../components/threads/PostNode.jsx';
 import {
   buttonGhostClass,
-  buttonSecondaryClass,
   cardBaseClass,
   eyebrowClass,
   pageTitleClass,
@@ -26,7 +25,8 @@ export default function ThreadPage() {
   const [isThreadLoading] = useState(false);
   const [threadError] = useState(null);
   const thread = threads.find((t) => t.id === threadId);
-  const posts = postsByThread[threadId] ?? [];
+  const replies = postsByThread[threadId] ?? [];
+  const initialPost = thread?.initialPost ?? null;
   const threadRoom = rooms.find((r) => r.id === thread?.roomId);
   const theme = threadRoom?.theme ?? {
     primary: '#a78bfa',
@@ -80,10 +80,20 @@ export default function ThreadPage() {
     );
   }
 
-  function handleNewPost({ content, parentId, attachments }) {
+  function handleNewPost({ content, attachments }) {
+    if (!initialPost) return;
     createPost(threadId, {
       content,
-      parentId,
+      parentId: initialPost.id,
+      personaId: thread.personaId,
+      attachments,
+    });
+  }
+
+  function handleCreateInitialPost({ content, attachments }) {
+    createPost(threadId, {
+      content,
+      parentId: null,
       personaId: thread.personaId,
       attachments,
     });
@@ -91,24 +101,41 @@ export default function ThreadPage() {
 
   const personaLabel =
     personas.find((p) => p.id === thread?.personaId)?.label ?? 'Persona attiva';
-  const treeRoot = buildTreeSorted(posts);
-  const rootNode =
-    treeRoot.find((node) => node.post.parentId === null) ?? null;
-  const firstLevelReplies = rootNode?.children ?? [];
-  const repliesOnly = posts.filter((p) => p.parentId !== null);
-  const repliesCount = repliesOnly.length;
+  const repliesSorted = useMemo(
+    () =>
+      replies
+        .slice()
+        .sort((a, b) => {
+          const timeA = new Date(a.createdAt).getTime();
+          const timeB = new Date(b.createdAt).getTime();
+          const safeA = Number.isNaN(timeA) ? 0 : timeA;
+          const safeB = Number.isNaN(timeB) ? 0 : timeB;
+          return safeB - safeA;
+        }),
+    [replies]
+  );
+  const postsById = useMemo(() => {
+    const map = new Map();
+    if (initialPost) {
+      map.set(initialPost.id, initialPost);
+    }
+    repliesSorted.forEach((post) => {
+      map.set(post.id, post);
+    });
+    return map;
+  }, [initialPost, repliesSorted]);
+  const repliesCount = replies.length;
   const lastReplyDate =
-    repliesOnly.length > 0
+    replies.length > 0
       ? new Date(
           Math.max(
-            ...repliesOnly.map((p) => new Date(p.createdAt).getTime())
+            ...replies.map((p) => new Date(p.createdAt).getTime())
           )
         )
       : null;
   const lastReplyText = lastReplyDate
     ? formatRelativeTime(lastReplyDate)
     : null;
-  const [replyingToRoot, setReplyingToRoot] = useState(false);
 
   function handleCopyLink() {
     try {
@@ -159,158 +186,83 @@ export default function ThreadPage() {
       </header>
 
       <section className="space-y-4">
-        <div className="space-y-3">
-          {rootNode ? (
+        {initialPost ? (
+          <>
             <div className="space-y-3">
               <PostNode
-                post={rootNode.post}
-                label="Post iniziale"
+                post={initialPost}
+                label="POST INIZIALE"
                 variant="root"
                 onToggleWave={handleToggleWave}
                 actions={
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                    <button
-                      type="button"
-                      className={`${buttonGhostClass} px-3 py-1 text-xs`}
-                      onClick={() => setReplyingToRoot((prev) => !prev)}
-                    >
-                      Rispondi
-                    </button>
-                    <button
-                      type="button"
-                      className={`${buttonGhostClass} px-3 py-1 text-xs`}
-                      onClick={handleCopyLink}
-                    >
-                      Copia link
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    className={`${buttonGhostClass} px-3 py-1 text-xs`}
+                    onClick={handleCopyLink}
+                  >
+                    Copia link
+                  </button>
                 }
               />
-              {replyingToRoot && (
-                <div className="pl-1">
-                  <PostComposer
-                    parentId={rootNode.post.id}
-                    onSubmit={(payload) => {
-                      handleNewPost(payload);
-                      setReplyingToRoot(false);
-                    }}
-                    accentGradient={accentGradient}
-                  />
+            </div>
+
+            <div className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
+              <div className="space-y-1">
+                <p className={eyebrowClass}>RISPOSTE AL THREAD</p>
+                {repliesCount === 0 ? (
+                  <>
+                    <p className="text-xs text-slate-500">
+                      Nessuna risposta ancora. Inizia tu la conversazione.
+                    </p>
+                    <p className="text-[11px] text-slate-600">
+                      Le risposte più recenti sono in alto.
+                    </p>
+                  </>
+                ) : null}
+              </div>
+
+              <PostComposer
+                parentId={initialPost.id}
+                onSubmit={handleNewPost}
+                accentGradient={accentGradient}
+                placeholder="Scrivi una risposta per far partire la discussione."
+              />
+
+              {repliesCount > 0 && (
+                <div className="space-y-4 pt-1">
+                  {repliesSorted.map((post) => (
+                    <PostNode
+                      key={post.id}
+                      post={post}
+                      parentAuthor={
+                        post.parentId
+                          ? postsById.get(post.parentId)?.author
+                          : undefined
+                      }
+                      onToggleWave={handleToggleWave}
+                    />
+                  ))}
                 </div>
               )}
             </div>
-          ) : (
-            <div className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}>
-              <p className={eyebrowClass}>Post iniziale</p>
-              <p className={bodyTextClass}>
-                Non c&apos;è ancora un post iniziale. Scrivi tu per avviare la conversazione.
-              </p>
-              <PostComposer
-                parentId={null}
-                onSubmit={handleNewPost}
-                accentGradient={accentGradient}
-              />
-            </div>
-          )}
-        </div>
-
-        <div className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
-          <div className="space-y-1">
-            <p className={eyebrowClass}>Risposte al thread</p>
-            <p className="text-xs text-slate-500">
-              {repliesCount > 0
-                ? `${repliesCount} ${
-                    repliesCount === 1 ? 'risposta' : 'risposte'
-                  } in questa discussione`
-                : 'Nessuna risposta ancora. Inizia tu la conversazione.'}
-            </p>
-            <p className="text-[11px] text-slate-600">
-              Le risposte più recenti sono in alto.
-            </p>
-          </div>
-
-          {firstLevelReplies.length === 0 ? (
-            <p className={bodyTextClass}>
-              Scrivi una risposta per far partire la discussione.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {firstLevelReplies.map((node) => (
-                <ReplyItem
-                  key={node.post.id}
-                  node={node}
-                  onReply={handleNewPost}
-                  accentGradient={accentGradient}
-                  onToggleWave={handleToggleWave}
-                  depth={0}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {rootNode && (
+          </>
+        ) : (
           <div className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}>
-            <div className="space-y-1">
-              <p className={eyebrowClass}>Scrivi una risposta a questo thread</p>
-              <p className="text-xs text-slate-500">
-                Stai rispondendo a questo thread, non stai creando un nuovo thread.
-              </p>
-            </div>
-            <PostComposer
-              parentId={rootNode.post.id}
-              onSubmit={handleNewPost}
-              accentGradient={accentGradient}
-            />
-            <p className="text-[11px] text-slate-500">
-              Vuoi parlare di altro?{' '}
-              <button
-                type="button"
-                onClick={() => navigate(`/app/rooms/${thread.roomId}`)}
-                className="text-accent underline-offset-2 hover:underline"
-              >
-                Torna alla stanza e crea un nuovo thread
-              </button>
-              .
+            <p className={eyebrowClass}>POST INIZIALE</p>
+            <p className={bodyTextClass}>
+              Non c&apos;è ancora un messaggio in questo thread. Scrivi il primo per avviare la conversazione.
             </p>
+            <PostComposer
+              parentId={null}
+              onSubmit={handleCreateInitialPost}
+              accentGradient={accentGradient}
+              placeholder="Scrivi il messaggio con cui vuoi aprire questa conversazione."
+            />
           </div>
         )}
       </section>
     </div>
   );
-}
-
-function buildTreeSorted(posts) {
-  const getTime = (post) => {
-    const time = new Date(post.createdAt).getTime();
-    return Number.isNaN(time) ? 0 : time;
-  };
-  const map = {};
-  posts.forEach((p) => {
-    map[p.id] = { post: p, children: [] };
-  });
-  const roots = [];
-  posts.forEach((p) => {
-    if (p.parentId && map[p.parentId]) {
-      map[p.parentId].children.push(map[p.id]);
-    } else if (!p.parentId) {
-      roots.push(map[p.id]);
-    }
-  });
-  const sortChildren = (node) => {
-    node.children.sort(
-      (a, b) =>
-        getTime(b.post) - getTime(a.post)
-    );
-    node.children.forEach(sortChildren);
-  };
-
-  roots.sort(
-    (a, b) =>
-      getTime(a.post) - getTime(b.post)
-  );
-  roots.forEach(sortChildren);
-  return roots;
 }
 
 function formatRelativeTime(date) {
@@ -325,89 +277,4 @@ function formatRelativeTime(date) {
   if (days < 7) return `${days}g fa`;
   const weeks = Math.floor(days / 7);
   return `${weeks} sett fa`;
-}
-
-function ReplyItem({
-  node,
-  onReply,
-  onToggleWave,
-  accentGradient,
-  depth = 0,
-  parentAuthor,
-}) {
-  const { post, children } = node;
-  const [showReplies, setShowReplies] = useState(false);
-  const [isReplying, setIsReplying] = useState(false);
-  const hasChildren = children.length > 0;
-  const visualDepth = Math.min(depth, 2);
-  const spacingClass =
-    visualDepth > 0
-      ? 'mt-3 border-l border-slate-800/80 pl-4 sm:pl-6 space-y-2'
-      : 'space-y-2';
-
-  return (
-    <div className={spacingClass}>
-      <PostNode
-        post={post}
-        parentAuthor={depth > 0 ? parentAuthor : undefined}
-        onToggleWave={onToggleWave}
-        actions={
-          <div className="flex flex-wrap items-center gap-2 text-[12px] text-slate-400">
-            <button
-              type="button"
-              className={`${buttonSecondaryClass} px-3 py-1 text-xs`}
-              onClick={() => setIsReplying((prev) => !prev)}
-            >
-              Rispondi
-            </button>
-            {hasChildren && (
-              <button
-                type="button"
-                className={`${buttonGhostClass} px-3 py-1 text-xs`}
-                onClick={() => setShowReplies((prev) => !prev)}
-              >
-                {showReplies
-                  ? 'Nascondi risposte'
-                  : `${children.length} risposte a questo messaggio`}
-              </button>
-            )}
-          </div>
-        }
-      />
-
-      {isReplying && (
-        <div className="pt-1">
-          <PostComposer
-            parentId={post.id}
-            onSubmit={(payload) => {
-              onReply(payload);
-              setIsReplying(false);
-            }}
-            accentGradient={accentGradient}
-          />
-        </div>
-      )}
-
-      {hasChildren && showReplies && (
-        <div className="mt-3 space-y-2">
-          <p className="text-[11px] text-slate-500">
-            Risposte a questo messaggio
-          </p>
-          <div className="space-y-2">
-            {children.map((child) => (
-              <ReplyItem
-                key={child.post.id}
-                node={child}
-                onReply={onReply}
-                onToggleWave={onToggleWave}
-                accentGradient={accentGradient}
-                depth={depth + 1}
-                parentAuthor={post.author}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
 }
