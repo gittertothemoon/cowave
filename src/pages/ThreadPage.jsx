@@ -5,6 +5,7 @@ import PostComposer from '../components/threads/PostComposer.jsx';
 import PostNode from '../components/threads/PostNode.jsx';
 import {
   buttonGhostClass,
+  buttonSecondaryClass,
   cardBaseClass,
   eyebrowClass,
   pageTitleClass,
@@ -79,8 +80,34 @@ export default function ThreadPage() {
   const personaLabel =
     personas.find((p) => p.id === thread?.personaId)?.label ?? 'Persona attiva';
   const treeRoot = buildTree(posts);
-  const isOnlyRoot =
-    treeRoot.length === 1 && (treeRoot[0]?.children?.length ?? 0) === 0;
+  const rootNode = treeRoot[0] ?? null;
+  const firstLevelReplies = rootNode?.children ?? [];
+  const repliesOnly = posts.filter((p) => p.parentId !== null);
+  const repliesCount = repliesOnly.length;
+  const lastReplyDate =
+    repliesOnly.length > 0
+      ? new Date(
+          Math.max(
+            ...repliesOnly.map((p) => new Date(p.createdAt).getTime())
+          )
+        )
+      : null;
+  const lastReplyText = lastReplyDate
+    ? formatRelativeTime(lastReplyDate)
+    : null;
+  const [replyingToRoot, setReplyingToRoot] = useState(false);
+
+  function handleCopyLink() {
+    try {
+      if (typeof window !== 'undefined') {
+        navigator?.clipboard
+          ?.writeText(window.location.href)
+          .catch(() => {});
+      }
+    } catch {
+      // best-effort copy
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -88,52 +115,100 @@ export default function ThreadPage() {
         className={`${cardBaseClass} p-4 sm:p-5 space-y-2 border`}
         style={{ borderColor: `${theme.primary}55` }}
       >
-        <button
-          onClick={() => navigate(-1)}
-          className={`${buttonGhostClass} text-sm w-fit`}
-        >
-          ← Torna alla stanza
-        </button>
-        <div>
-          <p className={eyebrowClass}>Thread</p>
-          <h1 className={`${pageTitleClass} mt-1 text-2xl`}>
-            {thread.title}
-          </h1>
-          <p className="text-xs text-slate-500 mt-2">
-            {threadRoom?.name ?? 'Stanza'} • {personaLabel}
-          </p>
-        </div>
+        <p className="text-[11px] text-slate-500">
+          Stanza &gt; {threadRoom?.name ?? 'Stanza'} &gt; {thread.title}
+        </p>
+        <h1 className={`${pageTitleClass} mt-1 text-2xl`}>
+          {thread.title}
+        </h1>
+        <p className="text-sm text-slate-400">
+          Avviato da {personaLabel} ·{' '}
+          {repliesCount === 1
+            ? '1 risposta'
+            : `${repliesCount} risposte`}
+          {lastReplyText ? ` · Ultima risposta ${lastReplyText}` : ''}
+        </p>
       </header>
 
       <section className="space-y-4">
-        <div
-          className={`${cardBaseClass} p-4 sm:p-5 border`}
-          style={{ borderColor: `${theme.primary}55` }}
-        >
-          <p className={`${eyebrowClass} mb-3`}>Radice del thread</p>
-          <PostComposer
-            parentId={null}
-            onSubmit={handleNewPost}
-            accentGradient={accentGradient}
-          />
+        <div className="space-y-3">
+          {rootNode ? (
+            <div className="space-y-3">
+              <PostNode
+                post={rootNode.post}
+                label="Post iniziale"
+                actions={
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                    <button
+                      type="button"
+                      className={`${buttonGhostClass} px-3 py-1 text-xs`}
+                      onClick={() => setReplyingToRoot((prev) => !prev)}
+                    >
+                      Rispondi
+                    </button>
+                    <button
+                      type="button"
+                      className={`${buttonGhostClass} px-3 py-1 text-xs`}
+                      onClick={handleCopyLink}
+                    >
+                      Copia link
+                    </button>
+                  </div>
+                }
+              />
+              {replyingToRoot && (
+                <div className="pl-1">
+                  <PostComposer
+                    parentId={rootNode.post.id}
+                    onSubmit={(payload) => {
+                      handleNewPost(payload);
+                      setReplyingToRoot(false);
+                    }}
+                    accentGradient={accentGradient}
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}>
+              <p className={eyebrowClass}>Post iniziale</p>
+              <p className={bodyTextClass}>
+                Non c&apos;è ancora un post iniziale. Scrivi tu per avviare la conversazione.
+              </p>
+              <PostComposer
+                parentId={null}
+                onSubmit={handleNewPost}
+                accentGradient={accentGradient}
+              />
+            </div>
+          )}
         </div>
 
-        <div className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}>
-          <p className={eyebrowClass}>Risposte</p>
-          {treeRoot.length === 0 ? (
+        <div className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
+          <div className="space-y-1">
+            <p className={eyebrowClass}>Risposte</p>
+            <p className="text-xs text-slate-500">
+              {repliesCount > 0
+                ? `${repliesCount} ${
+                    repliesCount === 1 ? 'risposta' : 'risposte'
+                  } in questa discussione`
+                : 'Nessuna risposta ancora. Inizia tu la conversazione.'}
+            </p>
+          </div>
+
+          {firstLevelReplies.length === 0 ? (
             <p className={bodyTextClass}>
-              Nessuna risposta ancora. Aggiungi un ramo e porta avanti la conversazione.
+              Scrivi una risposta per far partire la discussione.
             </p>
           ) : (
             <div className="space-y-4">
-              {treeRoot.map((node) => (
-                <ThreadTreeNode
+              {firstLevelReplies.map((node) => (
+                <ReplyItem
                   key={node.post.id}
                   node={node}
                   onReply={handleNewPost}
                   accentGradient={accentGradient}
                   depth={0}
-                  showNoRepliesNote={isOnlyRoot}
                 />
               ))}
             </div>
@@ -160,52 +235,87 @@ function buildTree(posts) {
   return roots;
 }
 
-function ThreadTreeNode({
-  node,
-  onReply,
-  accentGradient,
-  depth = 0,
-  showNoRepliesNote = false,
-}) {
+function formatRelativeTime(date) {
+  const now = Date.now();
+  const diffMs = now - date.getTime();
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return 'poco fa';
+  if (minutes < 60) return `${minutes} min fa`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h fa`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}g fa`;
+  const weeks = Math.floor(days / 7);
+  return `${weeks} sett fa`;
+}
+
+function ReplyItem({ node, onReply, accentGradient, depth = 0, parentAuthor }) {
   const { post, children } = node;
-  const composerIndent = Math.min(depth + 1, 4) * 0.55;
+  const [showReplies, setShowReplies] = useState(false);
+  const [isReplying, setIsReplying] = useState(false);
+  const hasChildren = children.length > 0;
+  const visualDepth = Math.min(depth, 2);
+  const spacingClass =
+    visualDepth > 0
+      ? 'mt-2 border-l border-slate-800 pl-3 sm:pl-4 space-y-2'
+      : 'space-y-2';
 
   return (
-    <div className="space-y-2">
+    <div className={spacingClass}>
       <PostNode
         post={post}
-        depth={depth}
-        childrenNodes={
-          children.length > 0 && (
-            <div className="space-y-2">
-              {children.map((child) => (
-                <ThreadTreeNode
-                  key={child.post.id}
-                  node={child}
-                  onReply={onReply}
-                  accentGradient={accentGradient}
-                  depth={depth + 1}
-                />
-              ))}
-            </div>
-          )
+        parentAuthor={depth > 0 ? parentAuthor : undefined}
+        actions={
+          <div className="flex flex-wrap items-center gap-2 text-[12px] text-slate-400">
+            <button
+              type="button"
+              className={`${buttonSecondaryClass} px-3 py-1 text-xs`}
+              onClick={() => setIsReplying((prev) => !prev)}
+            >
+              Rispondi
+            </button>
+            {hasChildren && (
+              <button
+                type="button"
+                className={`${buttonGhostClass} px-3 py-1 text-xs`}
+                onClick={() => setShowReplies((prev) => !prev)}
+              >
+                {showReplies
+                  ? 'Nascondi risposte'
+                  : `${children.length} risposte a questo messaggio`}
+              </button>
+            )}
+          </div>
         }
       />
-      {showNoRepliesNote && depth === 0 && (
-        <p className="mt-3 text-xs text-slate-400">
-          Nessuna risposta ancora. Scrivi la prima risposta per far partire il ramo.
-        </p>
+
+      {isReplying && (
+        <div className="pt-1">
+          <PostComposer
+            parentId={post.id}
+            onSubmit={(payload) => {
+              onReply(payload);
+              setIsReplying(false);
+            }}
+            accentGradient={accentGradient}
+          />
+        </div>
       )}
-      <div
-        className="pt-1"
-        style={{ marginLeft: `${composerIndent}rem` }}
-      >
-        <PostComposer
-          parentId={post.id}
-          onSubmit={onReply}
-          accentGradient={accentGradient}
-        />
-      </div>
+
+      {hasChildren && showReplies && (
+        <div className="mt-2 space-y-2">
+          {children.map((child) => (
+            <ReplyItem
+              key={child.post.id}
+              node={child}
+              onReply={onReply}
+              accentGradient={accentGradient}
+              depth={depth + 1}
+              parentAuthor={post.author}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
