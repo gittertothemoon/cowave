@@ -9,25 +9,69 @@ import {
   pageTitleClass,
 } from '../components/ui/primitives.js';
 
-const featureCards = [
+const howItWorksSteps = [
   {
-    title: 'Stanze tematiche',
-    bullets: ['Segui solo gli spazi che ti servono.', 'Apri stanze nuove con regole chiare.'],
+    title: 'Scegli le tue stanze',
+    description:
+      'Seleziona gli argomenti che ti interessano durante l’onboarding: ogni stanza è un contesto chiaro, non un miscuglio di tutto.',
   },
   {
-    title: 'Thread ad albero',
-    bullets: ['Conversazioni a rami, non un feed infinito.', 'Apri solo i rami che ti interessano.'],
+    title: 'Segui i thread',
+    description:
+      'Ogni discussione nasce da un post iniziale e le risposte sono organizzate in modo leggibile, senza alberi incomprensibili.',
   },
   {
-    title: 'Feed sotto controllo',
-    bullets: ['Persona e preset scelti prima di entrare.', 'Comfort, bilanciato o crescita: decidi tu.'],
+    title: 'Partecipa alle conversazioni',
+    description:
+      'Scrivi risposte, manda “onde” ai messaggi che ti colpiscono e, quando serve, allega una foto per dare più contesto.',
   },
 ];
 
 const differencePoints = [
-  'Ogni thread ha un inizio e una chiusura: niente scroll senza fine.',
-  'La tua persona attiva è sempre visibile e modificabile.',
-  'Algoritmo trasparente: preset chiari e slider sempre revocabili.',
+  {
+    title: 'Niente feed a caso',
+    description:
+      'Non ti perdi in video e post random. Entri in stanze con un tema chiaro e thread con un inizio e una fine.',
+  },
+  {
+    title: 'Thread leggibili, non muri di testo',
+    description:
+      'Post iniziale in alto, risposte sotto, repliche leggermente rientrate con “Risposte a questo messaggio”. Capisci subito chi sta rispondendo a chi.',
+  },
+  {
+    title: 'Strumenti per non farti risucchiare',
+    description:
+      'Dalla pagina “Strumenti avanzati” puoi gestire la tua esperienza: sessioni mindful, controlli dell’algoritmo e altre funzioni per usare il social con la testa, non in automatico.',
+  },
+];
+
+const featureCards = [
+  {
+    title: 'Stanze a tema',
+    description:
+      'Spazi dedicati a un argomento specifico, dove i thread non si perdono nel rumore di tutto il resto.',
+  },
+  {
+    title: 'Thread ad albero, ma semplici',
+    description:
+      'La struttura è intelligente, ma tu vedi solo “Post iniziale”, “Risposte” e “Risposte a questo messaggio”. Nessun gergo tecnico, nessun grafico di nodi.',
+  },
+  {
+    title: 'Risposte con foto',
+    description:
+      'Quando serve, puoi allegare un’immagine alle tue risposte per spiegarti meglio o raccontare una situazione.',
+  },
+  {
+    title: 'Onde al posto dei like',
+    description:
+      'Ti è piaciuto un messaggio? Non lo “liki”. Gli mandi un’onda. È il modo di CoWave per dire: “Questo mi è arrivato”.',
+  },
+];
+
+const audienceList = [
+  'Per chi è stufo di feed infiniti e vuole conversazioni più ordinate.',
+  'Per chi preferisce discutere per stanze e thread, non per urla nel mucchio.',
+  'Per chi vuole un social che non lo consuma, ma gli restituisce qualcosa.',
 ];
 
 export default function LandingPage() {
@@ -69,11 +113,11 @@ export default function LandingPage() {
                 </span>
               </p>
               <h1 className={`${pageTitleClass} text-3xl sm:text-4xl lg:text-5xl leading-tight`}>
-                CoWave: il social a stanze dove le conversazioni restano chiare.
+                Conversazioni chiare, una stanza alla volta.
               </h1>
               <p className={`${bodyTextClass} text-base sm:text-lg max-w-2xl`}>
-                Entra in stanze tematiche, segui i thread come rami e decidi tu che tipo
-                di contenuti arrivano nel feed.
+                CoWave è un social a stanze: scegli gli argomenti che ti interessano,
+                segui thread leggibili e rispondi senza affogare nel caos dei commenti.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <Link
@@ -82,76 +126,141 @@ export default function LandingPage() {
                 >
                   Inizia ora
                 </Link>
-                <Link
-                  to="/auth/login"
+                <a
+                  href="#come-funziona"
                   className={`${buttonSecondaryClass} w-full sm:w-auto`}
                 >
-                  Accedi
-                </Link>
+                  Guarda come funziona
+                </a>
               </div>
+              <p className="text-sm text-slate-400 max-w-xl">
+                Niente spam, niente feed infinito a caso. Solo stanze, thread e risposte
+                chiare.
+              </p>
             </div>
 
             <div className="relative w-full">
               <div className="absolute -inset-12 bg-gradient-to-tr from-accent/25 via-purple-500/20 to-fuchsia-500/25 blur-3xl opacity-60 animate-pulse-soft" />
-              <div className={`${cardBaseClass} relative p-4 sm:p-5 space-y-5`}>
+              <div className={`${cardBaseClass} relative p-4 sm:p-5 space-y-4`}>
                 <p className={eyebrowClass}>
-                  Tre passi e sei dentro
+                  Dentro CoWave
                 </p>
-                <ol className="space-y-3 text-sm text-slate-200 list-decimal list-inside">
-                  <li>Seleziona 1–3 stanze curate.</li>
-                  <li>Indica la persona con cui vuoi apparire.</li>
-                  <li>Imposta il preset del feed: Comfort, Bilanciato o Crescita.</li>
-                </ol>
-                <p className="text-[12px] text-slate-400">
-                  Trovi solo i thread generati dalle stanze che segui, senza feed infinito.
+                <h3 className="text-xl font-semibold text-white">
+                  Stanze, thread e onde.
+                </h3>
+                <ul className="space-y-2 text-base text-slate-200">
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent text-sm mt-0.5">✺</span>
+                    <span>Entra solo nelle stanze che scegli tu.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent text-sm mt-0.5">✺</span>
+                    <span>I thread restano leggibili: post iniziale, risposte e repliche.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent text-sm mt-0.5">✺</span>
+                    <span>Manda un’onda ai messaggi che ti colpiscono.</span>
+                  </li>
+                </ul>
+                <p className="text-[13px] text-slate-400">
+                  Niente feed infinito: muoviti tra stanze curate e conversazioni finite,
+                  senza rumore di fondo.
                 </p>
               </div>
             </div>
           </section>
 
-          <section className="space-y-6">
-            <div className="text-center space-y-2">
-              <p className={eyebrowClass}>Cosa trovi dentro</p>
+          <section id="come-funziona" className="space-y-8">
+            <div className="text-center space-y-3">
+              <p className={eyebrowClass}>In 3 step</p>
               <h2 className={`${pageTitleClass} text-3xl`}>
-                Conversazioni ordinate, feed intenzionale
+                Come funziona CoWave
               </h2>
-              <p className={`${bodyTextClass} max-w-2xl mx-auto`}>
-                Stanze, thread ad albero e controllo dell’algoritmo. Gli strumenti più
-                tecnici restano separati per non sporcare il feed.
+              <p className={`${bodyTextClass} text-base max-w-3xl mx-auto`}>
+                Invece di buttarti in un feed infinito, ti muovi tra stanze chiare e thread
+                facili da seguire.
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-3">
-              {featureCards.map((card) => (
+              {howItWorksSteps.map((card, index) => (
                 <article
                   key={card.title}
-                  className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}
+                  className={`${cardBaseClass} h-full p-4 sm:p-5 lg:p-6 space-y-3`}
                 >
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-500">
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                    Step {index + 1}
+                  </div>
                   <p className="text-lg font-semibold text-white">
                     {card.title}
                   </p>
-                  <ul className="space-y-1.5 text-sm text-slate-300">
-                    {card.bullets.map((bullet) => (
-                      <li key={bullet} className="flex items-start gap-2">
-                        <span className="text-accent mt-[2px] text-xs">✺</span>
-                        <span>{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <p className="text-base text-slate-300 leading-relaxed">
+                    {card.description}
+                  </p>
                 </article>
               ))}
             </div>
           </section>
 
-          <section className={`${cardBaseClass} p-5 sm:p-6 space-y-4`}>
-            <p className={eyebrowClass}>Perché è diverso</p>
-            <h3 className="text-2xl font-semibold text-white">
-              Conversazioni più intenzionali, meno rumore
-            </h3>
-            <ul className="space-y-2 text-sm text-slate-300">
+          <section className="space-y-8">
+            <div className="text-center space-y-3">
+              <p className={eyebrowClass}>Perché CoWave è diverso</p>
+              <h3 className={`${pageTitleClass} text-3xl`}>
+                Perché non è l’ennesimo social caotico
+              </h3>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
               {differencePoints.map((point) => (
-                <li key={point} className="flex items-start gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent mt-1.5" />
-                  <span>{point}</span>
+                <article key={point.title} className={`${cardBaseClass} h-full p-4 sm:p-5 lg:p-6 space-y-2`}>
+                  <p className="text-lg font-semibold text-white">
+                    {point.title}
+                  </p>
+                  <p className="text-base text-slate-300 leading-relaxed">
+                    {point.description}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-8">
+            <div className="text-center space-y-3">
+              <p className={eyebrowClass}>Cosa trovi dentro</p>
+              <h3 className={`${pageTitleClass} text-3xl`}>
+                Cosa trovi dentro CoWave
+              </h3>
+              <p className={`${bodyTextClass} text-base max-w-3xl mx-auto`}>
+                Le funzioni sono semplici e mirate: stanze tematiche, thread chiari e strumenti
+                pensati per parlare meglio, non per tenerti incollato.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {featureCards.map((card) => (
+                <article
+                  key={card.title}
+                  className={`${cardBaseClass} h-full p-4 sm:p-5 lg:p-6 space-y-2`}
+                >
+                  <p className="text-lg font-semibold text-white">
+                    {card.title}
+                  </p>
+                  <p className="text-base text-slate-300 leading-relaxed">
+                    {card.description}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className={`${cardBaseClass} p-5 sm:p-6 space-y-4 max-w-5xl mx-auto`}>
+            <p className={eyebrowClass}>Per chi è</p>
+            <h3 className="text-2xl font-semibold text-white">
+              Per chi è CoWave
+            </h3>
+            <ul className="space-y-2.5 text-base text-slate-300">
+              {audienceList.map((item) => (
+                <li key={item} className="flex items-start gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent mt-2" />
+                  <span>{item}</span>
                 </li>
               ))}
             </ul>
@@ -159,18 +268,18 @@ export default function LandingPage() {
 
           <section className="max-w-4xl mx-auto text-center space-y-4">
             <h3 className="text-3xl font-semibold text-white">
-              Pronto a entrare in CoWave?
+              Pronto a provare una nuova onda?
             </h3>
             <p className={`${bodyTextClass} text-base`}>
-              Registrati, fai l’onboarding in tre passi e atterra direttamente sul feed
-              delle tue stanze.
+              Entra, scegli le tue stanze e completa il tuo primo thread. Il resto lo
+              scopri strada facendo.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3">
               <Link
                 to="/auth/register"
                 className={`${buttonPrimaryClass} text-base`}
               >
-                Inizia ora
+                Registrati gratis
               </Link>
               <Link
                 to="/auth/login"
@@ -179,6 +288,9 @@ export default function LandingPage() {
                 Accedi
               </Link>
             </div>
+            <p className="text-sm text-slate-400">
+              Puoi uscire quando vuoi, ma forse non ne avrai voglia.
+            </p>
           </section>
         </main>
       </div>
