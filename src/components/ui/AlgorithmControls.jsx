@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { cardBaseClass } from './primitives.js';
 
-export default function AlgorithmControls({ compact }) {
+export default function AlgorithmControls({ compact, framed = true, className = '' }) {
   const [novelty, setNovelty] = useState(60); // nuovo vs familiari
   const [challenge, setChallenge] = useState(55); // quanto ti sfida
   const [lengthPref, setLengthPref] = useState(40); // breve vs lungo
@@ -11,7 +11,7 @@ export default function AlgorithmControls({ compact }) {
 
   if (compact) {
     return (
-      <div className="flex flex-col gap-1.5 text-[10px] bg-slate-950/50 border border-white/10 rounded-2xl px-3 py-2">
+      <div className={`flex flex-col gap-1.5 text-[10px] bg-slate-950/50 border border-white/10 rounded-2xl px-3 py-2 ${className}`}>
         <p className={baseLabelClass}>Algoritmo • sessione</p>
         <div className="flex gap-2">
           <MiniSlider label="Nuovo" value={novelty} onChange={setNovelty} />
@@ -26,9 +26,13 @@ export default function AlgorithmControls({ compact }) {
     );
   }
 
+  const containerClass = framed
+    ? `${cardBaseClass} glass-panel--interactive p-4 sm:p-5 space-y-4 ${className}`
+    : `space-y-4 ${className}`;
+
   return (
-    <div className={`${cardBaseClass} glass-panel--interactive p-4 sm:p-5 space-y-3`}>
-      <div className="flex items-center justify-between">
+    <div className={containerClass}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[10px] uppercase tracking-[0.35em] text-slate-400">
             Algoritmo

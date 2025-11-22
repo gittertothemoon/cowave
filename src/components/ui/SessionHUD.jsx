@@ -16,9 +16,9 @@ export default function SessionHUD({
     <div
       className={`${cardBaseClass} w-full ${
         fullWidth ? '' : 'max-w-sm'
-      } p-4 space-y-3 shadow-glow`}
+      } p-4 sm:p-5 space-y-4 shadow-glow`}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className={eyebrowClass}>Sessione</p>
           <p className="text-sm text-white font-semibold">Focus intenzionale</p>
@@ -28,21 +28,21 @@ export default function SessionHUD({
           Attiva
         </span>
       </div>
-      <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-400">
-        <div className="rounded-2xl border border-white/10 px-3 py-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-400">
+        <div className="rounded-2xl border border-white/10 px-3 py-2 space-y-1.5">
           <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
             Rimanente
           </p>
           <p className="text-base text-white font-semibold">24 min</p>
         </div>
-        <div className="rounded-2xl border border-white/10 px-3 py-2">
+        <div className="rounded-2xl border border-white/10 px-3 py-2 space-y-1.5">
           <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
             Prossima pausa
           </p>
           <p className="text-base text-white font-semibold">8 min</p>
         </div>
       </div>
-      <div className="ticker text-[11px] text-slate-400 border border-white/10 rounded-2xl px-3 py-1.5 bg-slate-950/50">
+      <div className="ticker text-[11px] text-slate-400 border border-white/10 rounded-2xl px-3 py-2 bg-slate-950/50">
         <div className="ticker__inner">
           {tickerMessages.map((msg) => (
             <span key={msg} className="flex items-center gap-2">
@@ -52,7 +52,7 @@ export default function SessionHUD({
           ))}
         </div>
       </div>
-      <div className="flex items-center justify-between text-[11px] text-slate-400">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between text-[11px] text-slate-400">
         <span>Streak mindful</span>
         <span className="text-white font-semibold">5 giorni</span>
       </div>
