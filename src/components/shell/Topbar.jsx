@@ -108,21 +108,18 @@ export default function Topbar({
             </button>
             <Link
               to="/app"
-              className="hidden md:flex items-center gap-2 text-slate-200"
+              className="hidden md:flex items-center gap-2 text-slate-200 -ml-6"
               aria-label="Vai alla home CoWave"
             >
-              <CoWaveLogo size={30} className="-ml-1.5" variant="full" />
+              <CoWaveLogo size={46} className="-ml-2.5" variant="full" />
             </Link>
             <div className="flex flex-1 justify-center md:hidden">
               <Link
                 to="/app"
-                className="flex items-center gap-2 text-slate-100"
+                className="flex items-center text-slate-100"
                 aria-label="Vai alla home CoWave"
               >
-                <CoWaveLogo size={28} variant="icon" />
-                <span className="text-sm font-semibold tracking-tight">
-                  CoWave
-                </span>
+                <CoWaveLogo size={44} variant="icon" />
               </Link>
             </div>
 
