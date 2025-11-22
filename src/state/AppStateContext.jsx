@@ -5,13 +5,32 @@ import {
   threads as initialThreads,
   postsByThread as initialPostsByThread,
 } from '../mockData.js';
+import { ACHIEVEMENT_IDS } from '../features/achievements/achievementsConfig.js';
 
 const AppStateContext = createContext(null);
 const USER_STORAGE_KEY = 'cowave-user';
 const CUSTOM_PERSONAS_KEY = 'cowave-custom-personas';
 const ONBOARDING_KEY = 'cowave:isOnboarded';
 const ONBOARDING_WELCOME_KEY = 'cowave-just-finished-onboarding';
-const defaultUser = { nickname: 'Tu', email: '' };
+const defaultUser = {
+  nickname: 'Tu',
+  email: '',
+  unlockedAchievements: [],
+};
+
+function normalizeUser(user) {
+  const unlocked = Array.isArray(user?.unlockedAchievements)
+    ? user.unlockedAchievements.filter((id) =>
+        ACHIEVEMENT_IDS.includes(id)
+      )
+    : [];
+
+  return {
+    ...defaultUser,
+    ...(user && typeof user === 'object' ? user : {}),
+    unlockedAchievements: [...new Set(unlocked)],
+  };
+}
 
 function getInitialIsOnboarded() {
   if (typeof window === 'undefined') return false;
@@ -27,7 +46,7 @@ export function AppStateProvider({ children }) {
     if (typeof window === 'undefined') return defaultUser;
     try {
       const stored = window.localStorage.getItem(USER_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : defaultUser;
+      return stored ? normalizeUser(JSON.parse(stored)) : defaultUser;
     } catch {
       return defaultUser;
     }
@@ -68,7 +87,7 @@ export function AppStateProvider({ children }) {
     try {
       window.localStorage.setItem(
         USER_STORAGE_KEY,
-        JSON.stringify(currentUser ?? defaultUser)
+        JSON.stringify(normalizeUser(currentUser))
       );
     } catch {
       // ignore storage errors
@@ -114,10 +133,32 @@ export function AppStateProvider({ children }) {
   }, [currentUser?.nickname, customPersonas]);
 
   function updateCurrentUser(updates) {
-    setCurrentUser((prev) => ({
-      ...prev,
-      ...updates,
-    }));
+    setCurrentUser((prev) =>
+      normalizeUser({
+        ...normalizeUser(prev),
+        ...updates,
+      })
+    );
+  }
+
+  function unlockAchievement(achievementId) {
+    if (!ACHIEVEMENT_IDS.includes(achievementId)) return false;
+    let unlocked = false;
+    setCurrentUser((prev) => {
+      const safeUser = normalizeUser(prev);
+      if (safeUser.unlockedAchievements.includes(achievementId)) {
+        return safeUser;
+      }
+      unlocked = true;
+      return {
+        ...safeUser,
+        unlockedAchievements: [
+          ...safeUser.unlockedAchievements,
+          achievementId,
+        ],
+      };
+    });
+    return unlocked;
   }
 
   function addCustomPersona(name, tagline = '') {
@@ -181,6 +222,7 @@ export function AppStateProvider({ children }) {
       branches: 0,
     };
     setThreads((prev) => [newThread, ...prev]);
+    unlockAchievement('FIRST_THREAD');
     return id;
   }
 
@@ -188,6 +230,9 @@ export function AppStateProvider({ children }) {
     threadId,
     { content, parentId = null, personaId, attachments = [] }
   ) {
+    const hasImageAttachment = attachments?.some(
+      (attachment) => attachment?.type === 'image'
+    );
     const newPost = {
       id: `p-${Date.now()}`,
       parentId,
@@ -209,6 +254,13 @@ export function AppStateProvider({ children }) {
         [threadId]: [...existing, newPost],
       };
     });
+
+    if (parentId !== null) {
+      unlockAchievement('FIRST_REPLY');
+      if (hasImageAttachment) {
+        unlockAchievement('FIRST_IMAGE_REPLY');
+      }
+    }
   }
 
   function toggleCommentWave(threadId, commentId) {
@@ -259,6 +311,7 @@ export function AppStateProvider({ children }) {
     } catch {
       // ignore storage errors
     }
+    unlockAchievement('ONBOARDING_DONE');
   }
 
   function resetOnboarding() {
@@ -300,6 +353,7 @@ export function AppStateProvider({ children }) {
       completeOnboarding,
       resetOnboarding,
       updateCurrentUser,
+      unlockAchievement,
       addCustomPersona,
       setFollowedRoomIds,
       setJustFinishedOnboarding,

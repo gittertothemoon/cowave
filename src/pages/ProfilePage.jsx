@@ -7,6 +7,8 @@ import {
   bodyTextClass,
   buttonSecondaryClass,
 } from '../components/ui/primitives.js';
+import { ACHIEVEMENTS } from '../features/achievements/achievementsConfig.js';
+import { useAchievements } from '../features/achievements/useAchievements.js';
 
 const rituals = [
   {
@@ -25,7 +27,9 @@ const rituals = [
 
 export default function ProfilePage({ activePersonaId }) {
   const { personas } = useAppState();
+  const { unlockedSet, unlockedIds } = useAchievements();
   const activePersona = personas.find((p) => p.id === activePersonaId);
+  const unlockedCount = unlockedIds.length;
 
   return (
     <div className="space-y-5">
@@ -99,6 +103,68 @@ export default function ProfilePage({ activePersonaId }) {
               </li>
             ))}
           </ul>
+        </div>
+      </section>
+
+      <section className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className={eyebrowClass}>Traguardi</p>
+            <h2 className={`${pageTitleClass} text-xl`}>
+              Progressi su CoWave
+            </h2>
+            <p className={`${bodyTextClass} text-sm`}>
+              Sblocca badge usando le stanze, rispondendo e completando l’onboarding.
+            </p>
+          </div>
+          <span className="text-[11px] text-slate-300 rounded-full border border-white/10 px-3 py-1 bg-slate-900/60">
+            {unlockedCount}/{ACHIEVEMENTS.length} sbloccati
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {ACHIEVEMENTS.map((achievement) => {
+            const unlocked = unlockedSet.has(achievement.id);
+            return (
+              <div
+                key={achievement.id}
+                className={`rounded-2xl border p-3 sm:p-4 flex flex-col gap-2 transition ${
+                  unlocked
+                    ? 'border-sky-400/60 bg-sky-500/10 shadow-[0_12px_34px_rgba(56,189,248,0.18)]'
+                    : 'border-slate-800 border-dashed bg-slate-950/70 opacity-80'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="h-10 w-10 rounded-xl bg-slate-900/70 border border-white/10 flex items-center justify-center text-lg">
+                    <span aria-hidden="true">
+                      {unlocked ? achievement.icon ?? '🏅' : '🔒'}
+                    </span>
+                  </div>
+                  <span
+                    className={`text-[11px] font-semibold uppercase tracking-[0.14em] rounded-full px-2 py-1 ${
+                      unlocked
+                        ? 'text-emerald-100 bg-emerald-500/15 border border-emerald-400/40'
+                        : 'text-slate-400 bg-slate-900/60 border border-slate-800'
+                    }`}
+                  >
+                    {unlocked ? 'Sbloccato' : 'Bloccato'}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <p
+                    className={`text-sm font-semibold ${
+                      unlocked ? 'text-white' : 'text-slate-200'
+                    }`}
+                  >
+                    {achievement.title}
+                  </p>
+                  <p className="text-[12px] text-slate-400 leading-snug">
+                    {achievement.description}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
     </div>
