@@ -109,6 +109,8 @@ export const postsByThread = {
       createdAt: '2025-11-10T09:00:00Z',
       content:
         'Vorrei un flusso da: SAP → esport BO → normalizzazione → dashboard web con filtri intelligenti.',
+      waveCount: 0,
+      hasWaved: false,
     },
     {
       id: 'p2',
@@ -118,6 +120,8 @@ export const postsByThread = {
       createdAt: '2025-11-10T09:15:00Z',
       content:
         'Potremmo usare un layer di validazione per le AUoM e un simulatore di occupancy integrato.',
+      waveCount: 0,
+      hasWaved: false,
     },
     {
       id: 'p3',
@@ -127,6 +131,8 @@ export const postsByThread = {
       createdAt: '2025-11-10T09:25:00Z',
       content:
         'Mi piace, branchiamo in “simulazione magazzino” come sottothread e vediamo dove ci porta.',
+      waveCount: 0,
+      hasWaved: false,
     },
   ],
   'thread-2': [
@@ -138,6 +144,8 @@ export const postsByThread = {
       createdAt: '2025-11-12T18:30:00Z',
       content:
         'Se potessi spostare slider tipo: %contenuti che mi sfidano vs %comfort, cambierebbe tutto.',
+      waveCount: 0,
+      hasWaved: false,
     },
   ],
 };

@@ -15,7 +15,14 @@ import {
 export default function ThreadPage() {
   const { threadId } = useParams();
   const navigate = useNavigate();
-  const { threads, postsByThread, createPost, rooms, personas } = useAppState();
+  const {
+    threads,
+    postsByThread,
+    createPost,
+    rooms,
+    personas,
+    toggleCommentWave,
+  } = useAppState();
   const [isThreadLoading] = useState(false);
   const [threadError] = useState(null);
   const thread = threads.find((t) => t.id === threadId);
@@ -109,6 +116,10 @@ export default function ThreadPage() {
     }
   }
 
+  function handleToggleWave(postId) {
+    toggleCommentWave(threadId, postId);
+  }
+
   return (
     <div className="space-y-5">
       <header
@@ -137,6 +148,7 @@ export default function ThreadPage() {
               <PostNode
                 post={rootNode.post}
                 label="Post iniziale"
+                onToggleWave={handleToggleWave}
                 actions={
                   <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
                     <button
@@ -208,6 +220,7 @@ export default function ThreadPage() {
                   node={node}
                   onReply={handleNewPost}
                   accentGradient={accentGradient}
+                  onToggleWave={handleToggleWave}
                   depth={0}
                 />
               ))}
@@ -249,7 +262,14 @@ function formatRelativeTime(date) {
   return `${weeks} sett fa`;
 }
 
-function ReplyItem({ node, onReply, accentGradient, depth = 0, parentAuthor }) {
+function ReplyItem({
+  node,
+  onReply,
+  onToggleWave,
+  accentGradient,
+  depth = 0,
+  parentAuthor,
+}) {
   const { post, children } = node;
   const [showReplies, setShowReplies] = useState(false);
   const [isReplying, setIsReplying] = useState(false);
@@ -265,6 +285,7 @@ function ReplyItem({ node, onReply, accentGradient, depth = 0, parentAuthor }) {
       <PostNode
         post={post}
         parentAuthor={depth > 0 ? parentAuthor : undefined}
+        onToggleWave={onToggleWave}
         actions={
           <div className="flex flex-wrap items-center gap-2 text-[12px] text-slate-400">
             <button
@@ -309,6 +330,7 @@ function ReplyItem({ node, onReply, accentGradient, depth = 0, parentAuthor }) {
               key={child.post.id}
               node={child}
               onReply={onReply}
+              onToggleWave={onToggleWave}
               accentGradient={accentGradient}
               depth={depth + 1}
               parentAuthor={post.author}

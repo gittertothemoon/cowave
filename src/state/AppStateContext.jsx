@@ -192,6 +192,8 @@ export function AppStateProvider({ children }) {
       personaId: personaId ?? personas[0]?.id ?? 'dev',
       createdAt: new Date().toISOString(),
       content,
+      waveCount: 0,
+      hasWaved: false,
     };
 
     setPostsByThread((prev) => {
@@ -199,6 +201,33 @@ export function AppStateProvider({ children }) {
       return {
         ...prev,
         [threadId]: [...existing, newPost],
+      };
+    });
+  }
+
+  function toggleCommentWave(threadId, commentId) {
+    setPostsByThread((prev) => {
+      const existing = prev[threadId];
+      if (!existing) return prev;
+      const updated = existing.map((post) => {
+        if (post.id !== commentId) return post;
+        const safeCount = Number.isFinite(post.waveCount)
+          ? post.waveCount
+          : 0;
+        const nextHasWaved = !post.hasWaved;
+        const nextWaveCount = Math.max(
+          0,
+          safeCount + (nextHasWaved ? 1 : -1)
+        );
+        return {
+          ...post,
+          hasWaved: nextHasWaved,
+          waveCount: nextWaveCount,
+        };
+      });
+      return {
+        ...prev,
+        [threadId]: updated,
       };
     });
   }
@@ -260,6 +289,7 @@ export function AppStateProvider({ children }) {
       createRoom,
       createThread,
       createPost,
+      toggleCommentWave,
       setActivePersonaId,
       completeOnboarding,
       resetOnboarding,
