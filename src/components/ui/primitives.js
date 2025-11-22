@@ -19,5 +19,5 @@ export const buttonSecondaryClass = `${buttonBase} px-4 py-2 border border-slate
 export const buttonGhostClass = `${buttonBase} px-3 py-1.5 bg-transparent text-slate-300 hover:text-white hover:bg-slate-900/60`;
 
 export const inputBaseClass =
-  'w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/70 focus:border-sky-500/60 transition-colors';
+  'w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-3.5 py-2.5 text-base text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/70 focus:border-sky-500/60 transition-colors';
 export const labelClass = 'text-xs font-semibold text-slate-300';

@@ -135,7 +135,7 @@ export default function Topbar({
                 <input
                   id="desktop-search"
                   type="search"
-                  className="bg-transparent flex-1 min-w-0 focus:outline-none text-slate-200 placeholder:text-slate-500 text-sm"
+                  className="bg-transparent flex-1 min-w-0 focus:outline-none text-slate-200 placeholder:text-slate-500 text-base"
                   placeholder="Cerca stanze, thread o persone…"
                 />
                 <span className="text-[10px] text-slate-500">ricerca</span>
@@ -266,7 +266,7 @@ export default function Topbar({
                 <input
                   type="search"
                   aria-label="Cerca thread o stanze"
-                  className="bg-transparent flex-1 focus:outline-none text-slate-200 placeholder:text-slate-500 text-sm"
+                  className="bg-transparent flex-1 focus:outline-none text-slate-200 placeholder:text-slate-500 text-base"
                   placeholder="Cerca thread o stanze…"
                 />
               </div>
