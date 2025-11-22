@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import CoWaveLogo from '../components/CoWaveLogo.jsx';
 import {
@@ -29,26 +29,31 @@ export default function AuthPage({ onAuth }) {
 
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [errors, setErrors] = useState({});
+  const [formError, setFormError] = useState('');
+  const nameId = useId();
+  const emailId = useId();
+  const passwordId = useId();
 
   function handleChange(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: '' }));
+    setFormError('');
   }
 
   function validate() {
     const nextErrors = {};
     if (!isLogin && !form.name.trim()) {
-      nextErrors.name = 'Inserisci un nickname.';
+      nextErrors.name = 'Nickname vuoto. Inserisci un nome per continuare.';
     }
     if (!form.email.trim()) {
       nextErrors.email = 'L’email è obbligatoria.';
     } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim())) {
-      nextErrors.email = 'Inserisci un’email valida.';
+      nextErrors.email = 'Email non valida.';
     }
     if (!form.password.trim()) {
       nextErrors.password = 'La password è obbligatoria.';
     } else if (form.password.length < 6) {
-      nextErrors.password = 'La password è troppo corta (minimo 6 caratteri).';
+      nextErrors.password = 'Password troppo corta (minimo 6 caratteri).';
     }
     return nextErrors;
   }
@@ -58,8 +63,10 @@ export default function AuthPage({ onAuth }) {
     const validation = validate();
     if (Object.keys(validation).length > 0) {
       setErrors(validation);
+      setFormError('Correggi i campi evidenziati per continuare.');
       return;
     }
+    setFormError('');
 
     if (!isLogin) {
       resetOnboarding();
@@ -94,12 +101,12 @@ export default function AuthPage({ onAuth }) {
         }}
       />
 
-      <div className="relative w-full max-w-4xl mx-auto grid gap-6 lg:grid-cols-[0.85fr,1.15fr] text-slate-100">
-        <div className={`${cardBaseClass} p-5 sm:p-8 rounded-3xl space-y-4`}>
+      <main className="relative w-full max-w-4xl mx-auto grid gap-6 lg:grid-cols-[0.85fr,1.15fr] text-slate-100">
+        <div className={`${cardBaseClass} p-5 sm:p-6 space-y-4`}>
           <button
             type="button"
             onClick={() => navigate('/')}
-            className={`${buttonSecondaryClass} rounded-full text-xs px-3.5 py-1.5 bg-slate-950/60 border-white/15 w-fit`}
+            className={`${buttonSecondaryClass} rounded-full bg-slate-950/60 w-fit`}
           >
             <span className="text-base leading-none">←</span>
             Torna alla pagina iniziale
@@ -124,51 +131,74 @@ export default function AuthPage({ onAuth }) {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-3 text-sm">
+            {formError && (
+              <div className="rounded-xl border border-red-500/40 bg-red-950/30 px-3 py-2 text-xs text-red-100">
+                {formError}
+              </div>
+            )}
             {!isLogin && (
               <div className="space-y-1">
-                <label className={labelClass}>Nickname</label>
+                <label className={labelClass} htmlFor={nameId}>
+                  Nickname
+                </label>
                 <input
                   type="text"
-                  className={inputBaseClass}
+                  className={`${inputBaseClass} ${
+                    errors.name ? 'border-red-500 focus:ring-red-500/70 focus:border-red-500/70' : ''
+                  }`}
                   value={form.name}
                   onChange={(e) => handleChange('name', e.target.value)}
                   placeholder="Scegli come vuoi apparire su CoWave"
+                  id={nameId}
+                  aria-invalid={Boolean(errors.name)}
                 />
                 {errors.name && (
-                  <p className="text-xs text-rose-300">{errors.name}</p>
+                  <p className="text-xs text-red-400 mt-1">{errors.name}</p>
                 )}
               </div>
             )}
             <div className="space-y-1">
-              <label className={labelClass}>Email</label>
+              <label className={labelClass} htmlFor={emailId}>
+                Email
+              </label>
               <input
                 type="email"
-                className={inputBaseClass}
+                className={`${inputBaseClass} ${
+                  errors.email ? 'border-red-500 focus:ring-red-500/70 focus:border-red-500/70' : ''
+                }`}
                 value={form.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 placeholder="nome@email.com"
+                id={emailId}
+                aria-invalid={Boolean(errors.email)}
               />
               {errors.email && (
-                <p className="text-xs text-rose-300">{errors.email}</p>
+                <p className="text-xs text-red-400 mt-1">{errors.email}</p>
               )}
             </div>
             <div className="space-y-1">
-              <label className={labelClass}>Password</label>
+              <label className={labelClass} htmlFor={passwordId}>
+                Password
+              </label>
               <input
                 type="password"
-                className={inputBaseClass}
+                className={`${inputBaseClass} ${
+                  errors.password ? 'border-red-500 focus:ring-red-500/70 focus:border-red-500/70' : ''
+                }`}
                 value={form.password}
                 onChange={(e) => handleChange('password', e.target.value)}
                 placeholder="Almeno 6 caratteri"
+                id={passwordId}
+                aria-invalid={Boolean(errors.password)}
               />
               {errors.password && (
-                <p className="text-xs text-rose-300">{errors.password}</p>
+                <p className="text-xs text-red-400 mt-1">{errors.password}</p>
               )}
             </div>
 
             <button
               type="submit"
-              className={`${buttonPrimaryClass} w-full mt-2 rounded-2xl py-3 text-base text-white shadow-[0_18px_40px_rgba(56,189,248,0.28)] ring-1 ring-white/10`}
+              className={`${buttonPrimaryClass} w-full mt-2 text-base text-white shadow-[0_18px_40px_rgba(56,189,248,0.28)] ring-1 ring-white/10`}
             >
               {isLogin ? 'Accedi' : 'Registrati'}
             </button>
@@ -179,14 +209,14 @@ export default function AuthPage({ onAuth }) {
             <button
               type="button"
               onClick={() => navigate(isLogin ? '/auth/register' : '/auth/login')}
-              className="text-accent hover:text-accentSoft"
+              className="text-accent hover:text-accentSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded-sm"
             >
               {isLogin ? 'Registrati' : 'Accedi'}
             </button>
           </p>
         </div>
 
-        <div className={`${cardMutedClass} p-5 sm:p-8 rounded-3xl space-y-5`}>
+        <div className={`${cardMutedClass} p-5 sm:p-6 space-y-5`}>
           <p className={eyebrowClass}>Perché CoWave</p>
           <ul className="space-y-3 text-sm text-slate-300">
             {insights.map((item) => (
@@ -205,7 +235,7 @@ export default function AuthPage({ onAuth }) {
             <p>Onboarding: circa 1 minuto. Sessioni consigliate: blocchi da 28 minuti.</p>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -56,7 +56,7 @@ export default function ProfilePage({ activePersonaId }) {
           </div>
           <button
             type="button"
-            className={`${buttonSecondaryClass} text-xs px-4 py-2 rounded-2xl border-white/15`}
+            className={`${buttonSecondaryClass} rounded-full`}
           >
             Personalizza persona
           </button>
@@ -67,7 +67,7 @@ export default function ProfilePage({ activePersonaId }) {
             <p className={eyebrowClass}>Altre personas</p>
             <button
               type="button"
-              className="text-[11px] text-accent hover:text-accentSoft"
+              className="text-[11px] text-accent hover:text-accentSoft rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
             >
               + Aggiungi
             </button>

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppState } from '../state/AppStateContext.jsx';
 import SessionHUD from '../components/ui/SessionHUD.jsx';
 import AlgorithmControls from '../components/ui/AlgorithmControls.jsx';
@@ -23,10 +23,26 @@ const highlightMoments = [
 
 export default function AdvancedToolsPage() {
   const { rooms, followedRoomIds, algorithmPreset } = useAppState();
+  const [toolsError] = useState(null);
+  const [isToolsLoading] = useState(false);
   const followedRooms = useMemo(() => {
-    if (!followedRoomIds.length) return rooms.slice(0, 3);
+    if (!followedRoomIds.length) return [];
     return rooms.filter((room) => followedRoomIds.includes(room.id)).slice(0, 3);
   }, [rooms, followedRoomIds]);
+  const hasRadarEmpty = followedRooms.length === 0;
+
+  if (toolsError) {
+    return (
+      <div className="mt-4 rounded-2xl border border-red-500/40 bg-red-950/20 p-4 text-sm text-red-100">
+        <p className="font-medium">
+          Si è verificato un problema nel caricamento dei contenuti.
+        </p>
+        <p className="mt-1 text-xs text-red-200">
+          Riprova a ricaricare la pagina. Se il problema persiste, segnalalo nella stanza “Feedback CoWave”.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -77,40 +93,59 @@ export default function AdvancedToolsPage() {
         </div>
 
         <aside className="space-y-4">
-          <div className={`${cardBaseClass} p-4 space-y-2`}>
+          <div className={`${cardBaseClass} p-4 sm:p-5 space-y-2`}>
             <p className={eyebrowClass}>Radar stanze</p>
             <p className={bodyTextClass}>
               Ricevi promemoria quando una stanza supera i limiti mindful o
               quando un thread esplode in nuovi rami.
             </p>
-            <ul className="space-y-2 text-sm">
-              {followedRooms.map((room) => (
-                <li
-                  key={room.id}
-                  className="rounded-2xl border border-white/10 px-3 py-2 bg-slate-950/50 flex items-center justify-between gap-2"
-                >
-                  <span className="font-semibold text-white">{room.name}</span>
-                  <span className="text-[11px] text-slate-500">
-                    {room.tags[0] ? `#${room.tags[0]}` : '—'}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            {isToolsLoading ? (
+              <div className="flex items-center justify-center py-6 text-sm text-slate-400">
+                Caricamento in corso...
+              </div>
+            ) : hasRadarEmpty ? (
+              <div className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-xs text-slate-400">
+                Nessun dato ancora disponibile.
+              </div>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {followedRooms.map((room) => (
+                  <li
+                    key={room.id}
+                    className="rounded-2xl border border-white/10 px-3 py-2 bg-slate-950/50 flex items-center justify-between gap-2"
+                  >
+                    <span className="font-semibold text-white">{room.name}</span>
+                    <span className="text-[11px] text-slate-500">
+                      {room.tags[0] ? `#${room.tags[0]}` : '—'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {!isToolsLoading && hasRadarEmpty && (
+              <p className="text-[11px] text-slate-500">
+                Configura questa sezione dalle opzioni qui sopra.
+              </p>
+            )}
           </div>
 
-          <div className={`${cardBaseClass} p-4 space-y-3`}>
+          <div className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}>
             <p className={eyebrowClass}>Azioni veloci</p>
-            <ul className="space-y-2 text-sm">
-              {quickActions.map((action) => (
-                <li
-                  key={action.label}
-                  className="rounded-2xl border border-white/10 px-3 py-2 bg-slate-950/40 flex flex-col"
-                >
-                  <span className="font-semibold text-white">{action.label}</span>
-                  <span className="text-[12px] text-slate-400">{action.desc}</span>
-                </li>
-              ))}
-            </ul>
+            {quickActions.length === 0 ? (
+              <p className="text-xs text-slate-500">Nessun dato ancora disponibile.</p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {quickActions.map((action) => (
+                  <li
+                    key={action.label}
+                    className="rounded-2xl border border-white/10 px-3 py-2 bg-slate-950/40 flex flex-col"
+                  >
+                    <span className="font-semibold text-white">{action.label}</span>
+                    <span className="text-[12px] text-slate-400">{action.desc}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </aside>
       </section>
@@ -118,14 +153,18 @@ export default function AdvancedToolsPage() {
       <section className="grid gap-4 md:grid-cols-2">
         <div className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}>
           <p className={`${eyebrowClass} text-accent`}>Momenti iconici</p>
-          <ul className="space-y-2 text-sm text-slate-300">
-            {highlightMoments.map((moment) => (
-              <li key={moment} className="flex items-start gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-accent mt-1.5" />
-                <span>{moment}</span>
-              </li>
-            ))}
-          </ul>
+          {highlightMoments.length === 0 ? (
+            <p className="text-xs text-slate-500">Nessun dato ancora disponibile.</p>
+          ) : (
+            <ul className="space-y-2 text-sm text-slate-300">
+              {highlightMoments.map((moment) => (
+                <li key={moment} className="flex items-start gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent mt-1.5" />
+                  <span>{moment}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className={`${cardBaseClass} p-4 sm:p-5 space-y-2`}>
           <p className={eyebrowClass}>Rituale quotidiano</p>

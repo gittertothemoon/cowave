@@ -55,6 +55,8 @@ export default function OnboardingPage() {
   const [customPersonaError, setCustomPersonaError] = useState('');
   const selectionLimit = 3;
   const customPersonaFormId = 'custom-persona-form';
+  const focusRingClass =
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
   const nickname =
     currentUser?.nickname?.trim().split(' ')?.[0] || currentUser?.nickname || 'Tu';
 
@@ -123,9 +125,9 @@ export default function OnboardingPage() {
             'radial-gradient(circle at 20% 20%, rgba(56,189,248,0.15), transparent 40%), radial-gradient(circle at 80% 0%, rgba(167,139,250,0.2), transparent 45%)',
         }}
       />
-      <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-8 py-8 flex flex-col gap-8">
+      <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-8 py-8">
         <header
-          className={`${cardBaseClass} flex items-center justify-between flex-wrap gap-4 rounded-3xl px-4 sm:px-5 py-4 shadow-2xl shadow-slate-900/40`}
+          className={`${cardBaseClass} flex items-center justify-between flex-wrap gap-4 p-4 sm:p-5 shadow-2xl shadow-slate-900/40`}
         >
           <div className="flex items-center gap-3">
             <CoWaveLogo size={40} variant="icon" />
@@ -143,7 +145,8 @@ export default function OnboardingPage() {
           </div>
         </header>
 
-        <section className={`${cardBaseClass} p-5 sm:p-6 space-y-4`}>
+        <main className="flex flex-col gap-8 mt-8">
+          <section className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
           <div className="flex items-center justify-between flex-wrap gap-2">
             <p className={eyebrowClass}>Step 1</p>
             <p className="text-xs text-slate-400">
@@ -174,7 +177,7 @@ export default function OnboardingPage() {
                   key={room.id}
                   type="button"
                   onClick={() => toggleRoom(room.id)}
-                  className={`text-left rounded-2xl border px-4 py-4 transition-colors bg-slate-950/60 backdrop-blur ${
+                  className={`text-left rounded-2xl border px-4 py-4 transition-colors bg-slate-950/60 backdrop-blur ${focusRingClass} ${
                     isSelected
                       ? 'border-accent/70 bg-accent/15 shadow-glow'
                       : 'border-white/10 hover:border-white/25'
@@ -219,7 +222,7 @@ export default function OnboardingPage() {
           </div>
         </section>
 
-        <section className={`${cardBaseClass} p-5 sm:p-6 space-y-4`}>
+          <section className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
           <div className={eyebrowClass}>Step 2</div>
           <h2 className={`${pageTitleClass} text-2xl`}>
             Scegli la tua persona iniziale
@@ -236,7 +239,7 @@ export default function OnboardingPage() {
                   key={persona.id}
                   type="button"
                   onClick={() => setSelectedPersonaId(persona.id)}
-                  className={`rounded-2xl border px-4 py-4 text-left transition-colors bg-slate-950/60 ${
+                  className={`rounded-2xl border px-4 py-4 text-left transition-colors bg-slate-950/60 ${focusRingClass} ${
                     isSelected
                       ? 'border-accent/80 bg-accent/15 shadow-glow'
                       : 'border-white/10 hover:border-white/20'
@@ -283,7 +286,7 @@ export default function OnboardingPage() {
                     setShowCustomForm((prev) => !prev);
                     setCustomPersonaError('');
                   }}
-                  className="rounded-full border border-white/10 w-8 h-8 text-lg text-white"
+                  className={`rounded-full border border-white/10 w-8 h-8 text-lg text-white ${focusRingClass}`}
                   aria-expanded={showCustomForm}
                   aria-controls={customPersonaFormId}
                   aria-label="Apri form persona personalizzata"
@@ -322,7 +325,7 @@ export default function OnboardingPage() {
                   <button
                     type="button"
                     onClick={handleCustomPersonaCreate}
-                    className={`${buttonPrimaryClass} w-full text-sm font-semibold rounded-2xl px-3 py-2`}
+                    className={`${buttonPrimaryClass} w-full text-sm font-semibold`}
                   >
                     Salva persona
                   </button>
@@ -332,7 +335,7 @@ export default function OnboardingPage() {
           </div>
         </section>
 
-        <section className={`${cardBaseClass} p-5 sm:p-6 space-y-4`}>
+          <section className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
           <div className={eyebrowClass}>Step 3</div>
           <h2 className={`${pageTitleClass} text-2xl`}>
             Imposta il ritmo del feed
@@ -349,7 +352,7 @@ export default function OnboardingPage() {
                   key={preset.id}
                   type="button"
                   onClick={() => setSelectedPreset(preset.id)}
-                  className={`rounded-2xl border px-4 py-4 text-left transition-colors bg-slate-950/60 ${
+                  className={`rounded-2xl border px-4 py-4 text-left transition-colors bg-slate-950/60 ${focusRingClass} ${
                     isSelected
                       ? 'border-accentBlue/80 bg-accentBlue/15 shadow-glow'
                       : 'border-white/10 hover:border-white/20'
@@ -368,25 +371,26 @@ export default function OnboardingPage() {
           </div>
         </section>
 
-        <footer
-          className={`${cardBaseClass} flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl px-4 sm:px-5 py-4`}
-        >
-          <div className="text-sm text-slate-300">
-            Entrerai nel feed con queste scelte. Tutto resta modificabile.
-          </div>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={!canComplete}
-            className={`w-full sm:w-auto text-center ${
-              canComplete
-                ? `${buttonPrimaryClass} text-white rounded-2xl px-6 py-3`
-                : 'rounded-2xl px-6 py-3 bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800'
-            }`}
+          <footer
+          className={`${cardBaseClass} flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 sm:p-5`}
           >
-            Entra in CoWave
-          </button>
-        </footer>
+            <div className="text-sm text-slate-300">
+              Entrerai nel feed con queste scelte. Tutto resta modificabile.
+            </div>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!canComplete}
+              className={`w-full sm:w-auto text-center ${
+                canComplete
+                  ? `${buttonPrimaryClass} text-white text-base`
+                  : 'rounded-2xl px-4 py-2 bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800'
+              }`}
+            >
+              Entra in CoWave
+            </button>
+          </footer>
+        </main>
       </div>
     </div>
   );

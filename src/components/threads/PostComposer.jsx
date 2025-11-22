@@ -49,7 +49,7 @@ export default function PostComposer({
         <button
           type="submit"
           disabled={isEmpty}
-          className={`${buttonPrimaryClass} text-[11px] px-3 py-2 rounded-2xl shadow-glow w-full sm:w-auto text-center ${
+          className={`${buttonPrimaryClass} shadow-glow w-full sm:w-auto text-center ${
             isEmpty ? 'opacity-60 cursor-not-allowed shadow-none' : ''
           }`}
           style={accentGradient ? { backgroundImage: accentGradient } : undefined}

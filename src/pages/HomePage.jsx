@@ -6,7 +6,6 @@ import CreateRoomModal from '../components/rooms/CreateRoomModal.jsx';
 import {
   buttonPrimaryClass,
   buttonSecondaryClass,
-  buttonGhostClass,
   cardBaseClass,
   cardAccentClass,
   eyebrowClass,
@@ -26,9 +25,11 @@ export default function HomePage() {
   const [showWelcome, setShowWelcome] = useState(justFinishedOnboarding);
   const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
   const feedRef = useRef(null);
+  const [feedError] = useState(null);
+  const [isFeedLoading] = useState(false);
 
   const visibleThreads = useMemo(() => {
-    if (!followedRoomIds.length) return threads;
+    if (!followedRoomIds.length) return [];
     return threads.filter((thread) => followedRoomIds.includes(thread.roomId));
   }, [threads, followedRoomIds]);
 
@@ -43,6 +44,16 @@ export default function HomePage() {
 
   function scrollToFeed() {
     feedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function handleStartThread() {
+    if (nextRoomId) {
+      navigate(`/app/rooms/${nextRoomId}`, {
+        state: { highlightCreateThread: true },
+      });
+    } else {
+      setIsCreateRoomOpen(true);
+    }
   }
 
   function goToRooms() {
@@ -61,7 +72,7 @@ export default function HomePage() {
   return (
     <div className="space-y-5">
       {showWelcome && (
-        <section className={`${cardAccentClass} mb-2 p-4 sm:p-6 space-y-3`}>
+        <section className={`${cardAccentClass} p-4 sm:p-5 space-y-3`}>
           <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.26em] text-sky-100">
@@ -105,7 +116,7 @@ export default function HomePage() {
             <button
               type="button"
               onClick={scrollToFeed}
-              className={`${buttonPrimaryClass} rounded-xl px-4 py-2 text-sm shadow-[0_12px_30px_rgba(56,189,248,0.25)] flex items-center gap-2 transition-transform hover:-translate-y-0.5`}
+              className={`${buttonPrimaryClass} text-sm shadow-[0_12px_30px_rgba(56,189,248,0.25)] flex items-center gap-2 transition-transform hover:-translate-y-0.5`}
             >
               <span>Vai al feed</span>
               <span className="text-xs">↗</span>
@@ -113,7 +124,7 @@ export default function HomePage() {
             <button
               type="button"
               onClick={goToRooms}
-              className={`${buttonSecondaryClass} rounded-xl px-4 py-2 text-sm border-white/20 bg-white/5 text-slate-100 hover:border-accent/60 hover:text-white flex items-center gap-2 transition-transform hover:-translate-y-0.5 hover:shadow-soft`}
+              className={`${buttonSecondaryClass} text-sm flex items-center gap-2 transition-transform hover:-translate-y-0.5 hover:shadow-soft`}
             >
               <span className="text-xs">●</span>
               <span>Vai alle tue stanze</span>
@@ -121,7 +132,7 @@ export default function HomePage() {
             <button
               type="button"
               onClick={dismissWelcome}
-              className="inline-flex items-center text-[11px] text-slate-200 hover:text-white hover:underline underline-offset-4 px-2 py-1 transition-colors"
+              className="inline-flex items-center text-[11px] text-slate-200 hover:text-white hover:underline underline-offset-4 px-2 py-1 transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
             >
               Nascondi messaggio
             </button>
@@ -129,7 +140,7 @@ export default function HomePage() {
         </section>
       )}
 
-      <section className={`${cardBaseClass} mb-4 p-4 sm:p-5`}>
+      <section className={`${cardBaseClass} p-4 sm:p-5`}>
         <p className={`${eyebrowClass} text-[10px] sm:text-[11px]`}>Home</p>
         <h1 className={`${pageTitleClass} mt-1 text-lg sm:text-xl`}>
           Il feed delle tue stanze
@@ -143,7 +154,7 @@ export default function HomePage() {
         <button
           type="button"
           onClick={() => setIsCreateRoomOpen(true)}
-          className={`${buttonPrimaryClass} w-full sm:w-auto sm:ml-auto rounded-2xl px-5 py-2.5 text-white shadow-[0_18px_38px_rgba(56,189,248,0.28)] transition-transform hover:-translate-y-0.5 hover:shadow-[0_20px_45px_rgba(56,189,248,0.35)]`}
+          className={`${buttonPrimaryClass} w-full sm:w-auto sm:ml-auto text-white shadow-[0_18px_38px_rgba(56,189,248,0.28)] transition-transform hover:-translate-y-0.5 hover:shadow-[0_20px_45px_rgba(56,189,248,0.35)]`}
         >
           <span className="text-lg leading-none">＋</span>
           Crea stanza
@@ -161,14 +172,56 @@ export default function HomePage() {
       </div>
 
       <div className="space-y-3" ref={feedRef}>
-        {visibleThreads.length === 0 ? (
-          <div
-            className={`${cardBaseClass} p-5 text-sm text-slate-400`}
-            role="status"
-            aria-live="polite"
-          >
-            Nessun thread dalle stanze che segui. Crea un thread o apri una nuova stanza
-            per far partire la conversazione.
+        {feedError ? (
+          <div className="mt-4 rounded-2xl border border-red-500/40 bg-red-950/20 p-4 text-sm text-red-100">
+            <p className="font-medium">
+              Si è verificato un problema nel caricamento dei contenuti.
+            </p>
+            <p className="mt-1 text-xs text-red-200">
+              Riprova a ricaricare la pagina. Se il problema persiste, segnalalo nella stanza “Feedback CoWave”.
+            </p>
+          </div>
+        ) : isFeedLoading ? (
+          <div className="space-y-3" aria-live="polite" role="status">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <div
+                key={idx}
+                className={`${cardBaseClass} animate-pulse p-4 sm:p-5 space-y-3`}
+              >
+                <div className="h-3 w-32 rounded-full bg-slate-800/60" />
+                <div className="h-5 w-3/4 rounded-full bg-slate-800/60" />
+                <div className="h-4 w-full rounded-full bg-slate-800/50" />
+                <div className="flex gap-2">
+                  <span className="h-6 w-24 rounded-full bg-slate-800/50" />
+                  <span className="h-6 w-28 rounded-full bg-slate-800/40" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : visibleThreads.length === 0 ? (
+          <div className={`${cardBaseClass} p-4 text-sm text-slate-300`}>
+            <p className="font-medium text-slate-100">
+              Nessun thread nel tuo feed
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              Inizia creando il tuo primo thread o esplora nuove stanze.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleStartThread}
+                className={`${buttonPrimaryClass} text-sm`}
+              >
+                Crea thread
+              </button>
+              <button
+                type="button"
+                onClick={goToRooms}
+                className={`${buttonSecondaryClass} text-sm`}
+              >
+                Vai alle stanze
+              </button>
+            </div>
           </div>
         ) : (
           visibleThreads.map((thread) => (

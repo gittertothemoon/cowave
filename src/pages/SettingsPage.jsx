@@ -33,7 +33,7 @@ export default function SettingsPage() {
         </p>
         <Link
           to="/app/settings/esperienza"
-          className={`${buttonSecondaryClass} inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] rounded-2xl border-white/15 px-3 py-1.5`}
+          className={`${buttonSecondaryClass} inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] rounded-full`}
         >
           Vai agli strumenti avanzati →
         </Link>

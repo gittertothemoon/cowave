@@ -27,7 +27,7 @@ export default function AlgorithmControls({ compact }) {
   }
 
   return (
-    <div className={`${cardBaseClass} glass-panel--interactive px-3.5 py-3 space-y-3`}>
+    <div className={`${cardBaseClass} glass-panel--interactive p-4 sm:p-5 space-y-3`}>
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[10px] uppercase tracking-[0.35em] text-slate-400">

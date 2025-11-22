@@ -1,5 +1,5 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useId, useRef, useState } from 'react';
 import ThreadCard from '../components/threads/ThreadCard.jsx';
 import { useAppState } from '../state/AppStateContext.jsx';
 import Modal from '../components/ui/Modal.jsx';
@@ -17,6 +17,7 @@ import {
 export default function RoomPage() {
   const { roomId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { rooms, threads, createThread } = useAppState();
 
   const room = rooms.find((r) => r.id === roomId);
@@ -26,7 +27,14 @@ export default function RoomPage() {
   const [title, setTitle] = useState('');
   const [snippet, setSnippet] = useState('');
   const [energy, setEnergy] = useState('costruttivo');
+  const [threadError, setThreadError] = useState('');
+  const [roomError] = useState(null);
+  const [isRoomLoading] = useState(false);
   const titleInputRef = useRef(null);
+  const titleId = useId();
+  const snippetId = useId();
+  const energyId = useId();
+  const shouldOpenThread = location.state?.highlightCreateThread;
 
   const theme = room?.theme ?? {
     primary: '#a78bfa',
@@ -40,16 +48,6 @@ export default function RoomPage() {
       ? room.tags.slice(0, 2).map((tag) => `#${tag}`).join(' · ')
       : 'Senza tag';
 
-  if (!room) {
-    return (
-      <div>
-        <p className="text-sm text-red-400" role="status" aria-live="assertive">
-          Stanza non trovata.
-        </p>
-      </div>
-    );
-  }
-
   function handleBack() {
     const canGoBack =
       typeof window !== 'undefined' && window.history.length > 2;
@@ -62,18 +60,27 @@ export default function RoomPage() {
 
   function handleCreateThread(e) {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      setThreadError('Inserisci un titolo per il thread.');
+      return;
+    }
     const id = createThread({
       roomId: room.id,
       title: title.trim(),
       rootSnippet: snippet.trim(),
       energy,
     });
+    setThreadError('');
     setTitle('');
     setSnippet('');
     setEnergy('costruttivo');
-    setIsNewThreadOpen(false);
+    closeNewThread();
     navigate(`/app/threads/${id}`);
+  }
+
+  function closeNewThread() {
+    setThreadError('');
+    setIsNewThreadOpen(false);
   }
 
   useEffect(() => {
@@ -83,6 +90,42 @@ export default function RoomPage() {
       }, 0);
     }
   }, [isNewThreadOpen]);
+
+  useEffect(() => {
+    if (shouldOpenThread) {
+      setIsNewThreadOpen(true);
+    }
+  }, [shouldOpenThread]);
+
+  if (roomError) {
+    return (
+      <div className="mt-4 rounded-2xl border border-red-500/40 bg-red-950/20 p-4 text-sm text-red-100">
+        <p className="font-medium">
+          Si è verificato un problema nel caricamento dei contenuti.
+        </p>
+        <p className="mt-1 text-xs text-red-200">
+          Riprova a ricaricare la pagina. Se il problema persiste, segnalalo nella stanza “Feedback CoWave”.
+        </p>
+      </div>
+    );
+  }
+
+  if (!room) {
+    return (
+      <div className={`${cardBaseClass} p-4`}>
+        <p className="text-sm text-red-200" role="status" aria-live="assertive">
+          Stanza non trovata.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate('/app')}
+          className={`${buttonPrimaryClass} mt-3 text-sm`}
+        >
+          Torna al feed
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -97,15 +140,13 @@ export default function RoomPage() {
           <button
             type="button"
             onClick={handleBack}
-            className={`${buttonGhostClass} text-[11px] px-0 py-0 text-left`}
-        >
-          ← Torna al feed
-        </button>
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className={eyebrowClass}>
-              Stanza
-              </p>
+            className={`${buttonGhostClass} text-[11px] text-left`}
+          >
+            ← Torna al feed
+          </button>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className={eyebrowClass}>Stanza</p>
               <h1 className={`${pageTitleClass} text-2xl`}>{room.name}</h1>
               <p className={`${bodyTextClass} mt-1 line-clamp-2`}>
                 {room.description}
@@ -127,7 +168,7 @@ export default function RoomPage() {
             <button
               type="button"
               onClick={() => setIsNewThreadOpen(true)}
-              className={`${buttonPrimaryClass} w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2`}
+              className={`${buttonPrimaryClass} w-full md:w-auto inline-flex items-center justify-center gap-2`}
               style={{ backgroundImage: accentGradient }}
             >
               Crea thread
@@ -144,10 +185,35 @@ export default function RoomPage() {
           </span>
         </div>
 
-        {roomThreads.length === 0 ? (
-          <p className={bodyTextClass}>
-            Nessun thread ancora. Scrivi tu il primo spunto e fai partire la stanza.
-          </p>
+        {isRoomLoading ? (
+          <div className="space-y-3" aria-live="polite" role="status">
+            {Array.from({ length: 2 }).map((_, idx) => (
+              <div
+                key={idx}
+                className={`${cardBaseClass} animate-pulse p-4 space-y-2`}
+              >
+                <div className="h-4 w-1/3 rounded-full bg-slate-800/60" />
+                <div className="h-5 w-3/4 rounded-full bg-slate-800/50" />
+                <div className="h-4 w-full rounded-full bg-slate-800/40" />
+              </div>
+            ))}
+          </div>
+        ) : roomThreads.length === 0 ? (
+          <div className={`${cardBaseClass} p-4 text-sm text-slate-300`}>
+            <p className="font-medium text-slate-100">
+              Nessun thread in questa stanza
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              Crea il primo thread per iniziare la conversazione.
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsNewThreadOpen(true)}
+              className={`${buttonPrimaryClass} mt-3 text-sm`}
+            >
+              Crea thread
+            </button>
+          </div>
         ) : (
           <div className="space-y-4">
             {roomThreads.map((t) => (
@@ -159,7 +225,7 @@ export default function RoomPage() {
 
       <Modal
         open={isNewThreadOpen}
-        onClose={() => setIsNewThreadOpen(false)}
+        onClose={closeNewThread}
         title="Nuovo thread nella stanza"
       >
         <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300 mb-3">
@@ -167,36 +233,53 @@ export default function RoomPage() {
         </div>
         <form onSubmit={handleCreateThread} className="space-y-4 text-slate-100">
           <div className="space-y-1">
-            <label className={labelClass}>Titolo</label>
+            <label className={labelClass} htmlFor={titleId}>
+              Titolo
+            </label>
             <input
               type="text"
               ref={titleInputRef}
-              className={inputBaseClass}
+              className={`${inputBaseClass} ${
+                threadError ? 'border-red-500 focus:border-red-500/70 focus:ring-red-500/70' : ''
+              }`}
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (threadError) setThreadError('');
+              }}
               placeholder="Es. Flusso senza feed, rituali serali…"
               required
+              id={titleId}
             />
+            {threadError && (
+              <p className="text-xs text-red-400 mt-1">{threadError}</p>
+            )}
           </div>
           <div className="space-y-1">
-            <label className={labelClass}>Spunto iniziale</label>
+            <label className={labelClass} htmlFor={snippetId}>
+              Spunto iniziale
+            </label>
             <textarea
               rows={4}
               className={`${inputBaseClass} resize-none`}
               value={snippet}
               onChange={(e) => setSnippet(e.target.value)}
               placeholder="Descrivi il punto di partenza o la tensione che vuoi esplorare…"
+              id={snippetId}
             />
             <p className="text-[11px] text-slate-400">
               2-3 frasi: cosa vuoi esplorare e perché interessa questa stanza.
             </p>
           </div>
           <div className="space-y-1">
-            <label className={labelClass}>Energia del thread</label>
+            <label className={labelClass} htmlFor={energyId}>
+              Energia del thread
+            </label>
             <select
               className={inputBaseClass}
               value={energy}
               onChange={(e) => setEnergy(e.target.value)}
+              id={energyId}
             >
               <option value="costruttivo">Costruttivo</option>
               <option value="riflessivo">Riflessivo</option>
@@ -207,14 +290,14 @@ export default function RoomPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 pt-1">
             <button
               type="button"
-              onClick={() => setIsNewThreadOpen(false)}
-              className={`${buttonGhostClass} w-full sm:w-auto text-sm px-2 py-2`}
+              onClick={closeNewThread}
+              className={`${buttonGhostClass} w-full sm:w-auto text-sm`}
             >
               Annulla
             </button>
             <button
               type="submit"
-              className={`${buttonPrimaryClass} w-full sm:w-auto text-sm px-4 py-2 rounded-2xl text-center`}
+              className={`${buttonPrimaryClass} w-full sm:w-auto text-sm text-center`}
             >
               Crea thread
             </button>

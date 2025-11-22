@@ -10,34 +10,73 @@ export default function Modal({ open, onClose, title, children }) {
   useEffect(() => {
     if (!open) return undefined;
 
-    prevFocusedRef.current = document.activeElement;
-    dialogRef.current?.focus();
+    const dialog = dialogRef.current;
+    const focusableElements = dialog
+      ? Array.from(
+          dialog.querySelectorAll(
+            'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+          )
+        ).filter(
+          (el) =>
+            !el.hasAttribute('aria-hidden') &&
+            (el.offsetParent !== null || el.getClientRects().length > 0)
+        )
+      : [];
+
+    prevFocusedRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     previousOverflowRef.current = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    return () => {
-      if (prevFocusedRef.current && prevFocusedRef.current.focus) {
-        prevFocusedRef.current.focus();
-      }
-      document.body.style.overflow = previousOverflowRef.current;
-    };
-  }, [open]);
+    const firstFocusable = focusableElements[0];
+    const lastFocusable = focusableElements[focusableElements.length - 1];
 
-  useEffect(() => {
-    if (!open) return undefined;
+    (firstFocusable ?? dialog)?.focus();
+
     function handleKeyDown(event) {
       if (event.key === 'Escape') {
         onClose?.();
+        return;
+      }
+
+      if (event.key === 'Tab') {
+        if (focusableElements.length === 0) {
+          event.preventDefault();
+          dialog?.focus();
+          return;
+        }
+
+        if (event.shiftKey) {
+          if (
+            document.activeElement === firstFocusable ||
+            document.activeElement === dialog
+          ) {
+            event.preventDefault();
+            (lastFocusable ?? firstFocusable)?.focus();
+          }
+        } else if (document.activeElement === lastFocusable) {
+          event.preventDefault();
+          (firstFocusable ?? dialog)?.focus();
+        }
       }
     }
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflowRef.current;
+      if (prevFocusedRef.current && prevFocusedRef.current.focus) {
+        prevFocusedRef.current.focus();
+      }
+    };
   }, [open, onClose]);
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center px-3 sm:px-6 py-10 sm:py-14">
+    <div className="fixed inset-0 z-40 flex items-center justify-center px-3 sm:px-5 py-10 sm:py-14 md:py-16">
       <div
         className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
@@ -51,16 +90,17 @@ export default function Modal({ open, onClose, title, children }) {
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className={`pointer-events-auto relative w-full max-w-lg sm:max-w-xl ${cardBaseClass} p-4 sm:p-5 flex flex-col max-h-[82vh] sm:max-h-[80vh] overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60`}
+          className={`pointer-events-auto relative w-full max-w-lg sm:max-w-xl ${cardBaseClass} p-4 sm:p-5 md:p-6 flex flex-col max-h-[75vh] md:max-h-[70vh] overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60`}
         >
           <div className="flex items-center justify-between mb-3 gap-3">
-            <h2 id={titleId} className="text-base font-semibold text-slate-100">
+            <h2 id={titleId} className="text-base font-semibold text-slate-50">
               {title}
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="text-slate-500 hover:text-slate-200 text-sm rounded-md focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-500/60"
+              className="text-slate-500 hover:text-slate-200 text-sm rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+              aria-label="Chiudi"
             >
               ✕
             </button>

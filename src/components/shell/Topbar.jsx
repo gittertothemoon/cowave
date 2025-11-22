@@ -54,7 +54,7 @@ export default function Topbar({
   }, [personaMenuOpen]);
 
   const navLinkBase =
-    'inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap';
+    'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-semibold transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
   const navLinkActive = 'bg-sky-500 text-slate-950 shadow-sm';
   const navLinkInactive =
     'text-slate-400 hover:text-slate-100 hover:bg-slate-900/70';
@@ -88,17 +88,17 @@ export default function Topbar({
   ];
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur">
       <div className="mx-auto w-full max-w-6xl px-3 sm:px-4 lg:px-6">
-        <div className="flex flex-col gap-2 py-2 md:py-0">
-          <div className="flex h-14 items-center gap-2">
+        <div className="flex flex-col gap-2 py-2">
+          <div className="flex h-14 items-center gap-3">
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-xl p-2 text-slate-200 hover:bg-slate-900/70 border border-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 md:hidden transition"
+              className="inline-flex items-center justify-center rounded-xl p-2.5 text-slate-200 hover:bg-slate-900/70 border border-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 md:hidden transition"
               onClick={onToggleSidebar}
-              aria-controls="cowave-sidebar-drawer"
+              aria-controls="sidebar-navigation"
               aria-expanded={isSidebarOpen}
-              aria-label="Apri menu stanze"
+              aria-label="Apri menu di navigazione"
             >
               <div className="space-y-1">
                 <span className="block h-0.5 w-5 bg-slate-200" />
@@ -108,7 +108,7 @@ export default function Topbar({
             </button>
             <Link
               to="/app"
-              className="hidden md:flex items-center gap-2 text-slate-200 -ml-7"
+              className="hidden md:flex items-center gap-2 text-slate-200"
               aria-label="Vai alla home CoWave"
             >
               <CoWaveLogo size={30} className="-ml-1.5" variant="full" />
@@ -126,26 +126,26 @@ export default function Topbar({
               </Link>
             </div>
 
-            <div className="hidden md:flex flex-1 justify-center px-4 lg:px-8">
+            <div className="hidden md:flex flex-1 justify-center px-3 lg:px-8">
               <label
                 htmlFor="desktop-search"
                 className="sr-only"
               >
                 Cerca in CoWave
               </label>
-              <div className="flex w-full max-w-md items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 px-3 py-1.5 text-sm transition focus-within:border-sky-500/60 focus-within:ring-1 focus-within:ring-sky-500/40">
-                <span className="text-slate-500">⌘K</span>
+              <div className="flex w-full max-w-md items-center gap-2 rounded-2xl border border-slate-800 bg-slate-950/70 px-3.5 py-2 text-sm shadow-inner transition focus-within:border-sky-500/60 focus-within:ring-1 focus-within:ring-sky-500/40">
+                <span className="text-xs text-slate-500">⌘K</span>
                 <input
                   id="desktop-search"
                   type="search"
-                  className="bg-transparent flex-1 min-w-0 focus:outline-none text-slate-200 placeholder:text-slate-500 text-base"
+                  className="bg-transparent flex-1 min-w-0 focus:outline-none text-slate-200 placeholder:text-slate-500 text-sm"
                   placeholder="Cerca stanze, thread o persone…"
                 />
                 <span className="text-[10px] text-slate-500">ricerca</span>
               </div>
             </div>
 
-            <div className="ml-auto flex items-center gap-2 md:gap-3 pr-1 sm:pr-2 lg:pr-3">
+            <div className="ml-auto flex items-center gap-2.5 md:gap-3 pr-1 sm:pr-2 lg:pr-3">
               <button
                 type="button"
                 className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-800 bg-slate-900/70 text-slate-300 hover:text-white md:hidden transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70"
@@ -153,7 +153,7 @@ export default function Topbar({
               >
                 <NotificationIcon />
               </button>
-              <nav className="hidden md:flex items-center gap-1">
+              <nav className="hidden md:flex items-center gap-1" aria-label="Navigazione principale">
                 {navItems.map((item) => (
                   <NavLink
                     key={item.label}
@@ -186,7 +186,7 @@ export default function Topbar({
                 <button
                   type="button"
                   onClick={() => setPersonaMenuOpen((prev) => !prev)}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/70 px-2 py-1.5 text-xs hover:border-sky-500/70 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 md:px-2.5"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/70 px-2.5 py-1.5 text-xs hover:border-sky-500/70 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60"
                   aria-haspopup="menu"
                   aria-expanded={personaMenuOpen}
                   aria-controls="persona-menu"
@@ -261,21 +261,21 @@ export default function Topbar({
           </div>
 
           <div className="md:hidden space-y-2 pb-1">
-            <div className="px-0.5">
-              <div className="flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 px-3 py-1.5 text-base transition focus-within:border-sky-500/60 focus-within:ring-1 focus-within:ring-sky-500/40">
+            <div className="px-1">
+              <div className="flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-950/70 px-3.5 py-2 text-sm transition focus-within:border-sky-500/60 focus-within:ring-1 focus-within:ring-sky-500/40">
                 <span className="text-slate-500" aria-hidden="true">
                   🔍
                 </span>
                 <input
                   type="search"
                   aria-label="Cerca thread o stanze"
-                  className="bg-transparent flex-1 focus:outline-none text-slate-200 placeholder:text-slate-500 text-base"
+                  className="bg-transparent flex-1 focus:outline-none text-slate-200 placeholder:text-slate-500 text-sm"
                   placeholder="Cerca thread o stanze…"
                 />
               </div>
             </div>
-            <nav className="px-0.5">
-              <div className="flex gap-2 overflow-x-auto pb-1">
+            <nav className="px-1" aria-label="Navigazione principale mobile">
+              <div className="flex gap-2.5 overflow-x-auto pb-1">
                 {navItems.map((item) => (
                   <NavLink
                     key={`${item.label}-mobile`}

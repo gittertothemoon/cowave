@@ -6,6 +6,7 @@ import {
   cardBaseClass,
   eyebrowClass,
   bodyTextClass,
+  pageTitleClass,
 } from '../components/ui/primitives.js';
 
 const featureCards = [
@@ -43,15 +44,15 @@ export default function LandingPage() {
       <div className="relative z-10">
         <header className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-3 text-slate-200" aria-label="CoWave">
-            <CoWaveLogo size={38} variant="full" />
+            <CoWaveLogo size={72} variant="full" />
           </Link>
           <div className="flex items-center gap-2 text-sm">
-            <Link to="/auth/login" className={`${buttonSecondaryClass} rounded-full`}>
+            <Link to="/auth/login" className={buttonSecondaryClass}>
               Accedi
             </Link>
             <Link
               to="/auth/register"
-              className={`${buttonPrimaryClass} rounded-full`}
+              className={buttonPrimaryClass}
             >
               Inizia ora
             </Link>
@@ -67,23 +68,23 @@ export default function LandingPage() {
                   Accesso su invito
                 </span>
               </p>
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight text-white">
+              <h1 className={`${pageTitleClass} text-3xl sm:text-4xl lg:text-5xl leading-tight`}>
                 CoWave: il social a stanze dove le conversazioni restano chiare.
               </h1>
-              <p className="text-base sm:text-lg text-slate-300 max-w-2xl">
+              <p className={`${bodyTextClass} text-base sm:text-lg max-w-2xl`}>
                 Entra in stanze tematiche, segui i thread come rami e decidi tu che tipo
                 di contenuti arrivano nel feed.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <Link
                   to="/auth/register"
-                  className={`${buttonPrimaryClass} w-full sm:w-auto rounded-3xl px-5 py-3 text-base`}
+                  className={`${buttonPrimaryClass} w-full sm:w-auto text-base`}
                 >
                   Inizia ora
                 </Link>
                 <Link
                   to="/auth/login"
-                  className={`${buttonSecondaryClass} w-full sm:w-auto rounded-3xl px-5 py-3 border-white/15`}
+                  className={`${buttonSecondaryClass} w-full sm:w-auto`}
                 >
                   Accedi
                 </Link>
@@ -92,7 +93,7 @@ export default function LandingPage() {
 
             <div className="relative w-full">
               <div className="absolute -inset-12 bg-gradient-to-tr from-accent/25 via-purple-500/20 to-fuchsia-500/25 blur-3xl opacity-60 animate-pulse-soft" />
-              <div className={`${cardBaseClass} relative rounded-3xl p-5 space-y-5`}>
+              <div className={`${cardBaseClass} relative p-4 sm:p-5 space-y-5`}>
                 <p className={eyebrowClass}>
                   Tre passi e sei dentro
                 </p>
@@ -111,7 +112,7 @@ export default function LandingPage() {
           <section className="space-y-6">
             <div className="text-center space-y-2">
               <p className={eyebrowClass}>Cosa trovi dentro</p>
-              <h2 className="text-3xl font-semibold text-white">
+              <h2 className={`${pageTitleClass} text-3xl`}>
                 Conversazioni ordinate, feed intenzionale
               </h2>
               <p className={`${bodyTextClass} max-w-2xl mx-auto`}>
@@ -123,7 +124,7 @@ export default function LandingPage() {
               {featureCards.map((card) => (
                 <article
                   key={card.title}
-                  className={`${cardBaseClass} p-5 sm:p-6 space-y-3`}
+                  className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}
                 >
                   <p className="text-lg font-semibold text-white">
                     {card.title}
@@ -141,7 +142,7 @@ export default function LandingPage() {
             </div>
           </section>
 
-          <section className={`${cardBaseClass} p-6 sm:p-8 rounded-3xl space-y-4`}>
+          <section className={`${cardBaseClass} p-5 sm:p-6 space-y-4`}>
             <p className={eyebrowClass}>Perché è diverso</p>
             <h3 className="text-2xl font-semibold text-white">
               Conversazioni più intenzionali, meno rumore
@@ -167,13 +168,13 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row justify-center gap-3">
               <Link
                 to="/auth/register"
-                className={`${buttonPrimaryClass} rounded-3xl px-6 py-3 text-base`}
+                className={`${buttonPrimaryClass} text-base`}
               >
                 Inizia ora
               </Link>
               <Link
                 to="/auth/login"
-                className={`${buttonSecondaryClass} rounded-3xl px-6 py-3 border-white/15`}
+                className={`${buttonSecondaryClass} text-base`}
               >
                 Accedi
               </Link>

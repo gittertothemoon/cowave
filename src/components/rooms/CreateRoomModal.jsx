@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import Modal from '../ui/Modal.jsx';
 import { useAppState } from '../../state/AppStateContext.jsx';
 import {
@@ -15,12 +15,19 @@ export default function CreateRoomModal({ open, onClose }) {
   const [description, setDescription] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const [tags, setTags] = useState('');
+  const [nameError, setNameError] = useState('');
+  const nameId = useId();
+  const descriptionId = useId();
+  const tagsId = useId();
 
   const quickTags = ['focus', 'deep talk', 'rituali', 'tecnico', 'creatori'];
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      setNameError('Inserisci un nome per la stanza.');
+      return;
+    }
     createRoom({
       name: name.trim(),
       description: description.trim(),
@@ -30,15 +37,21 @@ export default function CreateRoomModal({ open, onClose }) {
         .map((t) => t.trim())
         .filter(Boolean),
     });
+    setNameError('');
     setName('');
     setDescription('');
     setIsPrivate(false);
     setTags('');
+    handleClose();
+  }
+
+  function handleClose() {
+    setNameError('');
     onClose?.();
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Nuova stanza">
+    <Modal open={open} onClose={handleClose} title="Nuova stanza">
       <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300 mb-3">
         Dai un nome chiaro, una descrizione breve e qualche tag: chi entra saprà il tono
         e l’obiettivo della stanza.
@@ -46,31 +59,46 @@ export default function CreateRoomModal({ open, onClose }) {
 
       <form onSubmit={handleSubmit} className="space-y-4 text-slate-100">
         <div className="space-y-1">
-          <label className={labelClass}>Nome stanza</label>
+          <label className={labelClass} htmlFor={nameId}>
+            Nome stanza
+          </label>
           <input
             type="text"
-            className={inputBaseClass}
+            className={`${inputBaseClass} ${
+              nameError ? 'border-red-500 focus:border-red-500/70 focus:ring-red-500/70' : ''
+            }`}
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (nameError) setNameError('');
+            }}
             placeholder="Es. Creators Lab, Deep Talk…"
             required
+            id={nameId}
+            aria-invalid={Boolean(nameError)}
           />
+          {nameError && (
+            <p className="text-xs text-red-400 mt-1">{nameError}</p>
+          )}
         </div>
         <div className="space-y-1">
-          <label className={labelClass}>Descrizione</label>
+          <label className={labelClass} htmlFor={descriptionId}>
+            Descrizione
+          </label>
           <textarea
             rows={3}
             className={`${inputBaseClass} resize-none`}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Descrivi il tono e gli obiettivi della stanza…"
+            id={descriptionId}
           />
           <p className={`${bodyTextClass} text-[11px] text-slate-400`}>
             Max 1-2 frasi: chi entra deve capire subito ritmo e regole.
           </p>
         </div>
         <div className="space-y-1">
-          <label className={labelClass}>
+          <label className={labelClass} htmlFor={tagsId}>
             Tag (separati da virgola)
           </label>
           <input
@@ -79,6 +107,7 @@ export default function CreateRoomModal({ open, onClose }) {
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             placeholder="es. coding, mindset, rituali"
+            id={tagsId}
           />
           <div className="flex flex-wrap gap-2 text-[11px] text-slate-300 mt-1">
             {quickTags.map((tag) => (
@@ -94,7 +123,8 @@ export default function CreateRoomModal({ open, onClose }) {
                       : tag
                   )
                 }
-                className="rounded-full border border-white/10 bg-slate-900/60 px-2.5 py-1 hover:border-accent/60 transition"
+                className="rounded-full border border-white/10 bg-slate-900/60 px-2.5 py-1 hover:border-accent/60 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                aria-label={`Aggiungi tag ${tag}`}
               >
                 #{tag}
               </button>
@@ -117,14 +147,14 @@ export default function CreateRoomModal({ open, onClose }) {
           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2 gap-2 sm:ml-auto w-full sm:w-auto">
             <button
               type="button"
-              onClick={onClose}
-              className={`${buttonGhostClass} w-full sm:w-auto text-sm px-2 py-2`}
+              onClick={handleClose}
+              className={`${buttonGhostClass} w-full sm:w-auto text-sm`}
             >
               Annulla
             </button>
             <button
               type="submit"
-              className={`${buttonPrimaryClass} w-full sm:w-auto text-sm px-4 py-2 rounded-2xl text-center`}
+              className={`${buttonPrimaryClass} w-full sm:w-auto text-sm text-center`}
             >
               Crea stanza
             </button>

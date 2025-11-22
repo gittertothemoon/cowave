@@ -2,8 +2,14 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useAppState } from '../../state/AppStateContext.jsx';
 import CreateRoomModal from '../rooms/CreateRoomModal.jsx';
+import {
+  buttonPrimaryClass,
+  buttonSecondaryClass,
+  cardBaseClass,
+} from '../ui/primitives.js';
 
 const MOBILE_DRAWER_ID = 'cowave-sidebar-drawer';
+const SIDEBAR_NAV_ID = 'sidebar-navigation';
 
 export default function Sidebar({ variant = 'desktop', open = false, onClose }) {
   const { rooms, followedRoomIds = [] } = useAppState();
@@ -58,7 +64,7 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1.5 text-slate-400 hover:text-white hover:bg-slate-900/60"
+            className="rounded-md p-1.5 text-slate-400 hover:text-white hover:bg-slate-900/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
             aria-label="Chiudi menu"
           >
             ✕
@@ -66,11 +72,13 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
         </div>
       )}
       <nav
-        className={`flex-1 overflow-y-auto px-4 py-5 space-y-7 ${
+        id={isMobile ? SIDEBAR_NAV_ID : undefined}
+        className={`flex-1 overflow-y-auto px-4 py-5 space-y-6 ${
           isMobile ? 'text-sm' : ''
         }`}
+        aria-label="Navigazione principale"
       >
-        <div className="rounded-2xl border border-white/10 px-4 py-4 bg-slate-950/40 space-y-3">
+        <div className={`${cardBaseClass} p-4 space-y-3`}>
           <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
             Strumenti avanzati
           </p>
@@ -80,7 +88,7 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
           <button
             type="button"
             onClick={() => handleNavigate('/app/settings/esperienza')}
-            className="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] text-slate-200 hover:border-accent/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+            className={`${buttonSecondaryClass} rounded-full text-[11px] uppercase tracking-[0.18em]`}
           >
             Apri pagina
           </button>
@@ -94,11 +102,7 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
             <button
               type="button"
               onClick={() => setIsCreateRoomOpen(true)}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-950 px-2.5 py-1 rounded-2xl focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
-              style={{
-                backgroundImage: 'linear-gradient(120deg, #a78bfa, #38bdf8)',
-                boxShadow: '0 10px 25px rgba(15,23,42,0.35)',
-              }}
+              className={`${buttonPrimaryClass} rounded-full`}
             >
               <span className="text-base leading-none">+</span> Crea
             </button>
@@ -112,7 +116,7 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
                       <button
                         type="button"
                         onClick={() => handleNavigate(`/app/rooms/${room.id}`)}
-                        className="w-full text-left px-3 py-2.5 rounded-2xl border transition flex items-start gap-3 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+                        className="w-full text-left px-3 py-2.5 rounded-2xl border transition flex items-start gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                         style={{
                           borderColor: `${accent}40`,
                           boxShadow: `0 0 0 1px ${accent}20`,
@@ -157,7 +161,7 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
                       <button
                         type="button"
                         onClick={() => handleNavigate(`/app/rooms/${room.id}`)}
-                        className="w-full text-left px-3 py-2 rounded-2xl border border-slate-800 bg-slate-950/40 text-xs text-slate-300 hover:border-white/20 transition focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+                        className="w-full text-left px-3 py-2 rounded-2xl border border-slate-800 bg-slate-950/40 text-xs text-slate-300 hover:border-white/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                         style={{
                           boxShadow: `inset 0 0 0 1px ${accent}20`,
                         }}
@@ -189,7 +193,7 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
             <button
               key={link.label}
               type="button"
-              className="w-full flex items-center justify-between text-left text-xs text-slate-400 hover:text-white transition focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/60 rounded-xl px-2 py-1"
+              className="w-full flex items-center justify-between text-left text-xs text-slate-400 hover:text-white hover:bg-slate-900/60 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded-xl px-2.5 py-1.5"
               aria-label={`${link.label}, ${link.hint}`}
             >
               <span>{link.label}</span>
@@ -204,7 +208,10 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose }) 
   return (
     <>
       {variant === 'desktop' && (
-        <aside className="hidden md:flex flex-col w-72 bg-surface/80 border-r border-white/10 backdrop-blur-2xl relative z-30">
+        <aside
+          className="hidden md:flex flex-col w-72 bg-surface/80 border-r border-white/10 backdrop-blur-2xl relative z-30"
+          aria-label="Navigazione principale"
+        >
           {content}
         </aside>
       )}
