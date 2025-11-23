@@ -1,184 +1,227 @@
+import { useMemo } from 'react';
 import { useAppState } from '../state/AppStateContext.jsx';
-import {
-  cardBaseClass,
-  cardMutedClass,
-  eyebrowClass,
-  pageTitleClass,
-  bodyTextClass,
-  buttonSecondaryClass,
-} from '../components/ui/primitives.js';
-import { ACHIEVEMENTS } from '../features/achievements/achievementsConfig.js';
 import { useAchievements } from '../features/achievements/useAchievements.js';
-import AchievementIcon from '../features/achievements/AchievementIcon.jsx';
+import ProfileHeader from '../features/profile/ProfileHeader.jsx';
+import ProfileStatsSection from '../features/profile/ProfileStatsSection.jsx';
+import ProfileAchievementsSection from '../features/profile/ProfileAchievementsSection.jsx';
+import ProfileRoomsSection from '../features/profile/ProfileRoomsSection.jsx';
+import ProfileSettingsSection from '../features/profile/ProfileSettingsSection.jsx';
 
-const rituals = [
-  {
-    title: 'Check mattutino',
-    detail: '3 stanze leggere, 1 thread lungo, timer 18 min.',
-  },
-  {
-    title: 'Sessione coaching',
-    detail: 'Ospita la stanza Deep Talk ogni giovedì.',
-  },
-  {
-    title: 'Detox serale',
-    detail: 'Contenuti intensi off e recap scritto prima di uscire.',
-  },
-];
+const FALLBACK_JOINED_AT = new Date(
+  Date.now() - 1000 * 60 * 60 * 24 * 60
+).toISOString();
 
 export default function ProfilePage({ activePersonaId }) {
-  const { personas } = useAppState();
-  const { unlockedSet, unlockedIds } = useAchievements();
+  const {
+    currentUser,
+    personas,
+    rooms,
+    threads,
+    postsByThread,
+    followedRoomIds,
+  } = useAppState();
+  const { unlockedIds } = useAchievements();
+
+  const displayName = currentUser?.nickname?.trim() || 'Tu';
+  const handle =
+    currentUser?.handle?.trim() ||
+    `@${displayName.toLowerCase().replace(/[^a-z0-9]/gi, '') || 'tu'}`;
+  const bio =
+    currentUser?.bio?.trim() ||
+    'Aggiungi una breve descrizione su come vuoi usare CoWave.';
+  const joinedAt = currentUser?.joinedAt || FALLBACK_JOINED_AT;
+  const joinedLabel = formatJoinedLabel(joinedAt);
   const activePersona = personas.find((p) => p.id === activePersonaId);
-  const unlockedCount = unlockedIds.length;
+  const personaLabel = activePersona?.title || activePersona?.label;
+
+  const userData = useMemo(
+    () => deriveUserData(displayName, threads, postsByThread),
+    [displayName, threads, postsByThread]
+  );
+
+  const roomsWithMeta = useMemo(
+    () =>
+      deriveRoomMeta(
+        rooms,
+        threads,
+        postsByThread,
+        followedRoomIds,
+        userData.isByUser
+      ),
+    [rooms, threads, postsByThread, followedRoomIds, userData.isByUser]
+  );
+
+  const stats = {
+    threadsStarted: userData.userThreads.length,
+    repliesSent: userData.userReplies.length,
+    wavesSent: userData.wavesSent,
+    wavesReceived: userData.wavesReceived,
+  };
+
+  const activity = {
+    threads: buildRecentThreads(userData.userThreads, rooms),
+    replies: buildRecentReplies(userData.userReplies, threads, rooms),
+  };
 
   return (
-    <div className="space-y-5">
-      <header className={`${cardBaseClass} p-4 sm:p-5 space-y-2`}>
-        <p className={eyebrowClass}>Profilo</p>
-        <h1 className={`${pageTitleClass} text-2xl`}>
-          Personas e stanze che curi
-        </h1>
-        <p className={`${bodyTextClass} max-w-2xl`}>
-          Persone diverse per toni diversi. Qui gestisci voce, rituali e prepari i
-          prossimi esperimenti.
-        </p>
-      </header>
+    <main className="max-w-6xl mx-auto px-3 sm:px-6 pt-6 pb-10 space-y-6 sm:space-y-8">
+      <ProfileHeader
+        user={{ displayName, handle, bio, joinedLabel }}
+        personaLabel={personaLabel}
+        stats={stats}
+        followedRoomsCount={roomsWithMeta.length}
+      />
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <div className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
-          <p className={eyebrowClass}>Persona attiva</p>
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-accent to-accentBlue flex items-center justify-center text-sm font-semibold text-slate-950">
-              {activePersona?.label?.[0] ?? 'P'}
-            </div>
-            <div>
-              <p className="text-base font-semibold">{activePersona?.label}</p>
-              <p className="text-[12px] text-slate-400">
-                A breve potrai aggiungere descrizioni dedicate e decidere dove mostrarle.
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            className={`${buttonSecondaryClass} rounded-full`}
-          >
-            Personalizza persona
-          </button>
-        </div>
+      <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1.7fr),minmax(0,1.3fr)] lg:items-start">
+        <ProfileStatsSection stats={stats} activity={activity} />
+        <ProfileAchievementsSection unlocked={unlockedIds} />
+      </div>
 
-        <div className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}>
-          <div className="flex items-center justify-between">
-            <p className={eyebrowClass}>Altre personas</p>
-            <button
-              type="button"
-              className="text-[11px] text-accent hover:text-accentSoft rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
-            >
-              + Aggiungi
-            </button>
-          </div>
-          <ul className="space-y-2 text-sm">
-            {personas.map((p) => (
-              <li
-                key={p.id}
-                className={`${cardMutedClass} px-3 py-2`}
-              >
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <span>{p.label}</span>
-                  <span className="text-[11px] text-slate-500">
-                    Reputazione: in arrivo
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}>
-          <p className={`${eyebrowClass} text-accent`}>Rituali salvati</p>
-          <ul className="space-y-3 text-sm text-slate-300">
-            {rituals.map((ritual) => (
-              <li key={ritual.title} className={`${cardMutedClass} px-3 py-2`}>
-                <p className="font-semibold text-white">{ritual.title}</p>
-                <p className="text-[12px] text-slate-400">{ritual.detail}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <section className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className={eyebrowClass}>Traguardi</p>
-            <h2 className={`${pageTitleClass} text-xl`}>
-              Progressi su CoWave
-            </h2>
-            <p className={`${bodyTextClass} text-sm`}>
-              Sblocca badge usando le stanze, rispondendo e completando l’onboarding.
-            </p>
-          </div>
-          <span className="text-[11px] text-slate-300 rounded-full border border-white/10 px-3 py-1 bg-slate-900/60">
-            {unlockedCount}/{ACHIEVEMENTS.length} sbloccati
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {ACHIEVEMENTS.map((achievement) => {
-            const unlocked = unlockedSet.has(achievement.id);
-            return (
-              <div
-                key={achievement.id}
-                className={`rounded-2xl border p-3 sm:p-4 flex flex-col gap-2 transition ${
-                  unlocked
-                    ? 'border-sky-400/60 bg-sky-500/10 shadow-[0_12px_34px_rgba(56,189,248,0.18)]'
-                    : 'border-slate-800 border-dashed bg-slate-950/70 opacity-80'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div
-                    className={`h-12 w-12 rounded-xl border flex items-center justify-center ${
-                      unlocked
-                        ? 'bg-gradient-to-br from-accent/20 via-accentSoft/20 to-accentBlue/25 border-accent/50 shadow-glow'
-                        : 'bg-slate-900/70 border-slate-800'
-                    }`}
-                  >
-                    <AchievementIcon
-                      achievementId={achievement.id}
-                      className={
-                        unlocked
-                          ? 'h-8 w-8 text-accent'
-                          : 'h-8 w-8 text-slate-500 opacity-40 grayscale'
-                      }
-                    />
-                  </div>
-                  <span
-                    className={`text-[11px] font-semibold uppercase tracking-[0.14em] rounded-full px-2 py-1 ${
-                      unlocked
-                        ? 'text-emerald-100 bg-emerald-500/15 border border-emerald-400/40'
-                        : 'text-slate-400 bg-slate-900/60 border border-slate-800'
-                    }`}
-                  >
-                    {unlocked ? 'Sbloccato' : 'Bloccato'}
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  <p
-                    className={`text-sm font-semibold ${
-                      unlocked ? 'text-white' : 'text-slate-200'
-                    }`}
-                  >
-                    {achievement.title}
-                  </p>
-                  <p className="text-[12px] text-slate-400 leading-snug">
-                    {achievement.description}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-    </div>
+      <ProfileRoomsSection rooms={roomsWithMeta} />
+      <ProfileSettingsSection />
+    </main>
   );
+}
+
+function deriveUserData(displayName, threads, postsByThread) {
+  const nameToken = displayName.trim().toLowerCase();
+  const isByUser = (author) =>
+    !!author && author.trim().toLowerCase() === nameToken;
+
+  const userThreads = threads.filter(
+    (thread) =>
+      isByUser(thread.author) || isByUser(thread.initialPost?.author)
+  );
+
+  const userReplies = [];
+  Object.entries(postsByThread ?? {}).forEach(([threadId, replies]) => {
+    replies.forEach((reply) => {
+      if (isByUser(reply.author)) {
+        userReplies.push({ ...reply, threadId });
+      }
+    });
+  });
+
+  const userInitialPosts = threads
+    .map((thread) => thread.initialPost)
+    .filter((post) => post && isByUser(post.author));
+
+  const allPosts = [
+    ...threads.map((thread) => thread.initialPost).filter(Boolean),
+    ...Object.values(postsByThread ?? {}).flat(),
+  ];
+  const wavesSent = allPosts.filter((post) => post?.hasWaved).length;
+
+  const wavesReceived = [...userInitialPosts, ...userReplies].reduce(
+    (acc, post) => acc + (Number.isFinite(post?.waveCount) ? post.waveCount : 0),
+    0
+  );
+
+  return {
+    isByUser,
+    userThreads,
+    userReplies,
+    wavesSent,
+    wavesReceived,
+  };
+}
+
+function deriveRoomMeta(
+  rooms,
+  threads,
+  postsByThread,
+  followedRoomIds,
+  isByUser
+) {
+  const followedRooms = rooms.filter((room) =>
+    followedRoomIds.includes(room.id)
+  );
+
+  return followedRooms.map((room) => {
+    const roomThreads = threads.filter(
+      (thread) => thread.roomId === room.id
+    );
+    const participationCount = roomThreads.reduce((count, thread) => {
+      const replies = postsByThread?.[thread.id] ?? [];
+      const participated =
+        isByUser(thread.author) ||
+        isByUser(thread.initialPost?.author) ||
+        replies.some((reply) => isByUser(reply.author));
+      return participated ? count + 1 : count;
+    }, 0);
+
+    const timestamps = [];
+    roomThreads.forEach((thread) => {
+      const created = getTimeValue(thread.createdAt);
+      if (created) timestamps.push(created);
+      const initialTime = getTimeValue(thread.initialPost?.createdAt);
+      if (initialTime) timestamps.push(initialTime);
+      (postsByThread?.[thread.id] ?? []).forEach((reply) => {
+        const time = getTimeValue(reply.createdAt);
+        if (time) timestamps.push(time);
+      });
+    });
+
+    const lastActivity =
+      timestamps.length > 0 ? new Date(Math.max(...timestamps)) : null;
+
+    return {
+      ...room,
+      participationCount,
+      lastActivity,
+    };
+  });
+}
+
+function buildRecentThreads(threads, rooms) {
+  return [...threads]
+    .sort(
+      (a, b) =>
+        (getTimeValue(b.createdAt || b.initialPost?.createdAt) ?? 0) -
+        (getTimeValue(a.createdAt || a.initialPost?.createdAt) ?? 0)
+    )
+    .slice(0, 3)
+    .map((thread) => ({
+      id: thread.id,
+      title: thread.title,
+      roomName:
+        rooms.find((room) => room.id === thread.roomId)?.name ||
+        'Stanza',
+      createdAt: thread.createdAt || thread.initialPost?.createdAt,
+    }));
+}
+
+function buildRecentReplies(replies, threads, rooms) {
+  return [...replies]
+    .sort(
+      (a, b) => (getTimeValue(b.createdAt) ?? 0) - (getTimeValue(a.createdAt) ?? 0)
+    )
+    .slice(0, 3)
+    .map((reply) => {
+      const thread = threads.find((t) => t.id === reply.threadId);
+      return {
+        id: reply.id,
+        threadTitle: thread?.title || 'Thread',
+        roomName:
+          rooms.find((room) => room.id === thread?.roomId)?.name ||
+          'Stanza',
+        createdAt: reply.createdAt,
+        preview: reply.content,
+      };
+    });
+}
+
+function getTimeValue(dateLike) {
+  if (!dateLike) return null;
+  const value = new Date(dateLike).getTime();
+  return Number.isNaN(value) ? null : value;
+}
+
+function formatJoinedLabel(dateLike) {
+  const date = new Date(dateLike);
+  if (Number.isNaN(date.getTime())) return 'Ultime settimane';
+  return date.toLocaleDateString('it-IT', {
+    month: 'long',
+    year: 'numeric',
+  });
 }

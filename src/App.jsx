@@ -3,6 +3,7 @@ import LandingPage from './pages/LandingPage.jsx';
 import AuthPage from './pages/AuthPage.jsx';
 import MainLayout from './components/layout/MainLayout.jsx';
 import HomePage from './pages/HomePage.jsx';
+import RoomsOverviewPage from './pages/RoomsOverviewPage.jsx';
 import RoomPage from './pages/RoomPage.jsx';
 import ThreadPage from './pages/ThreadPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
@@ -51,6 +52,10 @@ export default function App() {
           <Route
             index
             element={<HomePage activePersonaId={activePersonaId} />}
+          />
+          <Route
+            path="rooms"
+            element={<RoomsOverviewPage />}
           />
           <Route
             path="rooms/:roomId"

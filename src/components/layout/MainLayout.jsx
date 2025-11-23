@@ -8,6 +8,8 @@ export default function MainLayout({
   onPersonaChange,
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] =
+    useState(false);
 
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? 'hidden' : '';
@@ -28,7 +30,13 @@ export default function MainLayout({
       />
       <div className="noise-overlay" aria-hidden="true" />
       {/* Desktop sidebar */}
-      <Sidebar variant="desktop" />
+      <Sidebar
+        variant="desktop"
+        collapsed={isDesktopSidebarCollapsed}
+        onToggleCollapse={() =>
+          setIsDesktopSidebarCollapsed((prev) => !prev)
+        }
+      />
 
       {/* Mobile sidebar */}
       <Sidebar

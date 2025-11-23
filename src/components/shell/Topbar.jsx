@@ -12,14 +12,8 @@ export default function Topbar({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { personas, rooms, followedRoomIds } = useAppState();
+  const { personas } = useAppState();
   const logout = useLogout();
-
-  const followedRooms = followedRoomIds?.length
-    ? rooms.filter((room) => followedRoomIds.includes(room.id))
-    : rooms;
-  const roomsNavTarget =
-    followedRooms[0]?.id ?? rooms[0]?.id ?? 'room-dev';
 
   const currentPersona =
     personas.find((p) => p.id === activePersonaId) ?? personas[0];
@@ -70,7 +64,7 @@ export default function Topbar({
     },
     {
       label: 'Stanze',
-      to: `/app/rooms/${roomsNavTarget}`,
+      to: '/app/rooms',
       icon: 'rooms',
       match: (path) => path.startsWith('/app/rooms'),
     },
@@ -104,11 +98,11 @@ export default function Topbar({
             </div>
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-xl p-2.5 text-slate-200 hover:bg-slate-900/70 border border-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 md:hidden transition"
-              onClick={onToggleSidebar}
-              aria-controls="sidebar-navigation"
-              aria-expanded={isSidebarOpen}
-              aria-label="Apri menu di navigazione"
+            className="inline-flex items-center justify-center rounded-xl p-2.5 text-slate-200 hover:bg-slate-900/70 border border-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 md:hidden transition"
+            onClick={onToggleSidebar}
+            aria-controls="sidebar-navigation"
+            aria-expanded={isSidebarOpen}
+            aria-label="Apri menu di navigazione"
             >
               <div className="space-y-1">
                 <span className="block h-0.5 w-5 bg-slate-200" />

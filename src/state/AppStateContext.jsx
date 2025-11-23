@@ -12,6 +12,8 @@ const USER_STORAGE_KEY = 'cowave-user';
 const CUSTOM_PERSONAS_KEY = 'cowave-custom-personas';
 const ONBOARDING_KEY = 'cowave:isOnboarded';
 const ONBOARDING_WELCOME_KEY = 'cowave-just-finished-onboarding';
+const FOLLOWED_ROOMS_KEY = 'cowave-followed-rooms';
+const INITIAL_ROOMS_KEY = 'cowave-initial-rooms';
 const defaultUser = {
   nickname: 'Tu',
   email: '',
@@ -60,6 +62,18 @@ function getInitialIsOnboarded() {
   }
 }
 
+function getStoredIds(key) {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = window.localStorage.getItem(key);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 export function AppStateProvider({ children }) {
   const { threadsWithInitialPost, repliesByThread } = useMemo(
     () => normalizeThreads(initialThreads, initialPostsByThread),
@@ -87,8 +101,12 @@ export function AppStateProvider({ children }) {
   const [threads, setThreads] = useState(threadsWithInitialPost);
   const [postsByThread, setPostsByThread] = useState(repliesByThread);
   const [isOnboarded, setIsOnboarded] = useState(getInitialIsOnboarded);
-  const [initialRoomIds, setInitialRoomIds] = useState([]);
-  const [followedRoomIds, setFollowedRoomIds] = useState([]);
+  const [initialRoomIds, setInitialRoomIds] = useState(() =>
+    getStoredIds(INITIAL_ROOMS_KEY)
+  );
+  const [followedRoomIds, setFollowedRoomIds] = useState(() =>
+    getStoredIds(FOLLOWED_ROOMS_KEY)
+  );
   const [primaryPersonaId, setPrimaryPersonaId] = useState(null);
   const [algorithmPreset, setAlgorithmPreset] = useState('balanced');
   const [justFinishedOnboarding, setJustFinishedOnboarding] = useState(() => {
@@ -134,6 +152,30 @@ export function AppStateProvider({ children }) {
       // ignore storage errors
     }
   }, [customPersonas]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        FOLLOWED_ROOMS_KEY,
+        JSON.stringify(followedRoomIds)
+      );
+    } catch {
+      // ignore storage errors
+    }
+  }, [followedRoomIds]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        INITIAL_ROOMS_KEY,
+        JSON.stringify(initialRoomIds)
+      );
+    } catch {
+      // ignore storage errors
+    }
+  }, [initialRoomIds]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -439,6 +481,8 @@ export function AppStateProvider({ children }) {
     try {
       if (typeof window !== 'undefined') {
         window.localStorage.removeItem(ONBOARDING_KEY);
+        window.localStorage.removeItem(FOLLOWED_ROOMS_KEY);
+        window.localStorage.removeItem(INITIAL_ROOMS_KEY);
       }
     } catch {
       // ignore storage errors

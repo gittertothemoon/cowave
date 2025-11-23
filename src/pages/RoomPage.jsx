@@ -50,13 +50,7 @@ export default function RoomPage() {
       : 'Senza tag';
 
   function handleBack() {
-    const canGoBack =
-      typeof window !== 'undefined' && window.history.length > 2;
-    if (canGoBack) {
-      navigate(-1);
-    } else {
-      navigate('/app');
-    }
+    navigate('/app');
   }
 
   function handleCreateThread(e) {
