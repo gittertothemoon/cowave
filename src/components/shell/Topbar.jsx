@@ -58,6 +58,7 @@ export default function Topbar({
   const navLinkActive = 'bg-sky-500 text-slate-950 shadow-sm';
   const navLinkInactive =
     'text-slate-400 hover:text-slate-100 hover:bg-slate-900/70';
+  const personaColorClass = currentPersona?.color ?? 'bg-sky-500';
 
   const navItems = [
     {
@@ -91,14 +92,14 @@ export default function Topbar({
     <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur">
       <div className="mx-auto w-full max-w-6xl px-3 sm:px-4 lg:px-6">
         <div className="flex flex-col gap-2 py-2">
-          <div className="flex h-14 items-center gap-3 relative">
+          <div className="flex h-[4.75rem] md:h-16 items-center gap-3 md:gap-4 relative">
             <div className="absolute inset-0 flex items-center justify-center md:hidden pointer-events-none">
               <Link
                 to="/app"
                 className="pointer-events-auto flex items-center text-slate-100"
                 aria-label="Vai alla home CoWave"
               >
-                <CoWaveLogo size={44} variant="icon" />
+                <CoWaveLogo size={72} variant="icon" />
               </Link>
             </div>
             <button
@@ -117,13 +118,13 @@ export default function Topbar({
             </button>
             <Link
               to="/app"
-              className="hidden md:flex items-center gap-2 text-slate-200 -ml-6"
+              className="hidden md:flex items-center gap-2 text-slate-200 -ml-20 lg:-ml-24"
               aria-label="Vai alla home CoWave"
             >
-              <CoWaveLogo size={46} className="-ml-2.5" variant="full" />
+              <CoWaveLogo size={64} className="-ml-6" variant="full" />
             </Link>
 
-            <div className="hidden md:flex flex-1 justify-center px-3 lg:px-8">
+            <div className="hidden md:flex flex-1 justify-center px-2 lg:px-6">
               <label
                 htmlFor="desktop-search"
                 className="sr-only"
@@ -138,11 +139,33 @@ export default function Topbar({
                   className="bg-transparent flex-1 min-w-0 focus:outline-none text-slate-200 placeholder:text-slate-500 text-base"
                   placeholder="Cerca stanze, thread o persone…"
                 />
-                <span className="text-[10px] text-slate-500">ricerca</span>
               </div>
             </div>
 
-            <div className="ml-auto flex items-center gap-2.5 md:gap-3 pr-1 sm:pr-2 lg:pr-3">
+            <nav className="hidden md:flex items-center gap-1 md:ml-3 lg:ml-4" aria-label="Navigazione principale">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.label}
+                  to={item.to}
+                  end={item.exact}
+                  className={({ isActive }) => {
+                    const active = item.match
+                      ? item.match(location.pathname)
+                      : isActive;
+                    return `${navLinkBase} ${
+                      active ? navLinkActive : navLinkInactive
+                    }`;
+                  }}
+                >
+                  <span className="text-white/80">
+                    <NavItemIcon type={item.icon} />
+                  </span>
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+
+            <div className="ml-auto md:pl-6 lg:pl-10 flex items-center gap-2.5 md:gap-3 pr-2 sm:pr-3 lg:pr-4">
               <button
                 type="button"
                 className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-800 bg-slate-900/70 text-slate-300 hover:text-white md:hidden transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70"
@@ -150,28 +173,6 @@ export default function Topbar({
               >
                 <NotificationIcon />
               </button>
-              <nav className="hidden md:flex items-center gap-1" aria-label="Navigazione principale">
-                {navItems.map((item) => (
-                  <NavLink
-                    key={item.label}
-                    to={item.to}
-                    end={item.exact}
-                    className={({ isActive }) => {
-                      const active = item.match
-                        ? item.match(location.pathname)
-                        : isActive;
-                      return `${navLinkBase} ${
-                        active ? navLinkActive : navLinkInactive
-                      }`;
-                    }}
-                  >
-                    <span className="text-white/80">
-                      <NavItemIcon type={item.icon} />
-                    </span>
-                    {item.label}
-                  </NavLink>
-                ))}
-              </nav>
               <button
                 type="button"
                 className="hidden md:inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-800 bg-slate-900/70 text-slate-300 hover:text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70"
@@ -183,19 +184,21 @@ export default function Topbar({
                 <button
                   type="button"
                   onClick={() => setPersonaMenuOpen((prev) => !prev)}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/70 px-2.5 py-1.5 text-xs hover:border-sky-500/70 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/70 px-2.5 py-1.5 text-xs hover:border-sky-500/70 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 md:min-w-[210px] md:max-w-[210px] md:flex-shrink-0 overflow-hidden"
                   aria-haspopup="menu"
                   aria-expanded={personaMenuOpen}
                   aria-controls="persona-menu"
                 >
-                  <span className="h-7 w-7 rounded-full bg-gradient-to-br from-accent to-accentBlue flex items-center justify-center text-[10px] font-semibold text-slate-950">
+                  <span
+                    className={`h-7 w-7 rounded-full ${personaColorClass} flex items-center justify-center text-[10px] font-semibold text-slate-950 shrink-0 aspect-square`}
+                  >
                     {currentPersona?.label?.[0] ?? 'P'}
                   </span>
-                  <div className="hidden md:block text-left">
+                  <div className="hidden md:block text-left min-w-0">
                     <p className="text-[11px] text-slate-400 leading-tight">
                       Persona attiva
                     </p>
-                    <p className="text-[11px] font-medium">
+                    <p className="text-[11px] font-medium truncate">
                       {currentPersona?.label ?? 'Tu'}
                     </p>
                   </div>
@@ -215,7 +218,7 @@ export default function Topbar({
                           onPersonaChange?.(p.id);
                           setPersonaMenuOpen(false);
                         }}
-                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-white/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
+                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-white/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent overflow-hidden ${
                           p.id === currentPersona?.id
                             ? 'text-accent'
                             : 'text-slate-200'
@@ -223,10 +226,10 @@ export default function Topbar({
                         role="menuitemradio"
                         aria-checked={p.id === currentPersona?.id}
                       >
-                        <span className="h-6 w-6 rounded-full bg-slate-800 flex items-center justify-center text-[10px] uppercase font-semibold">
+                        <span className="h-6 w-6 rounded-full bg-slate-800 flex-shrink-0 aspect-square flex items-center justify-center text-[10px] uppercase font-semibold">
                           {p.label[0]}
                         </span>
-                        <span className="truncate">{p.label}</span>
+                        <span className="truncate whitespace-nowrap min-w-0 max-w-[160px]">{p.label}</span>
                       </button>
                     ))}
                     <button
@@ -257,12 +260,9 @@ export default function Topbar({
             </div>
           </div>
 
-          <div className="md:hidden space-y-2 pb-1">
+          <div className="md:hidden space-y-4 pb-3">
             <div className="px-1">
-              <div className="flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-950/70 px-3.5 py-2 text-sm transition focus-within:border-sky-500/60 focus-within:ring-1 focus-within:ring-sky-500/40">
-                <span className="text-slate-500" aria-hidden="true">
-                  🔍
-                </span>
+              <div className="flex items-center rounded-2xl border border-slate-800 bg-slate-950/70 px-3.5 py-2 text-sm transition focus-within:border-sky-500/60 focus-within:ring-1 focus-within:ring-sky-500/40">
                 <input
                   type="search"
                   aria-label="Cerca thread o stanze"

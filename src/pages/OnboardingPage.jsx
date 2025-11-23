@@ -164,15 +164,15 @@ export default function OnboardingPage() {
       />
       <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-8 py-8">
         <header
-          className={`${cardBaseClass} flex items-center justify-between flex-wrap gap-4 p-4 sm:p-5 shadow-2xl shadow-slate-900/40`}
-        >
-          <div className="flex items-center gap-3">
-            <CoWaveLogo size={40} variant="icon" />
-            <div className="leading-tight">
-              <p className="text-sm font-semibold text-white">CoWave</p>
-              <p className="text-xs text-slate-400">
-                {currentUser?.nickname
-                  ? `${currentUser.nickname}, tre scelte e sei nel feed`
+        className={`${cardBaseClass} flex items-center justify-between flex-wrap gap-4 p-4 sm:p-5 shadow-2xl shadow-slate-900/40`}
+      >
+        <div className="flex items-center gap-3">
+          <CoWaveLogo size={56} variant="icon" />
+          <div className="leading-tight">
+            <p className="text-sm font-semibold text-white">CoWave</p>
+            <p className="text-xs text-slate-400">
+              {currentUser?.nickname
+                ? `${currentUser.nickname}, tre scelte e sei nel feed`
                   : 'Tre scelte e sei nel feed'}
               </p>
             </div>

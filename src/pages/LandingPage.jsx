@@ -12,56 +12,56 @@ import useInView from '../hooks/useInView.js';
 const howItWorksSteps = [
   {
     title: 'Scegli 2–3 stanze che ti assomigliano',
-    description: 'All’iscrizione te ne proponiamo alcune: tieni solo quelle che senti tue.',
+    description: 'Ti proponiamo qualche stanza, tu tieni solo quelle che useresti davvero.',
   },
   {
-    title: 'Entra nei thread e leggi dall’inizio',
-    description: 'Titolo, post iniziale, risposte in ordine. Capisci subito il contesto.',
+    title: 'Apri un thread e leggi dall’inizio',
+    description: 'Titolo, post iniziale, risposte in ordine: sai subito di cosa si parla.',
   },
   {
-    title: 'Rispondi quando hai qualcosa da dire',
-    description: 'Risposte brevi, foto se serve, un’onda quando qualcosa ti colpisce.',
+    title: 'Rispondi solo quando serve',
+    description: 'Scrivi breve, aggiungi una foto se aiuta, manda un’onda quando qualcosa ti colpisce.',
   },
 ];
 
 const differencePoints = [
   {
-    title: 'Apri, leggi, chiudi',
-    description: 'Passi pochi minuti su 2–3 thread. Qui la conversazione finisce, non il feed.',
+    title: 'Pochi minuti ben spesi',
+    description: 'Leggi 2–3 thread e chiudi. Non c’è un feed infinito che ti rincorre.',
   },
   {
-    title: 'Non perdi il filo',
-    description: 'Post iniziale in alto, repliche rientrate. Capisci chi risponde a chi.',
+    title: 'Sempre il filo della discussione',
+    description: 'Post iniziale in alto, repliche rientrate: capisci chi risponde a chi.',
   },
   {
-    title: 'Decidi tu il ritmo',
-    description: 'Sessioni mindful e controlli dell’algoritmo. Sei tu a decidere quando chiudere.',
+    title: 'Tu decidi il ritmo',
+    description: 'Sessioni mindful e notifiche sotto controllo: entri quando vuoi, esci sereno.',
   },
 ];
 
 const featureCards = [
   {
     title: 'Stanze a tema',
-    description: 'Spazi dedicati a un argomento preciso, senza rumore di fondo.',
+    description: 'Ogni stanza parla di una cosa precisa. Zero rumore di fondo.',
   },
   {
     title: 'Thread chiari da seguire',
-    description: 'Titolo, post iniziale e risposte organizzate: tutto leggibile in un colpo d’occhio.',
+    description: 'Titolo, post iniziale, risposte e repliche: tutto leggibile in due secondi.',
   },
   {
     title: 'Risposte con foto',
-    description: 'Quando serve, alleghi una foto per spiegarti meglio.',
+    description: 'Allega immagini solo quando servono per spiegarti meglio.',
   },
   {
-    title: 'Onde al posto dei like',
-    description: 'Niente like generici: mandi un’onda quando un messaggio ti arriva davvero.',
+    title: 'Onde sincere',
+    description: 'Niente like distratti: mandi un’onda quando qualcosa ti arriva davvero.',
   },
 ];
 
 const audienceList = [
-  'Per chi è stufo di feed infiniti e vuole conversazioni più ordinate.',
-  'Per chi preferisce discutere per stanze e thread, non per urla nel mucchio.',
-  'Per chi vuole un social che non lo consuma, ma gli restituisce qualcosa.',
+  'Per chi vuole smettere di scrollare e tornare a parlare.',
+  'Per chi preferisce thread ordinati al caos di un feed.',
+  'Per chi cerca conversazioni brevi, non infinite.',
 ];
 
 const featureVisuals = [
@@ -71,8 +71,8 @@ const featureVisuals = [
     subtitle: 'Solo thread su pause e stacchi',
     tone: 'sky',
     items: [
-      { title: 'Stacchi brevi', text: '12 risposte · +3 onde' },
-      { title: 'Focus timer', text: 'Thread chiuso ieri' },
+      { title: 'Stacchi brevi', text: '12 risposte nuove oggi' },
+      { title: 'Focus timer', text: 'Thread chiuso ieri, lo leggi in ordine' },
     ],
   },
   {
@@ -81,8 +81,8 @@ const featureVisuals = [
     subtitle: 'Capisci il contesto in 5 secondi',
     tone: 'fuchsia',
     items: [
-      { title: 'Post iniziale', text: '“Come stacchi dopo il lavoro?”' },
-      { title: 'Risposte', text: 'Marta · Giada · Elena in ordine' },
+      { title: 'Post iniziale chiaro', text: '“Come stacchi dopo il lavoro?”' },
+      { title: 'Risposte ordinate', text: 'Marta, Giada ed Elena in fila, niente caos' },
     ],
   },
   {
@@ -91,8 +91,8 @@ const featureVisuals = [
     subtitle: 'Foto dentro il thread, non altrove',
     tone: 'emerald',
     items: [
-      { title: 'Anteprima', text: 'Postazione serale · 1 foto' },
-      { title: 'Onde', text: '+8 dopo la foto di Sofia' },
+      { title: 'Anteprima', text: 'Postazione serale · 1 foto allegata' },
+      { title: 'Onde', text: '8 persone hanno mandato un’onda' },
     ],
   },
   {
@@ -101,8 +101,8 @@ const featureVisuals = [
     subtitle: 'Meno like generici, più onde mirate',
     tone: 'amber',
     items: [
-      { title: 'Stanza “Outdoor & foto”', text: '+5 onde in 1 thread' },
-      { title: 'Notifiche', text: 'Solo quando vuoi rispondere' },
+      { title: 'Stanza “Outdoor & foto”', text: '5 onde in un solo thread' },
+      { title: 'Notifiche leggere', text: 'Solo quando vuoi rispondere' },
     ],
   },
 ];
@@ -111,17 +111,17 @@ const uiShots = [
   {
     badge: 'Stanze scelte',
     title: 'Mindful break · Caffè creativo',
-    subtitle: '3 stanze attive oggi',
+    subtitle: 'Oggi segui solo le stanze che hai scelto',
     tone: 'sky',
     items: [
-      { title: 'Stacchi brevi', text: '12 risposte · +3 onde' },
-      { title: 'Outdoor & foto', text: 'Nuova risposta con foto' },
+      { title: 'Stacchi brevi', text: '12 risposte nuove, fai in tempo' },
+      { title: 'Outdoor & foto', text: 'C’è una risposta con foto' },
     ],
   },
   {
     badge: 'Thread',
     title: '“Come stacchi dopo il lavoro?”',
-    subtitle: 'Thread in corso · 12 risposte',
+    subtitle: 'Thread in corso · 12 risposte ordinate',
     tone: 'fuchsia',
     items: [
       { title: 'Marta · Host', text: 'Timer da 20 minuti + tè caldo.' },
@@ -130,7 +130,7 @@ const uiShots = [
   },
   {
     badge: 'Risposta con foto',
-    title: 'Foto allegata da Sofia',
+    title: 'Foto di Sofia',
     subtitle: 'Thread “Telefono spento”',
     tone: 'emerald',
     items: [
@@ -141,7 +141,7 @@ const uiShots = [
   {
     badge: 'Stanza “Outdoor & foto”',
     title: 'Post di Riccardo',
-    subtitle: '2 risposte con immagini',
+    subtitle: 'Due risposte con immagini',
     tone: 'amber',
     items: [
       { title: 'Elena', text: 'Foto del giro in bici.' },
@@ -158,7 +158,7 @@ const storyMoments = [
     tone: 'sky',
     items: [
       { title: 'Sofia', text: 'Mostra la scrivania prima di chiudere tutto.' },
-      { title: 'Teo', text: '“24h offline, guadagnato 1h di sonno.”' },
+      { title: 'Teo', text: '“24h offline, ho guadagnato un’ora di sonno.”' },
     ],
   },
   {
@@ -168,7 +168,7 @@ const storyMoments = [
     tone: 'emerald',
     items: [
       { title: 'Riccardo', text: 'Condivide il percorso e manda onde a chi prova.' },
-      { title: 'Chiara', text: 'Allega foto del sentiero breve.' },
+      { title: 'Chiara', text: 'Allega la foto del sentiero breve.' },
     ],
   },
   {
@@ -221,7 +221,7 @@ const quietPrimaryButton =
 const quietSecondaryButton =
   'inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-slate-100 border border-slate-800 bg-slate-900/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 shadow-none';
 
-function ScreenshotCard({ badge, title, subtitle, items = [], tone = 'sky' }) {
+function ScreenshotCard({ title, subtitle, items = [], tone = 'sky' }) {
   const toneStyle = toneStyles[tone] ?? toneStyles.sky;
 
   return (
@@ -233,11 +233,6 @@ function ScreenshotCard({ badge, title, subtitle, items = [], tone = 'sky' }) {
         aria-hidden="true"
       />
       <div className="relative p-4 space-y-3">
-        {badge ? (
-          <span className="inline-flex items-center rounded-full bg-slate-900/70 px-3 py-1 text-[11px] font-semibold text-slate-100 border border-slate-800">
-            {badge}
-          </span>
-        ) : null}
         <div className="space-y-1">
           <p className="text-sm font-semibold text-white leading-snug">{title}</p>
           <p className="text-xs text-slate-200/80">{subtitle}</p>
@@ -283,7 +278,7 @@ export default function LandingPage() {
       <div className="relative z-10">
         <header className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-3 text-slate-200" aria-label="CoWave">
-            <CoWaveLogo size={72} variant="full" />
+            <CoWaveLogo size={96} variant="full" />
           </Link>
           <div className="flex items-center gap-2 text-sm">
             <Link to="/auth/login" className={quietSecondaryButton}>
@@ -305,15 +300,15 @@ export default function LandingPage() {
               <p className={`${eyebrowClass} inline-flex items-center gap-2 animate-softPulse`}>
                 Beta privata
                 <span className="text-slate-500 text-[10px] tracking-[0.24em]">
-                  Accesso anticipato a chi vuole conversare, non solo scorrere.
+                  Stiamo aprendo a chi preferisce parlare invece di scorrere.
                 </span>
               </p>
               <h1 className={`${pageTitleClass} text-3xl sm:text-4xl lg:text-5xl leading-tight`}>
-                Il social per parlare, non per scorrere.
+                Parla con persone, non con un feed.
               </h1>
               <p className={`${bodyTextClass} text-base sm:text-lg max-w-2xl`}>
-                Poche stanze, thread che finiscono, foto solo quando servono. Apri, leggi,
-                rispondi e richiudi. Fine del feed infinito.
+                Scegli poche stanze che ti somigliano, leggi i thread dall’inizio e chiudi quando hai finito.
+                CoWave ti fa compagnia, non ti trattiene in un loop.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <Link
@@ -364,8 +359,7 @@ export default function LandingPage() {
                 Come funziona CoWave
               </h2>
               <p className={`${bodyTextClass} text-base max-w-3xl mx-auto`}>
-                Poche stanze, thread chiari, risposte brevi. Tutto è pensato per farti chiudere
-                l’app senza sensi di colpa.
+                Poche stanze scelte, thread chiari e risposte brevi: entri, capisci, rispondi e torni al tuo mondo.
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-3">
@@ -397,7 +391,7 @@ export default function LandingPage() {
                 Cosa succede dentro le stanze
               </h3>
               <p className={`${bodyTextClass} text-base max-w-3xl mx-auto`}>
-                Meno parole, più contesto: thread con foto e persone che raccontano la loro giornata.
+                Screenshot di thread veri: foto, risposte brevi e persone che raccontano la loro giornata.
               </p>
             </div>
             <div className="grid gap-5 lg:grid-cols-[1.05fr,0.95fr]">
@@ -508,8 +502,8 @@ export default function LandingPage() {
                 Cosa trovi dentro CoWave
               </h3>
               <p className={`${bodyTextClass} text-base max-w-3xl mx-auto`}>
-                Le funzioni sono poche e mirate: stanze tematiche, thread chiari e
-                strumenti pensati per parlare meglio, non per tenerti incollato allo schermo.
+                Funzioni poche e mirate: stanze tematiche, thread leggibili e strumenti che ti aiutano a parlare meglio,
+                non a restare incollato allo schermo.
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
@@ -577,7 +571,7 @@ export default function LandingPage() {
               Pronto a provare una nuova onda?
             </h3>
             <p className={`${bodyTextClass} text-base`}>
-              Entra, scegli le tue stanze e completa il tuo primo thread. Il resto lo
+              Entra, scegli le tue stanze e chiudi il tuo primo thread. Il resto lo
               scopri strada facendo.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3">
@@ -595,7 +589,7 @@ export default function LandingPage() {
               </Link>
             </div>
             <p className="text-sm text-slate-400">
-              Puoi uscire quando vuoi, ma forse non ne avrai voglia.
+              Puoi uscire quando vuoi: l’idea è proprio questa.
             </p>
           </section>
         </main>

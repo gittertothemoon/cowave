@@ -43,10 +43,10 @@ const heroStates = [
 function RoomsView({ data }) {
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className={eyebrowClass}>{data.headline}</p>
-          <p className="text-sm text-slate-300">{data.subheading}</p>
+          <p className={`${eyebrowClass} text-[10px] sm:text-[11px]`}>{data.headline}</p>
+          <p className="text-xs sm:text-sm text-slate-300">{data.subheading}</p>
         </div>
         <span className="rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[11px] font-semibold text-accent">
           3 nuove
@@ -76,10 +76,10 @@ function RoomsView({ data }) {
 function ThreadView({ data }) {
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className={eyebrowClass}>Thread aperto</p>
-          <p className="text-base font-semibold text-white">{data.title}</p>
+          <p className={`${eyebrowClass} text-[10px] sm:text-[11px]`}>Thread aperto</p>
+          <p className="text-sm sm:text-base font-semibold text-white">{data.title}</p>
         </div>
         <span className="rounded-full border border-slate-800 bg-slate-900/70 px-3 py-1 text-[11px] font-semibold text-slate-200">
           in corso
@@ -119,10 +119,10 @@ function ThreadView({ data }) {
 function ReplyView({ data }) {
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className={eyebrowClass}>Risposta con foto</p>
-          <p className="text-base font-semibold text-white">{data.prompt}</p>
+          <p className={`${eyebrowClass} text-[10px] sm:text-[11px]`}>Risposta con foto</p>
+          <p className="text-sm sm:text-base font-semibold text-white">{data.prompt}</p>
         </div>
         <span className="rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[11px] font-semibold text-accent">
           con foto
@@ -151,15 +151,15 @@ function ReplyView({ data }) {
 
       <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/60 p-3 shadow-inner">
         <p className="text-xs font-semibold text-slate-400">Rispondi nel thread</p>
-        <div className="flex gap-2">
-          <div className="flex-1 rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-slate-400">
+        <div className="flex flex-wrap gap-2">
+          <div className="flex-1 min-w-[180px] rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-slate-400">
             Scrivi una risposta...
           </div>
-          <div className="flex h-14 w-24 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 text-[11px] font-semibold text-slate-300">
+          <div className="flex h-12 w-28 sm:h-14 sm:w-24 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 text-[11px] font-semibold text-slate-300">
             Foto allegata
           </div>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm text-slate-400">
             <span className="text-accent" aria-hidden="true">🌊</span>
             <span>Manda un’onda a chi ti colpisce</span>
@@ -203,10 +203,10 @@ export default function HeroPreview() {
   const activeState = heroStates[activeIndex];
 
   return (
-    <div className="relative w-full pointer-events-none select-none" aria-hidden="true">
-      <div className="rounded-3xl border border-slate-700/70 bg-slate-950/80 p-3 sm:p-4 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-md">
+    <div className="relative w-full max-w-[760px] mx-auto pointer-events-none select-none" aria-hidden="true">
+      <div className="rounded-3xl border border-slate-700/70 bg-slate-950/80 p-3 sm:p-4 lg:p-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-md">
         <div
-          className={`${cardBaseClass} relative overflow-hidden p-4 sm:p-5 space-y-4 h-[420px] sm:h-[500px] lg:h-[520px]`}
+          className={`${cardBaseClass} relative overflow-hidden p-4 sm:p-5 lg:p-6 space-y-3 h-[360px] sm:h-[400px] md:h-[420px] lg:h-[440px]`}
         >
           <div
             aria-hidden="true"

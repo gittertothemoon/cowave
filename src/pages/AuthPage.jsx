@@ -5,7 +5,6 @@ import {
   buttonPrimaryClass,
   buttonSecondaryClass,
   cardBaseClass,
-  cardMutedClass,
   eyebrowClass,
   pageTitleClass,
   bodyTextClass,
@@ -14,12 +13,6 @@ import {
 } from '../components/ui/primitives.js';
 import { useAppState } from '../state/AppStateContext.jsx';
 import { setAuthenticated } from '../utils/auth.js';
-
-const insights = [
-  'Thread ad albero: segui solo i rami che ti servono.',
-  'Preset algoritmo sempre visibili e modificabili.',
-  'Più personas per separare toni e contesti.',
-];
 
 export default function AuthPage({ onAuth }) {
   const location = useLocation();
@@ -101,8 +94,15 @@ export default function AuthPage({ onAuth }) {
         }}
       />
 
-      <main className="relative w-full max-w-4xl mx-auto grid gap-6 lg:grid-cols-[0.85fr,1.15fr] text-slate-100">
-        <div className={`${cardBaseClass} p-5 sm:p-6 space-y-4`}>
+      <main className="relative w-full max-w-xl mx-auto text-slate-100 flex flex-col items-center gap-4">
+        <Link
+          to="/"
+          aria-label="Torna alla landing"
+          className="flex justify-center"
+        >
+          <CoWaveLogo variant="full" size={96} />
+        </Link>
+        <div className={`${cardBaseClass} w-full p-5 sm:p-6 space-y-4`}>
           <button
             type="button"
             onClick={() => navigate('/')}
@@ -111,13 +111,6 @@ export default function AuthPage({ onAuth }) {
             <span className="text-base leading-none">←</span>
             Torna alla pagina iniziale
           </button>
-          <Link
-            to="/"
-            aria-label="Torna alla landing"
-            className="w-full flex justify-center"
-          >
-            <CoWaveLogo variant="full" size={44} />
-          </Link>
           <p className={eyebrowClass}>
             {isLogin ? 'Accesso' : 'Registrazione'}
           </p>
@@ -214,26 +207,6 @@ export default function AuthPage({ onAuth }) {
               {isLogin ? 'Registrati' : 'Accedi'}
             </button>
           </p>
-        </div>
-
-        <div className={`${cardMutedClass} p-5 sm:p-6 space-y-5`}>
-          <p className={eyebrowClass}>Perché CoWave</p>
-          <ul className="space-y-3 text-sm text-slate-300">
-            {insights.map((item) => (
-              <li key={item} className="flex items-start gap-2">
-                <span className="text-accent text-lg leading-none">✺</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="rounded-2xl border border-white/10 px-4 py-3 text-xs text-slate-400 bg-slate-950/50">
-            <p className="text-sm text-white font-semibold">Cosa succede dopo?</p>
-            <p>Ti portiamo all’onboarding. Se è già completato, entri direttamente nel feed delle tue stanze.</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 px-4 py-3 text-xs text-slate-400 bg-slate-950/50">
-            <p className="text-sm text-white font-semibold">Tempo stimato</p>
-            <p>Onboarding: circa 1 minuto. Sessioni consigliate: blocchi da 28 minuti.</p>
-          </div>
         </div>
       </main>
     </div>

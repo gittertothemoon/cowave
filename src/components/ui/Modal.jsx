@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { cardBaseClass } from './primitives.js';
 
 export default function Modal({ open, onClose, title, children }) {
@@ -96,8 +97,11 @@ export default function Modal({ open, onClose, title, children }) {
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center px-3 sm:px-5 py-10 sm:py-14 md:py-16">
+  const modalContent = (
+    <div
+      className="fixed inset-x-0 top-0 z-50 flex min-h-screen items-center justify-center px-3 sm:px-5 py-10 sm:py-14 md:py-16"
+      style={{ minHeight: '100dvh' }}
+    >
       <div
         className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
@@ -111,7 +115,7 @@ export default function Modal({ open, onClose, title, children }) {
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className={`pointer-events-auto relative w-full max-w-lg sm:max-w-xl ${cardBaseClass} p-4 sm:p-5 md:p-6 flex flex-col max-h-[75vh] md:max-h-[70vh] overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60`}
+          className={`pointer-events-auto relative w-full max-w-lg sm:max-w-xl ${cardBaseClass} p-4 sm:p-5 md:p-6 flex flex-col max-h-[80dvh] md:max-h-[70vh] overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60`}
         >
           <div className="flex items-center justify-between mb-3 gap-3">
             <h2 id={titleId} className="text-base font-semibold text-slate-50">
@@ -133,4 +137,6 @@ export default function Modal({ open, onClose, title, children }) {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
