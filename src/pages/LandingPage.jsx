@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CoWaveLogo from '../components/CoWaveLogo.jsx';
 import {
@@ -38,24 +37,9 @@ const roomPills = [
 ];
 
 const threadReplies = [
-  { author: 'Marta · Host', text: 'Timer da 20 minuti, poi chiudo e mando un’onda a chi mi ha aiutata.' },
-  { author: 'Giada', text: 'Passeggiata corta, poi diario. Rispondo nel thread e mi stacco.' },
+  { author: 'Marta · Host', text: 'Timer da 20 minuti, poi chiudo e mando un’onda a chi mi ha risposto.' },
+  { author: 'Giada', text: 'Passeggiata corta, poi diario. Rispondo nel thread e chiudo.' },
   { author: 'Teo', text: 'Stretching e appunti rapidi. Torno quando ho finito, senza perdermi.' },
-];
-
-const modalDetails = [
-  {
-    title: 'Scegli poche stanze',
-    description: 'Segui solo i temi che contano per te e trovi subito dove entrare.',
-  },
-  {
-    title: 'Thread che partono dal post iniziale',
-    description: 'Vedi il post iniziale in alto e chi risponde a chi, senza caos.',
-  },
-  {
-    title: 'Ritmo che decidi tu',
-    description: 'Timer, sessioni mindful e promemoria per chiudere quando vuoi.',
-  },
 ];
 
 function AppPreview() {
@@ -78,16 +62,16 @@ function AppPreview() {
               <p className={`${eyebrowClass} text-[10px] sm:text-[11px] text-slate-200/90`}>
                 Dentro CoWave
               </p>
-              <p className="text-sm text-slate-200/80">Stanze tematiche, thread chiari, risposte senza caos.</p>
+              <p className="text-sm text-slate-200/80">Le stanze che segui, thread chiari, risposte in ordine.</p>
             </div>
           </div>
 
           <div className="space-y-3">
             <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-white">Stanze scelte da te</p>
+                <p className="text-sm font-semibold text-white">Le tue stanze preferite</p>
                 <span className="rounded-lg border border-slate-800 bg-slate-950/70 px-2.5 py-1 text-[11px] text-slate-200">
-                  Solo argomenti che segui
+                  Solo stanze che segui
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -117,7 +101,7 @@ function AppPreview() {
                 </span>
               </div>
               <p className="text-sm text-slate-200 leading-relaxed">
-                Sto provando a ritagliarmi 20 minuti senza schermo per staccare. Idee semplici?
+                Mi ritaglio 20 minuti senza schermo per staccare. Idee semplici?
               </p>
               <div className="space-y-2">
                 {threadReplies.map((reply) => (
@@ -138,7 +122,7 @@ function AppPreview() {
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sky-500/30 bg-sky-500/10 px-3.5 py-2.5">
                 <div className="flex items-center gap-2 text-xs sm:text-sm text-sky-100">
                   <span className="h-2 w-2 rounded-full bg-sky-300" aria-hidden="true" />
-                  Sessione mindful · Timer 20 minuti
+                  Sessione mindful · Timer 20 min
                 </div>
                 <span className="text-[11px] font-semibold text-slate-900 rounded-lg bg-sky-300 px-2 py-1">
                   Uso consapevole
@@ -152,80 +136,7 @@ function AppPreview() {
   );
 }
 
-function InsideModal({ open, onClose }) {
-  if (!open) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-10 bg-slate-950/80 backdrop-blur-sm">
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-slate-900/30 to-slate-950/60" aria-hidden="true" />
-      <div className={`${cardBaseClass} relative w-full max-w-3xl max-h-[calc(100vh-3rem)] overflow-auto p-6 sm:p-7 lg:p-8 space-y-5`}>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className={eyebrowClass}>Uno sguardo dentro CoWave</p>
-            <p className="text-xl font-semibold text-white">Stanze curate, thread chiari, ritmo sereno.</p>
-          </div>
-          <button type="button" className={buttonSecondaryClass} onClick={onClose}>
-            Chiudi
-          </button>
-        </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-2">
-            <p className={`${eyebrowClass} text-[10px] sm:text-[11px]`}>Scorcio stanze</p>
-            <p className="text-sm font-semibold text-white">Scegli le stanze che senti tue.</p>
-            <p className={`${bodyTextClass} text-sm`}>
-              Poche stanze che contano. I badge ti dicono cosa succede prima di entrare.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 space-y-2">
-            <p className={`${eyebrowClass} text-[10px] sm:text-[11px]`}>Thread leggibile</p>
-            <p className="text-sm font-semibold text-white">Post iniziale in alto, repliche rientrate.</p>
-            <p className={`${bodyTextClass} text-sm`}>
-              Vedi il post iniziale, le risposte e le onde in ordine. Chiudi la sessione quando hai finito di leggere.
-            </p>
-          </div>
-        </div>
-        <ul className="space-y-2.5">
-          {modalDetails.map((item) => (
-            <li key={item.title} className="flex items-start gap-3">
-              <span className="mt-1 h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-white">{item.title}</p>
-                <p className={`${bodyTextClass} text-sm`}>{item.description}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-        <div className="flex flex-wrap gap-3 justify-end">
-          <Link to="/auth/register" className={buttonPrimaryClass}>
-            Entra in beta privata
-          </Link>
-          <button type="button" className={buttonSecondaryClass} onClick={onClose}>
-            Torna alla landing
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function LandingPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    const originalBodyOverflow = document.body.style.overflow;
-    const originalHtmlOverflow = document.documentElement.style.overflow;
-    if (isModalOpen) {
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = originalBodyOverflow;
-      document.documentElement.style.overflow = originalHtmlOverflow;
-    };
-  }, [isModalOpen]);
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-50">
@@ -281,18 +192,9 @@ export default function LandingPage() {
                     ))}
                   </ul>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                  <Link to="/auth/register" className={`${buttonPrimaryClass} w-full sm:w-auto text-base`}>
-                    Entra in beta privata
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(true)}
-                    className={`${buttonSecondaryClass} w-full sm:w-auto`}
-                  >
-                    Guarda com’è dentro
-                  </button>
-                </div>
+                <Link to="/auth/register" className={`${buttonPrimaryClass} w-full sm:w-auto text-base`}>
+                  Entra in beta privata
+                </Link>
               </div>
               <div className={`${cardBaseClass} p-4 sm:p-5 space-y-2 lg:-translate-y-6`}>
                 <p className={`${eyebrowClass} text-[10px] sm:text-[11px]`}>È per te se…</p>
@@ -313,8 +215,6 @@ export default function LandingPage() {
           </section>
         </main>
       </div>
-
-      <InsideModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }
