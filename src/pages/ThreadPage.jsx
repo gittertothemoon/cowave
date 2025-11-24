@@ -205,28 +205,34 @@ export default function ThreadPage() {
           : undefined;
       const hasChildReplies = (repliesByParent.get(post.id) ?? []).length;
       const isNested = depth > 0;
+      const isIndented = depth === 1;
+      const isDeepNested = depth > 1;
       const wrapperClass = [
-        'relative space-y-3',
-        isNested ? 'ml-4 pl-4' : '',
+        'relative space-y-3 w-full',
+        isIndented ? 'md:pl-4 md:ml-4' : '',
       ]
         .filter(Boolean)
         .join(' ');
       const cardClass = isNested
-        ? 'rounded-2xl border border-slate-800/60 bg-slate-950/50 p-3'
-        : 'rounded-2xl border border-accent/30 bg-slate-900/70 p-3 shadow-[0_10px_30px_rgba(56,189,248,0.08)]';
+        ? 'w-full rounded-2xl border border-slate-800/60 bg-slate-950/50 p-3'
+        : 'w-full rounded-2xl border border-accent/30 bg-slate-900/70 p-3 shadow-[0_10px_30px_rgba(56,189,248,0.08)]';
 
       return (
         <div key={post.id} className={wrapperClass}>
-          {isNested && (
+          {isIndented && (
             <span
               aria-hidden="true"
-              className="absolute left-1 top-4 bottom-4 w-px bg-gradient-to-b from-accent/60 via-slate-700/80 to-transparent"
+              className="absolute left-1 top-4 bottom-4 w-px bg-gradient-to-b from-accent/60 via-slate-700/80 to-transparent md:left-1"
             />
           )}
           <div className={cardClass}>
             <div className="flex items-center justify-between text-[11px] text-slate-400 mb-2">
               <span className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2 py-0.5 bg-white/5 text-[11px] text-slate-300">
-                {isNested ? 'Risposta a un commento' : 'Risposta al post iniziale'}
+                {isNested
+                  ? isDeepNested
+                    ? 'Risposta nella catena'
+                    : 'Risposta a un commento'
+                  : 'Risposta al post iniziale'}
               </span>
               {hasChildReplies ? (
                 <span className="text-[10px] text-slate-500">
