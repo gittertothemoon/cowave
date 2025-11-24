@@ -210,7 +210,7 @@ export default function Sidebar({
         <div className={`${cardBaseClass} p-4 space-y-4`}>
           <div className="space-y-1">
             <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
-              Apri il thread in
+              Apri un thread in
             </p>
             <div className="flex flex-wrap gap-2">
               {threadRoomChoices.map((room, index) => {
@@ -263,7 +263,7 @@ export default function Sidebar({
           <div>
             <div className="flex items-center justify-between px-1 mb-2">
               <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                Stanze in movimento
+                Stanze attive
               </p>
               <span className="text-[11px] text-slate-500">
                 {repliesLast24h} risposte oggi
@@ -486,6 +486,10 @@ export default function Sidebar({
       <CreateRoomModal
         open={isCreateRoomOpen}
         onClose={() => setIsCreateRoomOpen(false)}
+        onCreated={(roomId) => {
+          setIsCreateRoomOpen(false);
+          handleNavigate(`/app/rooms/${roomId}`);
+        }}
       />
     </>
   );

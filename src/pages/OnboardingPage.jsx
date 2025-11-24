@@ -172,8 +172,8 @@ export default function OnboardingPage() {
             <p className="text-sm font-semibold text-white">CoWave</p>
             <p className="text-xs text-slate-400">
               {currentUser?.nickname
-                ? `${currentUser.nickname}, tre scelte e sei nel feed`
-                  : 'Tre scelte e sei nel feed'}
+                ? `${currentUser.nickname}, costruiamo il tuo primo feed`
+                  : 'Costruiamo il tuo primo feed'}
               </p>
             </div>
           </div>
@@ -191,12 +191,10 @@ export default function OnboardingPage() {
               </p>
             </div>
             <h2 className={`${pageTitleClass} text-2xl`}>
-              Scegli le tue stanze iniziali
+              Scegli le stanze da cui partire
             </h2>
             <p className={bodyTextClass}>
-              Scegli da {minSelection} a {selectionLimit} stanze curate: il feed parte qui e puoi
-              aggiornarle quando vuoi. Abbiamo selezionato tre stanze attive per farti
-              partire.
+              Seleziona da {minSelection} a {selectionLimit} stanze che ti somigliano. Useremo queste per costruire il tuo primo feed e potrai cambiarle quando vuoi dal profilo.
             </p>
             {roomError && (
               <p
@@ -275,11 +273,11 @@ export default function OnboardingPage() {
           <section className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
           <div className={eyebrowClass}>Step 2</div>
           <h2 className={`${pageTitleClass} text-2xl`}>
-            Scegli la tua persona iniziale
+            Scegli come vuoi presentarti
           </h2>
           <p className={bodyTextClass}>
-            {nickname}, con quale tono vuoi apparire nei primi thread? Puoi cambiare o
-            creare nuove personas quando vuoi.
+            {nickname}, con quale tono vuoi parlare nei primi thread? Puoi cambiare o
+            creare nuove personas in ogni momento.
           </p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {personas.map((persona) => {
@@ -388,11 +386,10 @@ export default function OnboardingPage() {
           <section className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
           <div className={eyebrowClass}>Step 3</div>
           <h2 className={`${pageTitleClass} text-2xl`}>
-            Imposta il ritmo del feed
+            Decidi il ritmo del feed
           </h2>
           <p className={bodyTextClass}>
-            Tre preset chiari per dosare comfort, novità e ritmo. Puoi cambiarli in ogni
-            momento dagli Strumenti avanzati.
+            Scegli come vuoi che arrivino i thread: più comfort, più novità o un mix. Potrai regolare questi preset quando vuoi dagli Strumenti avanzati.
           </p>
           <div className="grid gap-3 sm:grid-cols-3">
             {algorithmPresets.map((preset) => {
@@ -425,7 +422,7 @@ export default function OnboardingPage() {
           className={`${cardBaseClass} flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 sm:p-5`}
           >
             <div className="text-sm text-slate-300">
-              Entrerai nel feed con queste scelte. Tutto resta modificabile.
+              Entrerai nel feed con queste impostazioni: potrai modificarle quando vuoi.
             </div>
             <button
               type="button"

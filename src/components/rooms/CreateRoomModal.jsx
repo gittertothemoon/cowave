@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Modal from '../ui/Modal.jsx';
 import { useAppState } from '../../state/AppStateContext.jsx';
 import {
@@ -9,7 +10,8 @@ import {
   bodyTextClass,
 } from '../ui/primitives.js';
 
-export default function CreateRoomModal({ open, onClose }) {
+export default function CreateRoomModal({ open, onClose, onCreated }) {
+  const navigate = useNavigate();
   const { createRoom } = useAppState();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -28,7 +30,7 @@ export default function CreateRoomModal({ open, onClose }) {
       setNameError('Inserisci un nome per la stanza.');
       return;
     }
-    createRoom({
+    const roomId = createRoom({
       name: name.trim(),
       description: description.trim(),
       isPrivate,
@@ -37,6 +39,12 @@ export default function CreateRoomModal({ open, onClose }) {
         .map((t) => t.trim())
         .filter(Boolean),
     });
+    if (roomId) {
+      onCreated?.(roomId);
+      if (!onCreated) {
+        navigate(`/app/rooms/${roomId}`);
+      }
+    }
     setNameError('');
     setName('');
     setDescription('');

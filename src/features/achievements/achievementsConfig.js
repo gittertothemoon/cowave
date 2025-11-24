@@ -21,23 +21,23 @@ export const ACHIEVEMENT_IDS = [
 export const ACHIEVEMENTS = [
   {
     id: 'ONBOARDING_DONE',
-    title: 'Onboarding completato',
-    description: 'Hai scelto stanze, persona e preset per iniziare a navigare.',
+    title: 'Pronto a partire',
+    description: 'Hai scelto stanze, persona e ritmo per costruire il tuo feed.',
   },
   {
     id: 'FIRST_THREAD',
-    title: 'Primo thread',
-    description: 'Hai creato il tuo primo thread in una stanza.',
+    title: 'Primo thread creato',
+    description: 'Hai aperto la tua prima conversazione in una stanza.',
   },
   {
     id: 'FIRST_REPLY',
     title: 'Prima risposta',
-    description: 'Hai partecipato a una discussione con una risposta.',
+    description: 'Hai scritto la tua prima risposta in un thread.',
   },
   {
     id: 'FIRST_IMAGE_REPLY',
     title: 'Risposta con immagine',
-    description: 'Hai allegato un’immagine in una risposta.',
+    description: 'Hai aggiunto un’immagine per dare più contesto.',
   },
 ];
 

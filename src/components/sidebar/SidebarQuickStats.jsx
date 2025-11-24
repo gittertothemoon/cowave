@@ -28,12 +28,12 @@ export function SidebarQuickStats({ rooms, threadsToday, repliesToday }) {
     <section className={`${cardBaseClass} p-3 space-y-2`}>
       <p className={eyebrowClass}>Controllo rapido</p>
       <p className="text-xs text-slate-400">
-        Uno sguardo alle tue stanze seguite.
+        Numeri veloci sulle stanze che segui.
       </p>
       <div className="grid grid-cols-3 gap-1.5">
         <SidebarStatPill label="STANZE" value={rooms} helper="in elenco" />
-        <SidebarStatPill label="THREAD" value={threadsToday} helper="24h" />
-        <SidebarStatPill label="RISPOSTE" value={repliesToday} helper="24h" />
+        <SidebarStatPill label="THREAD" value={threadsToday} helper="ultime 24h" />
+        <SidebarStatPill label="RISPOSTE" value={repliesToday} helper="ultime 24h" />
       </div>
     </section>
   );

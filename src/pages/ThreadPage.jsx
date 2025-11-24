@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useAppState } from '../state/AppStateContext.jsx';
 import PostComposer from '../components/threads/PostComposer.jsx';
 import PostNode from '../components/threads/PostNode.jsx';
+import Modal from '../components/ui/Modal.jsx';
 import {
   buttonGhostClass,
   cardBaseClass,
@@ -27,6 +28,8 @@ export default function ThreadPage() {
   const thread = threads.find((t) => t.id === threadId);
   const replies = postsByThread[threadId] ?? [];
   const initialPost = thread?.initialPost ?? null;
+  const [replyModalPostId, setReplyModalPostId] = useState(null);
+  const [collapsedParents, setCollapsedParents] = useState(() => new Set());
   const threadRoom = rooms.find((r) => r.id === thread?.roomId);
   const theme = threadRoom?.theme ?? {
     primary: '#a78bfa',
@@ -101,19 +104,18 @@ export default function ThreadPage() {
 
   const personaLabel =
     personas.find((p) => p.id === thread?.personaId)?.label ?? 'Persona attiva';
-  const repliesSorted = useMemo(
-    () =>
-      replies
-        .slice()
-        .sort((a, b) => {
-          const timeA = new Date(a.createdAt).getTime();
-          const timeB = new Date(b.createdAt).getTime();
-          const safeA = Number.isNaN(timeA) ? 0 : timeA;
-          const safeB = Number.isNaN(timeB) ? 0 : timeB;
-          return safeB - safeA;
-        }),
-    [replies]
-  );
+  const repliesSorted = useMemo(() => {
+    const sorted = replies
+      .slice()
+      .sort((a, b) => {
+        const timeA = new Date(a.createdAt).getTime();
+        const timeB = new Date(b.createdAt).getTime();
+        const safeA = Number.isNaN(timeA) ? 0 : timeA;
+        const safeB = Number.isNaN(timeB) ? 0 : timeB;
+        return safeB - safeA;
+      });
+    return sorted;
+  }, [replies]);
   const postsById = useMemo(() => {
     const map = new Map();
     if (initialPost) {
@@ -124,6 +126,16 @@ export default function ThreadPage() {
     });
     return map;
   }, [initialPost, repliesSorted]);
+  const repliesByParent = useMemo(() => {
+    const map = new Map();
+    repliesSorted.forEach((post) => {
+      const parentId = post.parentId ?? initialPost?.id ?? null;
+      const existing = map.get(parentId) ?? [];
+      existing.push(post);
+      map.set(parentId, existing);
+    });
+    return map;
+  }, [initialPost?.id, repliesSorted]);
   const repliesCount = replies.length;
   const lastReplyDate =
     replies.length > 0
@@ -135,6 +147,9 @@ export default function ThreadPage() {
       : null;
   const lastReplyText = lastReplyDate
     ? formatRelativeTime(lastReplyDate)
+    : null;
+  const replyModalPost = replyModalPostId
+    ? postsById.get(replyModalPostId)
     : null;
 
   function handleCopyLink() {
@@ -153,6 +168,110 @@ export default function ThreadPage() {
     toggleCommentWave(threadId, postId);
   }
 
+  function handleReplyTo(postId) {
+    setReplyModalPostId(postId);
+  }
+
+  function handleModalReply({ content, attachments }) {
+    if (!replyModalPostId || !thread) return;
+    createPost(threadId, {
+      content,
+      parentId: replyModalPostId,
+      personaId: thread.personaId,
+      attachments,
+    });
+    setReplyModalPostId(null);
+  }
+
+  function handleToggleCollapse(postId) {
+    setCollapsedParents((prev) => {
+      const next = new Set(prev);
+      if (next.has(postId)) {
+        next.delete(postId);
+      } else {
+        next.add(postId);
+      }
+      return next;
+    });
+  }
+
+  function renderReplies(parentId, depth = 0) {
+    const children = repliesByParent.get(parentId) ?? [];
+    if (children.length === 0) return null;
+    return children.map((post) => {
+      const parentAuthor =
+        post.parentId && postsById.has(post.parentId)
+          ? postsById.get(post.parentId)?.author
+          : undefined;
+      const hasChildReplies = (repliesByParent.get(post.id) ?? []).length;
+      const isNested = depth > 0;
+      const wrapperClass = [
+        'relative space-y-3',
+        isNested ? 'ml-4 pl-4' : '',
+      ]
+        .filter(Boolean)
+        .join(' ');
+      const cardClass = isNested
+        ? 'rounded-2xl border border-slate-800/60 bg-slate-950/50 p-3'
+        : 'rounded-2xl border border-accent/30 bg-slate-900/70 p-3 shadow-[0_10px_30px_rgba(56,189,248,0.08)]';
+
+      return (
+        <div key={post.id} className={wrapperClass}>
+          {isNested && (
+            <span
+              aria-hidden="true"
+              className="absolute left-1 top-4 bottom-4 w-px bg-gradient-to-b from-accent/60 via-slate-700/80 to-transparent"
+            />
+          )}
+          <div className={cardClass}>
+            <div className="flex items-center justify-between text-[11px] text-slate-400 mb-2">
+              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2 py-0.5 bg-white/5 text-[11px] text-slate-300">
+                {isNested ? 'Risposta a un commento' : 'Risposta al post iniziale'}
+              </span>
+              {hasChildReplies ? (
+                <span className="text-[10px] text-slate-500">
+                  {hasChildReplies} risp.
+                </span>
+              ) : null}
+            </div>
+            <PostNode
+              post={post}
+              parentAuthor={parentAuthor}
+              actions={
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    className={`${buttonGhostClass} px-3 py-1 text-xs`}
+                    onClick={() => handleReplyTo(post.id)}
+                  >
+                    Rispondi
+                  </button>
+                  {hasChildReplies ? (
+                    <button
+                      type="button"
+                      className={`${buttonGhostClass} px-3 py-1 text-xs`}
+                      onClick={() => handleToggleCollapse(post.id)}
+                    >
+                      {collapsedParents.has(post.id)
+                        ? `Mostra ${hasChildReplies}`
+                        : 'Nascondi risposte'}
+                    </button>
+                  ) : null}
+                </div>
+              }
+              onToggleWave={handleToggleWave}
+            />
+            {hasChildReplies && !collapsedParents.has(post.id) ? (
+              <div className="mt-3 space-y-3">
+                {renderReplies(post.id, depth + 1)}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      );
+    });
+  }
+
   return (
     <div className="space-y-5">
       <header
@@ -165,7 +284,7 @@ export default function ThreadPage() {
             onClick={() => navigate(`/app/rooms/${thread.roomId}`)}
             className={`${buttonGhostClass} px-0 py-0 h-auto text-[11px] text-slate-300`}
           >
-            Stanza: {threadRoom?.name ?? 'Stanza'}
+            Stanza {threadRoom?.name ?? 'Stanza'}
           </button>
           <span className="text-slate-700">→</span>
           <span className="text-slate-400">Thread</span>
@@ -181,7 +300,7 @@ export default function ThreadPage() {
           {lastReplyText ? ` · Ultima risposta ${lastReplyText}` : ''}
         </p>
         <p className="text-[12px] text-slate-500">
-          In questa pagina puoi leggere e rispondere al thread. Per aprire una nuova conversazione torna alla stanza e crea un nuovo thread.
+          Qui leggi il thread di questa stanza e puoi rispondere con le tue onde. Per aprire un’altra conversazione torna alla stanza e crea un nuovo thread.
         </p>
       </header>
 
@@ -191,7 +310,7 @@ export default function ThreadPage() {
             <div className="space-y-3">
               <PostNode
                 post={initialPost}
-                label="POST INIZIALE"
+                label="Post iniziale"
                 variant="root"
                 onToggleWave={handleToggleWave}
                 actions={
@@ -208,7 +327,7 @@ export default function ThreadPage() {
 
             <div className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
               <div className="space-y-1">
-                <p className={eyebrowClass}>RISPOSTE AL THREAD</p>
+                <p className={eyebrowClass}>Risposte al thread</p>
                 {repliesCount === 0 ? (
                   <>
                     <p className="text-xs text-slate-500">
@@ -225,42 +344,62 @@ export default function ThreadPage() {
                 parentId={initialPost.id}
                 onSubmit={handleNewPost}
                 accentGradient={accentGradient}
-                placeholder="Scrivi una risposta per far partire la discussione."
+                placeholder="Scrivi una risposta a questo thread..."
               />
 
               {repliesCount > 0 && (
                 <div className="space-y-4 pt-1">
-                  {repliesSorted.map((post) => (
-                    <PostNode
-                      key={post.id}
-                      post={post}
-                      parentAuthor={
-                        post.parentId
-                          ? postsById.get(post.parentId)?.author
-                          : undefined
-                      }
-                      onToggleWave={handleToggleWave}
-                    />
-                  ))}
+                  {renderReplies(initialPost.id)}
                 </div>
               )}
             </div>
           </>
         ) : (
           <div className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}>
-            <p className={eyebrowClass}>POST INIZIALE</p>
+            <p className={eyebrowClass}>Post iniziale</p>
             <p className={bodyTextClass}>
-              Non c&apos;è ancora un messaggio in questo thread. Scrivi il primo per avviare la conversazione.
+              Nessun post iniziale ancora. Scrivi il primo per avviare la conversazione.
             </p>
             <PostComposer
               parentId={null}
               onSubmit={handleCreateInitialPost}
               accentGradient={accentGradient}
-              placeholder="Scrivi il messaggio con cui vuoi aprire questa conversazione."
+              placeholder="Scrivi il post iniziale per aprire questo thread..."
             />
           </div>
         )}
       </section>
+
+      <Modal
+        open={Boolean(replyModalPost)}
+        onClose={() => setReplyModalPostId(null)}
+        title={
+          replyModalPost
+            ? `Rispondi a ${replyModalPost.author || 'questo commento'}`
+            : 'Rispondi'
+        }
+      >
+        {replyModalPost && (
+          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-3 space-y-2">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+              Commento
+            </p>
+            <p className="text-sm text-slate-200 whitespace-pre-wrap">
+              {replyModalPost.content}
+            </p>
+          </div>
+        )}
+        <PostComposer
+          parentId={replyModalPostId ?? undefined}
+          onSubmit={handleModalReply}
+          accentGradient={accentGradient}
+          placeholder={
+            replyModalPost
+              ? `Rispondi a ${replyModalPost.author || 'questo commento'}...`
+              : 'Scrivi la tua risposta...'
+          }
+        />
+      </Modal>
     </div>
   );
 }

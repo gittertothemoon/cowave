@@ -50,7 +50,7 @@ export default function RoomPage() {
       : 'Senza tag';
 
   function handleBack() {
-    navigate('/app');
+    navigate('/app/rooms');
   }
 
   function handleCreateThread(e) {
@@ -149,7 +149,7 @@ export default function RoomPage() {
             onClick={handleBack}
             className={`${buttonGhostClass} text-[11px] text-left`}
           >
-            ← Torna al feed
+            ← Torna alle stanze
           </button>
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
@@ -159,7 +159,7 @@ export default function RoomPage() {
                 {room.description}
               </p>
               <p className="text-[12px] text-slate-400 mt-2 max-w-2xl">
-                In questa stanza raccogliamo thread su {room.name}. Apri un thread quando vuoi iniziare una nuova conversazione: le risposte vivono dentro il thread.
+                Questa stanza ospita conversazioni dedicate a {room.name}. Entra nei thread per leggere e rispondere, oppure apri tu il prossimo tema.
               </p>
               <div className="flex flex-wrap gap-2 text-[11px] text-slate-400 mt-3">
                 <span className="px-2 py-1 rounded-2xl bg-slate-950/40 border border-white/10">
@@ -175,14 +175,19 @@ export default function RoomPage() {
                 </span>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsNewThreadOpen(true)}
-              className={`${buttonPrimaryClass} w-full md:w-auto inline-flex items-center justify-center gap-2`}
-              style={{ backgroundImage: accentGradient }}
-            >
-              Crea un nuovo thread in questa stanza
-            </button>
+            <div className="w-full md:w-auto flex flex-col items-start md:items-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsNewThreadOpen(true)}
+                className={`${buttonPrimaryClass} w-full md:w-auto inline-flex items-center justify-center gap-2`}
+                style={{ backgroundImage: accentGradient }}
+              >
+                Crea un nuovo thread in questa stanza
+              </button>
+              <p className="text-[11px] text-slate-400 md:text-right max-w-xs">
+                Crea un thread quando vuoi aprire una nuova conversazione in questa stanza.
+              </p>
+            </div>
           </div>
         </div>
       </header>
@@ -195,7 +200,7 @@ export default function RoomPage() {
           </span>
         </div>
         <p className="text-[12px] text-slate-500">
-          Ogni thread è una conversazione autonoma: entra per leggere e rispondere. Se vuoi aprire un tema nuovo, crea qui un thread.
+          Ogni thread è una conversazione dedicata: entra per leggere e rispondere. Se vuoi proporre un tema nuovo, apri qui il tuo thread.
         </p>
 
         {isRoomLoading ? (
@@ -217,7 +222,7 @@ export default function RoomPage() {
               Nessun thread in questa stanza
             </p>
             <p className="mt-1 text-xs text-slate-400">
-              Crea il primo thread per iniziare la conversazione.
+              Rompi il ghiaccio con il primo thread della stanza.
             </p>
             <button
               type="button"
@@ -270,7 +275,7 @@ export default function RoomPage() {
           </div>
           <div className="space-y-1">
             <label className={labelClass} htmlFor={initialContentId}>
-              Testo del thread
+              Post iniziale
             </label>
             <textarea
               rows={4}
@@ -280,7 +285,7 @@ export default function RoomPage() {
                 setInitialContent(e.target.value);
                 if (initialContentError) setInitialContentError('');
               }}
-              placeholder="Scrivi il messaggio con cui vuoi aprire questa conversazione…"
+              placeholder="Scrivi il post iniziale con cui vuoi aprire questa conversazione..."
               id={initialContentId}
               required
             />
@@ -290,7 +295,7 @@ export default function RoomPage() {
               </p>
             ) : (
               <p className="text-[11px] text-slate-400">
-                Questo sarà il primo messaggio del thread: rendilo chiaro per chi entra.
+                Questo è il post iniziale del thread: rendilo chiaro per chi entra.
               </p>
             )}
           </div>

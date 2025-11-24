@@ -316,6 +316,10 @@ export default function HomePage() {
       <CreateRoomModal
         open={isCreateRoomOpen}
         onClose={() => setIsCreateRoomOpen(false)}
+        onCreated={(roomId) => {
+          setIsCreateRoomOpen(false);
+          navigate(`/app/rooms/${roomId}`);
+        }}
       />
     </div>
   );

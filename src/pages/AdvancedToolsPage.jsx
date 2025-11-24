@@ -9,15 +9,15 @@ import {
 } from '../components/ui/primitives.js';
 
 const quickActions = [
-  { label: 'Avvia stanza lampo', desc: 'sessione da 30 minuti' },
-  { label: 'Crea highlight vocale', desc: 'clip audio di 90 secondi' },
-  { label: 'Invita co-host', desc: 'apri uno slot per un ospite' },
+  { label: 'Sessione breve', desc: '30 minuti per concentrarti con calma.' },
+  { label: 'Nota vocale', desc: 'Registra un highlight audio di 90 secondi.' },
+  { label: 'Invita un amico', desc: 'Apri uno slot per un ospite nel thread.' },
 ];
 
 const highlightMoments = [
-  'Dev Lab • il flusso “senza feed” è tra i migliori della settimana.',
-  'Deep Talk • il ramo “stanchezza digitale” ha raggiunto 12 livelli.',
-  'Creators 18+ Lab • nuovo rituale serale in test.',
+  'Dev Lab • Il thread “Senza feed” raccoglie nuove onde interessanti.',
+  'Deep Talk • Il thread “Stanchezza digitale” ha raggiunto 12 risposte.',
+  'Creators 18+ Lab • È in prova un rituale serale condiviso.',
 ];
 
 export default function AdvancedToolsPage() {
@@ -53,8 +53,7 @@ export default function AdvancedToolsPage() {
           Strumenti avanzati
         </h1>
         <p className="mt-1 text-sm text-slate-400">
-          Timer mindful, radar, preset dell’algoritmo e rituali sperimentali sono qui.
-          Il feed resta pulito: regola da questa pagina ciò che è più intenso o tecnico.
+          Qui trovi timer, sessioni mindful e controlli dell’algoritmo per usare CoWave con più intenzione. Regola il ritmo senza appesantire il feed.
         </p>
       </header>
 
@@ -64,7 +63,7 @@ export default function AdvancedToolsPage() {
             <div>
               <h2 className="text-sm font-semibold text-slate-100">Sessione mindful</h2>
               <p className="mt-1 text-xs text-slate-400">
-                Gestisci timer, streak e recap consapevoli.
+                Tieni il tempo e le pause con un ritmo gentile.
               </p>
             </div>
             <span className="text-[11px] text-slate-500">
@@ -80,8 +79,7 @@ export default function AdvancedToolsPage() {
           <div className="flex flex-col gap-1">
             <h2 className="text-sm font-semibold text-slate-100">Radar stanze</h2>
             <p className="text-xs text-slate-400">
-              Ricevi promemoria quando una stanza supera i limiti mindful o
-              quando un thread esplode in nuovi rami.
+              Ricevi promemoria quando una stanza diventa vivace o un thread raccoglie molte risposte.
             </p>
           </div>
           <div className="space-y-3">
@@ -110,7 +108,7 @@ export default function AdvancedToolsPage() {
             )}
             {!isToolsLoading && hasRadarEmpty && (
               <p className="text-[11px] text-slate-500">
-                Configura questa sezione dalle opzioni qui sopra.
+                Segui qualche stanza e vedrai qui i segnali più utili.
               </p>
             )}
           </div>
@@ -121,7 +119,7 @@ export default function AdvancedToolsPage() {
             <div>
               <h2 className="text-sm font-semibold text-slate-100">Controllo algoritmo</h2>
               <p className="mt-1 text-xs text-slate-400">
-                Regola manualmente comfort vs novità vs ritmo.
+                Scegli l’equilibrio tra comfort, novità e ritmo del feed.
               </p>
             </div>
             <span className="text-[11px] text-slate-500 capitalize">
@@ -175,8 +173,7 @@ export default function AdvancedToolsPage() {
           <section className={`${cardBaseClass} p-4 sm:p-5 space-y-3`}>
             <p className={eyebrowClass}>Rituale quotidiano</p>
             <p className={bodyTextClass}>
-              Blocchi da 28 minuti, pausa respiro guidata e recap serale con
-              co-host. Modifica qui e condividi le routine con le tue stanze.
+              Blocchi da 28 minuti, pausa respiro e recap serale. Personalizza e condividi le tue routine con le stanze.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center text-[11px]">
               {['Mattino', 'Pomeriggio', 'Sera'].map((slot) => (

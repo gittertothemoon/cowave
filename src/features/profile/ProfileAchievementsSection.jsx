@@ -19,10 +19,10 @@ export default function ProfileAchievementsSection({ unlocked }) {
         <div>
           <p className={sectionTitleClass}>Traguardi</p>
           <h3 className="text-lg font-semibold text-white">
-            Progressi su CoWave
+            I tuoi progressi
           </h3>
           <p className={`${bodyTextClass} text-sm`}>
-            Quello che hai già sbloccato e cosa ti manca.
+            I traguardi che sblocchi man mano che usi CoWave.
           </p>
         </div>
         <div className="flex flex-col gap-2 w-full sm:w-auto sm:items-end">
@@ -37,6 +37,12 @@ export default function ProfileAchievementsSection({ unlocked }) {
           </div>
         </div>
       </div>
+
+      {unlockedCount === 0 && (
+        <p className="text-[12px] text-slate-400">
+          Qui vedrai i traguardi che sblocchi man mano che usi CoWave.
+        </p>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {ACHIEVEMENTS.map((achievement) => {
@@ -84,7 +90,7 @@ export default function ProfileAchievementsSection({ unlocked }) {
                       : 'text-slate-400 bg-slate-900/70 border border-slate-800'
                   }`}
                 >
-                  {isUnlocked ? 'Sbloccato' : 'Bloccato'}
+                  {isUnlocked ? 'Sbloccato' : 'Da sbloccare'}
                 </span>
               </div>
             </div>

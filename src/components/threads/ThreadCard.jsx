@@ -40,7 +40,7 @@ export default function ThreadCard({ thread }) {
     thread.initialPost?.content ||
     thread.rootSnippet ||
     replies.find((p) => p.parentId === null)?.content ||
-    'Nessun contenuto iniziale ancora.';
+    'Post iniziale in arrivo. Entra e scrivilo tu.';
 
   return (
     <article className="relative">
