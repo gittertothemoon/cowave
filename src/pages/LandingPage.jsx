@@ -241,15 +241,15 @@ export default function LandingPage() {
       />
 
       <div className="relative z-10">
-        <header className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap sm:flex-nowrap items-center justify-between gap-4">
+        <header className="max-w-6xl mx-auto px-3 sm:px-6 py-5 flex items-center justify-between gap-3 sm:gap-4">
           <Link to="/" className="flex items-center gap-3 text-slate-200" aria-label="CoWave">
-            <CoWaveLogo size={96} variant="full" className="origin-left scale-90 sm:scale-100" />
+            <CoWaveLogo size={84} variant="full" className="origin-left scale-90 sm:scale-100" />
           </Link>
-          <div className="flex items-center gap-2 text-sm w-full sm:w-auto justify-end flex-wrap">
-            <Link to="/auth/login" className={`${buttonSecondaryClass} w-full sm:w-auto`}>
+          <div className="flex items-center gap-2 text-[13px] sm:text-sm flex-nowrap">
+            <Link to="/auth/login" className={`${buttonSecondaryClass} px-3 py-2 text-xs sm:text-sm sm:px-4`}>
               Accedi
             </Link>
-            <Link to="/auth/register" className={`${buttonPrimaryClass} w-full sm:w-auto`}>
+            <Link to="/auth/register" className={`${buttonPrimaryClass} px-3 py-2 text-xs sm:text-sm sm:px-4`}>
               Entra in beta privata
             </Link>
           </div>
