@@ -62,7 +62,7 @@ function AppPreview() {
   return (
     <div className="relative w-full max-w-[640px] mx-auto">
       <div
-        className="absolute -inset-10 bg-gradient-to-tr from-accent/25 via-fuchsia-500/20 to-sky-500/25 blur-3xl opacity-60"
+        className="absolute -inset-6 sm:-inset-10 bg-gradient-to-tr from-accent/25 via-fuchsia-500/20 to-sky-500/25 blur-[26px] opacity-60"
         aria-hidden="true"
       />
       <div
@@ -241,15 +241,15 @@ export default function LandingPage() {
       />
 
       <div className="relative z-10">
-        <header className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between gap-4">
+        <header className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap sm:flex-nowrap items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-3 text-slate-200" aria-label="CoWave">
-            <CoWaveLogo size={96} variant="full" />
+            <CoWaveLogo size={96} variant="full" className="origin-left scale-90 sm:scale-100" />
           </Link>
-          <div className="flex items-center gap-2 text-sm">
-            <Link to="/auth/login" className={buttonSecondaryClass}>
+          <div className="flex items-center gap-2 text-sm w-full sm:w-auto justify-end flex-wrap">
+            <Link to="/auth/login" className={`${buttonSecondaryClass} w-full sm:w-auto`}>
               Accedi
             </Link>
-            <Link to="/auth/register" className={buttonPrimaryClass}>
+            <Link to="/auth/register" className={`${buttonPrimaryClass} w-full sm:w-auto`}>
               Entra in beta privata
             </Link>
           </div>
