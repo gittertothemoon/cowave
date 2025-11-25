@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react';
 import { supabase } from '../lib/supabaseClient.js';
+import { cleanAuthNoiseFromUrl } from '../lib/url.js';
 
 const AuthContext = createContext(null);
 
@@ -19,6 +20,13 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let isMounted = true;
+
+    if (typeof window !== 'undefined') {
+      const isAuthCallback = window.location.pathname.startsWith('/auth/callback');
+      if (!isAuthCallback) {
+        cleanAuthNoiseFromUrl();
+      }
+    }
 
     async function loadSession() {
       try {

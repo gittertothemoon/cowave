@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppState } from '../state/AppStateContext.jsx';
 import PostComposer from '../components/threads/PostComposer.jsx';
 import PostNode from '../components/threads/PostNode.jsx';
@@ -11,6 +11,7 @@ import {
   pageTitleClass,
   bodyTextClass,
 } from '../components/ui/primitives.js';
+import { getCanonicalUrl } from '../lib/url.js';
 
 export default function ThreadPage() {
   const { threadId } = useParams();
@@ -30,6 +31,8 @@ export default function ThreadPage() {
   const initialPost = thread?.initialPost ?? null;
   const [replyModalPostId, setReplyModalPostId] = useState(null);
   const [collapsedParents, setCollapsedParents] = useState(() => new Set());
+  const [copyFeedback, setCopyFeedback] = useState('');
+  const copyTimeoutRef = useRef(null);
   const threadRoom = rooms.find((r) => r.id === thread?.roomId);
   const theme = threadRoom?.theme ?? {
     primary: '#a78bfa',
@@ -37,6 +40,14 @@ export default function ThreadPage() {
     glow: 'rgba(59,130,246,0.35)',
   };
   const accentGradient = `linear-gradient(120deg, ${theme.primary}, ${theme.secondary})`;
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (threadError) {
     return (
@@ -153,12 +164,26 @@ export default function ThreadPage() {
     : null;
 
   function handleCopyLink() {
-    try {
-      if (typeof window !== 'undefined') {
-        navigator?.clipboard
-          ?.writeText(window.location.href)
-          .catch(() => {});
+    const clearExistingTimeout = () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
       }
+    };
+
+    try {
+      if (typeof window === 'undefined') return;
+
+      const shareUrl =
+        getCanonicalUrl() ||
+        `${window.location.origin}/app/threads/${threadId}`;
+
+      navigator?.clipboard?.writeText(shareUrl).catch(() => {});
+
+      clearExistingTimeout();
+      setCopyFeedback('Link copiato.');
+      copyTimeoutRef.current = window.setTimeout(() => {
+        setCopyFeedback('');
+      }, 1200);
     } catch {
       // best-effort copy
     }
@@ -320,13 +345,20 @@ export default function ThreadPage() {
                 variant="root"
                 onSendWave={handleSendWave}
                 actions={
-                  <button
-                    type="button"
-                    className={`${buttonGhostClass} px-3 py-1 text-xs`}
-                    onClick={handleCopyLink}
-                  >
-                    Copia link
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className={`${buttonGhostClass} px-3 py-1 text-xs`}
+                      onClick={handleCopyLink}
+                    >
+                      Copia link
+                    </button>
+                    {copyFeedback ? (
+                      <span className="text-[11px] text-slate-400">
+                        {copyFeedback}
+                      </span>
+                    ) : null}
+                  </div>
                 }
               />
             </div>
