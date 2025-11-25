@@ -26,28 +26,54 @@ export default function AuthCallback() {
       if (typeof window === 'undefined') return;
       const currentUrl = new URL(window.location.href);
       const hasCode = currentUrl.searchParams.has('code');
+      const hashFragment = currentUrl.hash?.startsWith('#')
+        ? currentUrl.hash.slice(1)
+        : currentUrl.hash ?? '';
+      const hashParams = hashFragment ? new URLSearchParams(hashFragment) : null;
+      const accessToken = hashParams?.get('access_token');
+      const refreshToken = hashParams?.get('refresh_token');
+      const hasHashTokens = Boolean(accessToken && refreshToken);
       const hasNoise = hasAuthNoise(currentUrl);
 
-      if (!hasCode && !hasNoise) {
+      if (!hasCode && !hasNoise && !hasHashTokens) {
+        setIsProcessing(false);
         navigate('/app', { replace: true });
         return;
       }
 
       try {
-        const { data, error: exchangeError } =
-          await supabase.auth.exchangeCodeForSession(window.location.href);
-        if (!isActive) return;
-        if (exchangeError) {
-          throw exchangeError;
+        let sessionData = null;
+
+        if (hasHashTokens) {
+          const { data, error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (!isActive) return;
+          if (sessionError) {
+            throw sessionError;
+          }
+          sessionData = data?.session ?? null;
+        } else {
+          const { data, error: exchangeError } =
+            await supabase.auth.exchangeCodeForSession(window.location.href);
+          if (!isActive) return;
+          if (exchangeError) {
+            throw exchangeError;
+          }
+          sessionData = data?.session ?? null;
         }
 
-        const nextProfile = await refreshProfile(data?.session?.user?.id);
+        if (!sessionData?.user?.id) {
+          throw new Error('Sessione non valida ricevuta dal callback.');
+        }
+
+        const nextProfile = await refreshProfile(sessionData.user.id);
         if (!isActive) return;
 
         cleanAuthNoiseFromUrl();
-        const destination = nextProfile?.is_onboarded
-          ? '/app'
-          : '/app/onboarding';
+        const destination =
+          nextProfile?.is_onboarded === false ? '/app/onboarding' : '/app';
         navigate(destination, { replace: true });
       } catch (err) {
         if (!isActive) return;

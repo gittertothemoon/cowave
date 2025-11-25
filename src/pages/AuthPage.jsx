@@ -151,7 +151,7 @@ export default function AuthPage({ onAuth }) {
         email,
         password,
         options: {
-          emailRedirectTo: `${siteUrl}/auth/callback`, // Necessario per far puntare il link di conferma alla callback corretta
+          emailRedirectTo: `${siteUrl}/auth/confirm`, // Necessario per far puntare il link di conferma alla pagina di verifica
           data: {
             display_name: displayName,
           },

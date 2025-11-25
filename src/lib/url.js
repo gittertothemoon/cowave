@@ -1,4 +1,4 @@
-const AUTH_QUERY_KEYS = ['code', 'token', 'type', 'redirect_to', 'error', 'error_description'];
+const AUTH_QUERY_KEYS = ['code', 'token', 'token_hash', 'type', 'redirect_to', 'error', 'error_description'];
 const AUTH_HASH_KEYS = ['access_token', 'refresh_token', 'expires_in', 'token_type'];
 
 export function getCanonicalUrl() {

@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import LandingPage from './pages/LandingPage.jsx';
 import AuthPage from './pages/AuthPage.jsx';
 import AuthCallback from './pages/AuthCallback.jsx';
+import AuthConfirm from './pages/AuthConfirm.jsx';
 import MainLayout from './components/layout/MainLayout.jsx';
 import HomePage from './pages/HomePage.jsx';
 import RoomsOverviewPage from './pages/RoomsOverviewPage.jsx';
@@ -26,6 +27,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/auth/confirm" element={<AuthConfirm />} />
         <Route path="/auth/*" element={<AuthPage />} />
         <Route
           path="/app/onboarding"

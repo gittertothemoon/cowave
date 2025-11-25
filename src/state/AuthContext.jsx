@@ -22,8 +22,10 @@ export function AuthProvider({ children }) {
     let isMounted = true;
 
     if (typeof window !== 'undefined') {
-      const isAuthCallback = window.location.pathname.startsWith('/auth/callback');
-      if (!isAuthCallback) {
+      const pathname = window.location.pathname;
+      const isAuthFlow =
+        pathname.startsWith('/auth/callback') || pathname.startsWith('/auth/confirm');
+      if (!isAuthFlow) {
         cleanAuthNoiseFromUrl();
       }
     }
