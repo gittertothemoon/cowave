@@ -105,6 +105,10 @@ export default function AuthPage({ onAuth }) {
 
     const email = form.email.trim();
     const password = form.password;
+    const siteUrl = (
+      import.meta.env.VITE_PUBLIC_SITE_URL ||
+      (typeof window !== 'undefined' ? window.location.origin : '')
+    ).replace(/\/$/, '');
     const displayName =
       form.name.trim() ||
       currentUser?.nickname?.trim() ||
@@ -147,7 +151,7 @@ export default function AuthPage({ onAuth }) {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${siteUrl}/auth/callback`, // Necessario per far puntare il link di conferma alla callback corretta
           data: {
             display_name: displayName,
           },
