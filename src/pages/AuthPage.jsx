@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import CoWaveLogo from '../components/CoWaveLogo.jsx';
 import {
@@ -12,20 +12,33 @@ import {
   labelClass,
 } from '../components/ui/primitives.js';
 import { useAppState } from '../state/AppStateContext.jsx';
-import { setAuthenticated } from '../utils/auth.js';
+import { useAuth } from '../state/AuthContext.jsx';
+import { getAuthErrorMessage, getDisplayNameFromEmail } from '../utils/auth.js';
 
 export default function AuthPage({ onAuth }) {
   const location = useLocation();
   const navigate = useNavigate();
   const isLogin = location.pathname.includes('login');
-  const { isOnboarded, resetOnboarding, updateCurrentUser } = useAppState();
+  const {
+    isOnboarded,
+    resetOnboarding,
+    updateCurrentUser,
+    currentUser,
+  } = useAppState();
+  const { isAuthenticated, isAuthReady, signIn, signUp } = useAuth();
 
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const nameId = useId();
   const emailId = useId();
   const passwordId = useId();
+
+  useEffect(() => {
+    if (!isAuthReady || !isAuthenticated) return;
+    navigate(isOnboarded ? '/app' : '/app/onboarding', { replace: true });
+  }, [isAuthenticated, isAuthReady, isOnboarded, navigate]);
 
   function handleChange(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -51,7 +64,7 @@ export default function AuthPage({ onAuth }) {
     return nextErrors;
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     const validation = validate();
     if (Object.keys(validation).length > 0) {
@@ -60,26 +73,79 @@ export default function AuthPage({ onAuth }) {
       return;
     }
     setFormError('');
+    setIsSubmitting(true);
 
-    if (!isLogin) {
+    const email = form.email.trim();
+    const password = form.password;
+    const displayName =
+      form.name.trim() ||
+      currentUser?.nickname?.trim() ||
+      getDisplayNameFromEmail(email);
+
+    try {
+      if (isLogin) {
+        const { data, error } = await signIn({
+          email,
+          password,
+        });
+        if (error) {
+          setFormError(getAuthErrorMessage(error, { isLogin: true }));
+          return;
+        }
+        const metadataName =
+          data?.user?.user_metadata?.display_name?.trim() || '';
+        const storedNickname = currentUser?.nickname?.trim();
+        const hasCustomNickname =
+          storedNickname && storedNickname !== 'Tu';
+        const nickname = hasCustomNickname
+          ? storedNickname
+          : metadataName || storedNickname || getDisplayNameFromEmail(email);
+        updateCurrentUser({
+          nickname,
+          email,
+        });
+        onAuth?.();
+        navigate(isOnboarded ? '/app' : '/app/onboarding');
+        return;
+      }
+
+      const { data, error } = await signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: displayName,
+          },
+        },
+      });
+
+      if (error) {
+        setFormError(getAuthErrorMessage(error, { isLogin: false }));
+        return;
+      }
+
+      const nextNickname =
+        data?.user?.user_metadata?.display_name?.trim() ||
+        displayName ||
+        getDisplayNameFromEmail(email);
+
       resetOnboarding();
       updateCurrentUser({
-        nickname: form.name.trim() || 'Tu',
-        email: form.email.trim(),
+        nickname: nextNickname,
+        email,
       });
-    } else {
-      updateCurrentUser({
-        email: form.email.trim(),
-      });
-    }
-    // AUTH: set fake authenticated state for protected pages
-    setAuthenticated();
-    onAuth?.();
+      onAuth?.();
 
-    if (isLogin) {
-      navigate(isOnboarded ? '/app' : '/app/onboarding');
-    } else {
+      if (!data?.session) {
+        setFormError(
+          'Registrazione completata. Controlla la tua email per confermare e poi accedi.'
+        );
+        return;
+      }
+
       navigate('/app/onboarding');
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -191,9 +257,16 @@ export default function AuthPage({ onAuth }) {
 
             <button
               type="submit"
-              className={`${buttonPrimaryClass} w-full mt-2 text-base text-white shadow-[0_18px_40px_rgba(56,189,248,0.28)] ring-1 ring-white/10`}
+              disabled={isSubmitting}
+              className={`${buttonPrimaryClass} w-full mt-2 text-base text-white shadow-[0_18px_40px_rgba(56,189,248,0.28)] ring-1 ring-white/10 ${
+                isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+              }`}
             >
-              {isLogin ? 'Accedi' : 'Registrati'}
+              {isSubmitting
+                ? 'Attendi...'
+                : isLogin
+                  ? 'Accedi'
+                  : 'Registrati'}
             </button>
           </form>
 

@@ -21,7 +21,7 @@ export default function ThreadPage() {
     createPost,
     rooms,
     personas,
-    toggleCommentWave,
+    addWaveToComment,
   } = useAppState();
   const [isThreadLoading] = useState(false);
   const [threadError] = useState(null);
@@ -164,8 +164,8 @@ export default function ThreadPage() {
     }
   }
 
-  function handleToggleWave(postId) {
-    toggleCommentWave(threadId, postId);
+  function handleSendWave(postId, waveType) {
+    addWaveToComment(threadId, postId, waveType);
   }
 
   function handleReplyTo(postId) {
@@ -240,10 +240,10 @@ export default function ThreadPage() {
                 </span>
               ) : null}
             </div>
-            <PostNode
-              post={post}
-              parentAuthor={parentAuthor}
-              actions={
+              <PostNode
+                post={post}
+                parentAuthor={parentAuthor}
+                actions={
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
@@ -265,7 +265,7 @@ export default function ThreadPage() {
                   ) : null}
                 </div>
               }
-              onToggleWave={handleToggleWave}
+              onSendWave={handleSendWave}
             />
             {hasChildReplies && !collapsedParents.has(post.id) ? (
               <div className="mt-3 space-y-3">
@@ -318,7 +318,7 @@ export default function ThreadPage() {
                 post={initialPost}
                 label="Post iniziale"
                 variant="root"
-                onToggleWave={handleToggleWave}
+                onSendWave={handleSendWave}
                 actions={
                   <button
                     type="button"

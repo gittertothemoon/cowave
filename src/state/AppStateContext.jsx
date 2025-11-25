@@ -18,21 +18,72 @@ const defaultUser = {
   nickname: 'Tu',
   email: '',
   unlockedAchievements: [],
+  reflections: [],
+  wavesSent: 0,
 };
+const defaultWaves = {
+  support: 0,
+  insight: 0,
+  question: 0,
+};
+
+function normalizeWaves(waves, fallbackWaveCount = 0) {
+  const base =
+    waves && typeof waves === 'object'
+      ? waves
+      : { support: 0, insight: 0, question: 0 };
+  const safe = {
+    support: Number.isFinite(base.support) ? Math.max(0, base.support) : 0,
+    insight: Number.isFinite(base.insight) ? Math.max(0, base.insight) : 0,
+    question: Number.isFinite(base.question) ? Math.max(0, base.question) : 0,
+  };
+  const fallback =
+    (!waves || typeof waves !== 'object') && Number.isFinite(fallbackWaveCount)
+      ? Math.max(0, fallbackWaveCount)
+      : 0;
+  if (
+    fallback > 0 &&
+    safe.support === 0 &&
+    safe.insight === 0 &&
+    safe.question === 0
+  ) {
+    safe.support = fallback;
+  }
+  return safe;
+}
+
+function getTotalWaves(waves) {
+  const safe = normalizeWaves(waves);
+  return safe.support + safe.insight + safe.question;
+}
+
+function normalizePost(post) {
+  if (!post) return post;
+  const safeWaves = normalizeWaves(post.waves, post.waveCount);
+  return {
+    ...post,
+    waves: safeWaves,
+    waveCount: getTotalWaves(safeWaves),
+  };
+}
 
 function normalizeThreads(initialThreads, postsByThread) {
   const repliesByThread = {};
 
   const threadsWithInitialPost = initialThreads.map((thread) => {
-    const posts = postsByThread?.[thread.id] ?? [];
-    const initialPost = posts.find((p) => p.parentId === null) ?? null;
-    const replies = posts.filter((p) => p.parentId !== null);
+    const posts = (postsByThread?.[thread.id] ?? []).map(normalizePost);
+    const initialPost =
+      posts.find((p) => p.parentId === null) ?? null;
+    const safeInitialPost = normalizePost(initialPost);
+    const replies = posts
+      .filter((p) => p.parentId !== null)
+      .map((reply) => normalizePost(reply));
     repliesByThread[thread.id] = replies;
 
     return {
       ...thread,
-      initialPost,
-      rootSnippet: thread.rootSnippet || initialPost?.content || '',
+      initialPost: safeInitialPost || null,
+      rootSnippet: thread.rootSnippet || safeInitialPost?.content || '',
     };
   });
 
@@ -49,6 +100,8 @@ function normalizeUser(user) {
   return {
     ...defaultUser,
     ...(user && typeof user === 'object' ? user : {}),
+    reflections: Array.isArray(user?.reflections) ? user.reflections : [],
+    wavesSent: Number.isFinite(user?.wavesSent) ? user.wavesSent : 0,
     unlockedAchievements: [...new Set(unlocked)],
   };
 }
@@ -286,6 +339,7 @@ export function AppStateProvider({ children }) {
       isPrivate,
       tags,
       members: 1,
+      prompts: [],
     };
     setRooms((prev) => [...prev, newRoom]);
     setFollowedRoomIds((prev) =>
@@ -314,8 +368,8 @@ export function AppStateProvider({ children }) {
       personaId,
       createdAt,
       content: cleanedInitialContent,
+      waves: { ...defaultWaves },
       waveCount: 0,
-      hasWaved: false,
     };
     const newThread = {
       id,
@@ -353,8 +407,8 @@ export function AppStateProvider({ children }) {
       personaId: personaId ?? personas[0]?.id ?? 'dev',
       createdAt: new Date().toISOString(),
       content,
+      waves: { ...defaultWaves },
       waveCount: 0,
-      hasWaved: false,
       attachments: attachments?.length
         ? attachments.slice(0, 1)
         : undefined,
@@ -393,28 +447,32 @@ export function AppStateProvider({ children }) {
     return newPost.id;
   }
 
-  function toggleCommentWave(threadId, commentId) {
+  function addWaveToComment(threadId, commentId, waveType) {
+    if (!['support', 'insight', 'question'].includes(waveType)) return;
+
+    const incrementWave = (post) => {
+      if (!post) return post;
+      const safeWaves = normalizeWaves(post.waves, post.waveCount);
+      const nextWaves = {
+        ...safeWaves,
+        [waveType]: safeWaves[waveType] + 1,
+      };
+      return {
+        ...post,
+        waves: nextWaves,
+        waveCount: getTotalWaves(nextWaves),
+      };
+    };
+
     setThreads((prev) =>
       prev.map((thread) => {
         if (thread.id !== threadId) return thread;
         if (!thread.initialPost || thread.initialPost.id !== commentId) {
           return thread;
         }
-        const safeCount = Number.isFinite(thread.initialPost.waveCount)
-          ? thread.initialPost.waveCount
-          : 0;
-        const nextHasWaved = !thread.initialPost.hasWaved;
-        const nextWaveCount = Math.max(
-          0,
-          safeCount + (nextHasWaved ? 1 : -1)
-        );
         return {
           ...thread,
-          initialPost: {
-            ...thread.initialPost,
-            hasWaved: nextHasWaved,
-            waveCount: nextWaveCount,
-          },
+          initialPost: incrementWave(thread.initialPost),
         };
       })
     );
@@ -422,27 +480,46 @@ export function AppStateProvider({ children }) {
     setPostsByThread((prev) => {
       const existing = prev[threadId];
       if (!existing) return prev;
-      const updated = existing.map((post) => {
-        if (post.id !== commentId) return post;
-        const safeCount = Number.isFinite(post.waveCount)
-          ? post.waveCount
-          : 0;
-        const nextHasWaved = !post.hasWaved;
-        const nextWaveCount = Math.max(
-          0,
-          safeCount + (nextHasWaved ? 1 : -1)
-        );
-        return {
-          ...post,
-          hasWaved: nextHasWaved,
-          waveCount: nextWaveCount,
-        };
-      });
+      const updated = existing.map((post) =>
+        post.id === commentId ? incrementWave(post) : post
+      );
       return {
         ...prev,
         [threadId]: updated,
       };
     });
+
+    setCurrentUser((prev) => {
+      const safeUser = normalizeUser(prev);
+      const nextSent = Number.isFinite(safeUser.wavesSent)
+        ? safeUser.wavesSent + 1
+        : 1;
+      return { ...safeUser, wavesSent: nextSent };
+    });
+  }
+
+  function addReflection({ tag = 'idea', note, date }) {
+    const trimmedNote = note?.trim();
+    if (!trimmedNote) return null;
+    const allowedTags = ['idea', 'sfogo', 'spunto'];
+    const safeTag = allowedTags.includes(tag) ? tag : 'idea';
+    const reflection = {
+      id: `reflection-${Date.now()}`,
+      date: date || new Date().toISOString(),
+      tag: safeTag,
+      note: trimmedNote,
+    };
+    setCurrentUser((prev) => {
+      const safeUser = normalizeUser(prev);
+      const existing = Array.isArray(safeUser.reflections)
+        ? safeUser.reflections
+        : [];
+      return {
+        ...safeUser,
+        reflections: [reflection, ...existing],
+      };
+    });
+    return reflection.id;
   }
 
   function completeOnboarding({
@@ -506,11 +583,12 @@ export function AppStateProvider({ children }) {
       createRoom,
       createThread,
       createPost,
-      toggleCommentWave,
+      addWaveToComment,
       setActivePersonaId,
       completeOnboarding,
       resetOnboarding,
       updateCurrentUser,
+      addReflection,
       unlockAchievement,
       addCustomPersona,
       setFollowedRoomIds,

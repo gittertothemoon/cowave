@@ -29,9 +29,13 @@ export default function RoomPage() {
   const [energy, setEnergy] = useState('costruttivo');
   const [threadError, setThreadError] = useState('');
   const [initialContentError, setInitialContentError] = useState('');
+  const [hasEditedTitle, setHasEditedTitle] = useState(false);
+  const [hasEditedContent, setHasEditedContent] = useState(false);
+  const [lastPromptApplied, setLastPromptApplied] = useState(null);
   const [roomError] = useState(null);
   const [isRoomLoading] = useState(false);
   const titleInputRef = useRef(null);
+  const initialContentRef = useRef(null);
   const titleId = useId();
   const initialContentId = useId();
   const energyId = useId();
@@ -48,6 +52,15 @@ export default function RoomPage() {
     room?.tags?.length > 0
       ? room.tags.slice(0, 2).map((tag) => `#${tag}`).join(' · ')
       : 'Senza tag';
+  const roomPrompts = room?.prompts ?? [];
+  const energyOptions = [
+    { value: 'costruttivo', label: 'Costruttivo', hint: 'Per soluzioni e next step' },
+    { value: 'riflessivo', label: 'Riflessivo', hint: 'Per pensieri e confronto calmo' },
+    { value: 'tecnico', label: 'Tecnico', hint: 'Per dettagli, stack e how-to' },
+    { value: 'giocoso', label: 'Giocoso', hint: 'Per esperimenti leggeri' },
+    { value: 'supporto', label: 'Supporto', hint: 'Per chiedere aiuto o sostegno' },
+    { value: 'brainstorm', label: 'Brainstorm', hint: 'Per idee rapide e tante proposte' },
+  ];
 
   function handleBack() {
     navigate('/app/rooms');
@@ -80,6 +93,9 @@ export default function RoomPage() {
     setTitle('');
     setInitialContent('');
     setEnergy('costruttivo');
+    setHasEditedTitle(false);
+    setHasEditedContent(false);
+    setLastPromptApplied(null);
     closeNewThread();
     navigate(`/app/threads/${id}`);
   }
@@ -87,7 +103,29 @@ export default function RoomPage() {
   function closeNewThread() {
     setThreadError('');
     setInitialContentError('');
+    setHasEditedTitle(false);
+    setHasEditedContent(false);
+    setLastPromptApplied(null);
     setIsNewThreadOpen(false);
+  }
+
+  function handlePromptSelect(promptText) {
+    if (!promptText) return;
+    const previousPrompt = lastPromptApplied;
+    const derivedTitle = deriveTitleFromPrompt(promptText);
+    setLastPromptApplied(promptText);
+    if (
+      !hasEditedTitle ||
+      title.trim() === '' ||
+      (previousPrompt && title === deriveTitleFromPrompt(previousPrompt))
+    ) {
+      setTitle(derivedTitle);
+      setHasEditedTitle(false);
+      setThreadError('');
+    }
+    window.setTimeout(() => {
+      initialContentRef.current?.focus();
+    }, 0);
   }
 
   useEffect(() => {
@@ -250,6 +288,33 @@ export default function RoomPage() {
           Crea uno spunto breve e chiaro: chi entra capirà subito il tono del thread.
         </div>
         <form onSubmit={handleCreateThread} className="space-y-4 text-slate-100">
+          {roomPrompts.length > 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-slate-100">
+                  Ti diamo una mano a iniziare
+                </p>
+                <span className="text-[11px] text-slate-500">
+                  Scegli uno spunto rapido
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {roomPrompts.map((prompt) => (
+                  <button
+                    type="button"
+                    key={prompt}
+                    onClick={() => handlePromptSelect(prompt)}
+                    className="text-xs sm:text-sm px-3 py-1.5 rounded-full border border-slate-700 bg-slate-950/70 text-slate-100 hover:border-accent/60 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Puoi partire da un suggerimento o scrivere il tuo thread da zero.
+              </p>
+            </div>
+          ) : null}
           <div className="space-y-1">
             <label className={labelClass} htmlFor={titleId}>
               Titolo
@@ -263,6 +328,7 @@ export default function RoomPage() {
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
+                setHasEditedTitle(true);
                 if (threadError) setThreadError('');
               }}
               placeholder="Es. Flusso senza feed, rituali serali…"
@@ -279,10 +345,12 @@ export default function RoomPage() {
             </label>
             <textarea
               rows={4}
+              ref={initialContentRef}
               className={`${inputBaseClass} resize-none`}
               value={initialContent}
               onChange={(e) => {
                 setInitialContent(e.target.value);
+                setHasEditedContent(true);
                 if (initialContentError) setInitialContentError('');
               }}
               placeholder="Scrivi il post iniziale con cui vuoi aprire questa conversazione..."
@@ -299,21 +367,38 @@ export default function RoomPage() {
               </p>
             )}
           </div>
-          <div className="space-y-1">
-            <label className={labelClass} htmlFor={energyId}>
-              Energia del thread
-            </label>
-            <select
-              className={inputBaseClass}
-              value={energy}
-              onChange={(e) => setEnergy(e.target.value)}
-              id={energyId}
-            >
-              <option value="costruttivo">Costruttivo</option>
-              <option value="riflessivo">Riflessivo</option>
-              <option value="tecnico">Tecnico</option>
-              <option value="giocoso">Giocoso</option>
-            </select>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className={labelClass} htmlFor={energyId}>
+                Energia del thread
+              </label>
+              <span className="text-[11px] text-slate-500">
+                Scegli il tono che vuoi dare
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="group" aria-labelledby={energyId}>
+              {energyOptions.map((option) => {
+                const isActive = energy === option.value;
+                return (
+                  <button
+                    type="button"
+                    key={option.value}
+                    onClick={() => setEnergy(option.value)}
+                    className={`rounded-2xl border px-3 py-2 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 ${
+                      isActive
+                        ? 'border-accent/70 bg-accent/10 text-white shadow-[0_10px_24px_rgba(56,189,248,0.18)]'
+                        : 'border-slate-800 bg-slate-900/70 text-slate-200 hover:border-accent/50'
+                    }`}
+                    aria-pressed={isActive}
+                  >
+                    <p className="text-sm font-semibold">{option.label}</p>
+                    <p className="text-[12px] text-slate-400">
+                      {option.hint}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 pt-1">
             <button
@@ -334,4 +419,11 @@ export default function RoomPage() {
       </Modal>
     </div>
   );
+}
+
+function deriveTitleFromPrompt(promptText) {
+  const cleaned = promptText?.trim() ?? '';
+  if (!cleaned) return '';
+  if (cleaned.length <= 60) return cleaned;
+  return `${cleaned.slice(0, 60).trim()}…`;
 }

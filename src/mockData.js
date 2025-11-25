@@ -41,6 +41,11 @@ export const rooms = [
     members: 412,
     isPrivate: false,
     tags: ['coding', 'ai', 'automation'],
+    prompts: [
+      'Condividi un problema tecnico che ti blocca oggi.',
+      'Mostra un WIP di prodotto su cui vuoi feedback veloce.',
+      'Quale automazione vorresti costruire questa settimana?',
+    ],
     theme: {
       primary: '#34d399',
       secondary: '#10b981',
@@ -56,6 +61,11 @@ export const rooms = [
     members: 233,
     isPrivate: false,
     tags: ['creator', 'community', 'monetization'],
+    prompts: [
+      'Condividi un formato che vorresti testare con la tua community.',
+      'Quale sponsorizzazione ti ha fatto dubitare? Racconta e chiedi feedback.',
+      'Scrivi un esperimento per ridurre il rumore nei tuoi canali.',
+    ],
     theme: {
       primary: '#f472b6',
       secondary: '#fb7185',
@@ -70,6 +80,11 @@ export const rooms = [
     members: 142,
     isPrivate: false,
     tags: ['mindset', 'long-form', 'relazioni'],
+    prompts: [
+      'Racconta una situazione recente che ti ha fatto riflettere.',
+      'Quale abitudine digitale vorresti cambiare e perché?',
+      'Condividi un momento in cui ti sei sentito davvero ascoltato.',
+    ],
     theme: {
       primary: '#60a5fa',
       secondary: '#a78bfa',
@@ -85,6 +100,11 @@ export const rooms = [
     members: 278,
     isPrivate: false,
     tags: ['evening', 'creativity', 'rituali'],
+    prompts: [
+      'Come stacchi la testa dopo il lavoro? Condividi il tuo rituale.',
+      'Qual è una piccola attività creativa che ti riaccende la sera?',
+      'Scrivi un ostacolo che ti impedisce di riposare e chiedi un consiglio.',
+    ],
     theme: {
       primary: '#f59e0b',
       secondary: '#f97316',
@@ -100,6 +120,11 @@ export const rooms = [
     members: 364,
     isPrivate: false,
     tags: ['side-project', 'prototype', 'builder'],
+    prompts: [
+      'Racconta un side project che vuoi sbloccare questa settimana.',
+      'Condividi un’idea folle e chiedi feedback in 3 punti.',
+      'Qual è il pezzo più noioso del tuo progetto? Chiedi come semplificarlo.',
+    ],
     theme: {
       primary: '#a855f7',
       secondary: '#6366f1',
@@ -115,6 +140,11 @@ export const rooms = [
     members: 289,
     isPrivate: false,
     tags: ['tech', 'no-flame', 'prod'],
+    prompts: [
+      'Porta un problema tecnico reale su cui cerchi una soluzione senza polemiche.',
+      'Condividi un confronto tra due stack che hai testato e chiedi pareri pratici.',
+      'Quale linea guida usi per tenere i team tech sereni? Mettila in thread.',
+    ],
     theme: {
       primary: '#38bdf8',
       secondary: '#0ea5e9',
@@ -130,6 +160,12 @@ export const rooms = [
     members: 320,
     isPrivate: false,
     tags: ['lavoro', 'burnout', 'ritmo'],
+    prompts: [
+      'Racconta una cosa che ti sta pesando al lavoro in questo periodo.',
+      'Qual è la cosa che ti scarica di più le energie ultimamente?',
+      'Condividi un piccolo progresso che hai fatto oggi.',
+      'Su cosa vorresti un consiglio rapido per alleggerire le giornate?',
+    ],
     theme: {
       primary: '#facc15',
       secondary: '#eab308',
@@ -144,6 +180,11 @@ export const rooms = [
     members: 298,
     isPrivate: false,
     tags: ['digital-detox', 'minimalismo', 'notifiche'],
+    prompts: [
+      'Racconta un’abitudine digitale che vuoi cambiare questa settimana.',
+      'Qual è il tuo rituale per staccare dal telefono? Condividilo in dettaglio.',
+      'Chiedi un consiglio per ridurre le notifiche senza perdere ciò che conta.',
+    ],
     theme: {
       primary: '#06b6d4',
       secondary: '#0ea5e9',
@@ -159,6 +200,11 @@ export const rooms = [
     members: 185,
     isPrivate: true,
     tags: ['relazioni', 'adulting', 'cura'],
+    prompts: [
+      'Racconta un momento di convivenza che ti ha messo alla prova.',
+      'Condividi un dubbio su amicizie adulte e chiedi come gestirlo.',
+      'Scrivi un patto o una regola di casa che funziona per te.',
+    ],
     theme: {
       primary: '#fb7185',
       secondary: '#f472b6',
