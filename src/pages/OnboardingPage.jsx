@@ -10,6 +10,8 @@ import {
   inputBaseClass,
 } from '../components/ui/primitives.js';
 import { useAppState } from '../state/AppStateContext.jsx';
+import { useAuth } from '../state/AuthContext.jsx';
+import { supabase } from '../lib/supabaseClient.js';
 import { computeRoomStats } from '../utils/roomStats.js';
 
 const algorithmPresets = [
@@ -44,6 +46,7 @@ export default function OnboardingPage() {
     threads,
     postsByThread,
   } = useAppState();
+  const { user, updateProfileState } = useAuth();
 
   const defaultPersonaId = primaryPersonaId ?? personas[0]?.id ?? null;
   const roomStats = useMemo(
@@ -82,6 +85,8 @@ export default function OnboardingPage() {
   const [customPersonaName, setCustomPersonaName] = useState('');
   const [customPersonaTagline, setCustomPersonaTagline] = useState('');
   const [customPersonaError, setCustomPersonaError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const selectionLimit = 5;
   const minSelection = 3;
   const customPersonaFormId = 'custom-persona-form';
@@ -138,18 +143,66 @@ export default function OnboardingPage() {
     });
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!canComplete) {
       setRoomError('Completa i tre passi prima di proseguire.');
       return;
     }
 
-    completeOnboarding({
-      initialRoomIds: selectedRooms,
-      primaryPersonaId: selectedPersonaId,
-      algorithmPreset: selectedPreset,
-    });
-    navigate('/app', { replace: true });
+    if (!user?.id) {
+      setSaveError('Serve un account attivo per completare il setup.');
+      return;
+    }
+
+    setRoomError('');
+    setSaveError('');
+    setIsSubmitting(true);
+    const onboardingData = {
+      rooms: selectedRooms,
+      personaId: selectedPersonaId,
+      preset: selectedPreset,
+    };
+
+    try {
+      const { data: updatedProfile, error } = await supabase
+        .from('profiles')
+        .update({
+          is_onboarded: true,
+          onboarding: onboardingData,
+        })
+        .eq('id', user.id)
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Errore durante il salvataggio del profilo', error);
+        setSaveError(
+          'Non siamo riusciti a salvare le tue preferenze. Riprova tra poco.'
+        );
+        return;
+      }
+
+      updateProfileState(
+        updatedProfile ?? {
+          is_onboarded: true,
+          onboarding: onboardingData,
+        }
+      );
+
+      completeOnboarding({
+        initialRoomIds: selectedRooms,
+        primaryPersonaId: selectedPersonaId,
+        algorithmPreset: selectedPreset,
+      });
+      navigate('/app', { replace: true });
+    } catch (err) {
+      console.error('Errore inatteso durante l’onboarding', err);
+      setSaveError(
+        'C’è stato un problema inatteso. Riprova tra qualche secondo.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -424,18 +477,25 @@ export default function OnboardingPage() {
             <div className="text-sm text-slate-300">
               Entrerai nel feed con queste impostazioni: potrai modificarle quando vuoi.
             </div>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={!canComplete}
-              className={`w-full sm:w-auto text-center ${
-                canComplete
-                  ? `${buttonPrimaryClass} text-white text-base`
-                  : 'rounded-2xl px-4 py-2 bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800'
-              }`}
-            >
-              Entra in CoWave
-            </button>
+            <div className="w-full sm:w-auto flex flex-col gap-2 items-stretch sm:items-end">
+              {saveError && (
+                <p className="text-xs text-rose-300 sm:text-right">{saveError}</p>
+              )}
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!canComplete || isSubmitting}
+                className={`w-full sm:w-auto text-center ${
+                  canComplete
+                    ? `${buttonPrimaryClass} text-white text-base ${
+                        isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                      }`
+                    : 'rounded-2xl px-4 py-2 bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-800'
+                }`}
+              >
+                {isSubmitting ? 'Salvataggio...' : 'Entra in CoWave'}
+              </button>
+            </div>
           </footer>
         </main>
       </div>

@@ -20,12 +20,19 @@ export default function AuthPage({ onAuth }) {
   const navigate = useNavigate();
   const isLogin = location.pathname.includes('login');
   const {
-    isOnboarded,
     resetOnboarding,
     updateCurrentUser,
     currentUser,
   } = useAppState();
-  const { isAuthenticated, isAuthReady, signIn, signUp } = useAuth();
+  const {
+    isAuthenticated,
+    isAuthReady,
+    signIn,
+    signUp,
+    profile,
+    isProfileLoading,
+    refreshProfile,
+  } = useAuth();
 
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [errors, setErrors] = useState({});
@@ -36,9 +43,16 @@ export default function AuthPage({ onAuth }) {
   const passwordId = useId();
 
   useEffect(() => {
-    if (!isAuthReady || !isAuthenticated) return;
-    navigate(isOnboarded ? '/app' : '/app/onboarding', { replace: true });
-  }, [isAuthenticated, isAuthReady, isOnboarded, navigate]);
+    if (!isAuthReady || isProfileLoading || !isAuthenticated) return;
+    const destination = profile?.is_onboarded ? '/app' : '/app/onboarding';
+    navigate(destination, { replace: true });
+  }, [
+    isAuthenticated,
+    isAuthReady,
+    isProfileLoading,
+    profile?.is_onboarded,
+    navigate,
+  ]);
 
   function handleChange(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -105,7 +119,12 @@ export default function AuthPage({ onAuth }) {
           email,
         });
         onAuth?.();
-        navigate(isOnboarded ? '/app' : '/app/onboarding');
+        const nextProfile = await refreshProfile(data?.user?.id);
+        const destination =
+          nextProfile?.is_onboarded || profile?.is_onboarded
+            ? '/app'
+            : '/app/onboarding';
+        navigate(destination, { replace: true });
         return;
       }
 

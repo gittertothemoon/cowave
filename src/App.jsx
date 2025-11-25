@@ -13,9 +13,12 @@ import OnboardingPage from './pages/OnboardingPage.jsx';
 import { useAppState } from './state/AppStateContext.jsx';
 import ProtectedRoute from './routes/ProtectedRoute.jsx';
 import AchievementCelebrationPortal from './features/achievements/AchievementCelebrationPortal.jsx';
+import { useAuth } from './state/AuthContext.jsx';
 
 export default function App() {
-  const { isOnboarded, activePersonaId, setActivePersonaId } = useAppState();
+  const { profile } = useAuth();
+  const { activePersonaId, setActivePersonaId } = useAppState();
+  const isOnboarded = Boolean(profile?.is_onboarded);
 
   return (
     <>
