@@ -13,6 +13,7 @@ import {
 } from '../components/ui/primitives.js';
 import { useAppState } from '../state/AppStateContext.jsx';
 import { useAuth } from '../state/AuthContext.jsx';
+import { supabase } from '../lib/supabaseClient.js';
 import { getAuthErrorMessage, getDisplayNameFromEmail } from '../utils/auth.js';
 
 export default function AuthPage({ onAuth }) {
@@ -38,6 +39,11 @@ export default function AuthPage({ onAuth }) {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [status, setStatus] = useState('idle');
+  const [submittedEmail, setSubmittedEmail] = useState('');
+  const [resendMessage, setResendMessage] = useState('');
+  const [resendError, setResendError] = useState('');
+  const [isResending, setIsResending] = useState(false);
   const nameId = useId();
   const emailId = useId();
   const passwordId = useId();
@@ -58,6 +64,11 @@ export default function AuthPage({ onAuth }) {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: '' }));
     setFormError('');
+    setResendMessage('');
+    setResendError('');
+    if (status !== 'idle') {
+      setStatus('idle');
+    }
   }
 
   function validate() {
@@ -86,7 +97,10 @@ export default function AuthPage({ onAuth }) {
       setFormError('Correggi i campi evidenziati per continuare.');
       return;
     }
+    setStatus(isLogin ? 'idle' : 'loading');
     setFormError('');
+    setResendMessage('');
+    setResendError('');
     setIsSubmitting(true);
 
     const email = form.email.trim();
@@ -104,6 +118,7 @@ export default function AuthPage({ onAuth }) {
         });
         if (error) {
           setFormError(getAuthErrorMessage(error, { isLogin: true }));
+          setStatus('idle');
           return;
         }
         const metadataName =
@@ -140,6 +155,7 @@ export default function AuthPage({ onAuth }) {
 
       if (error) {
         setFormError(getAuthErrorMessage(error, { isLogin: false }));
+        setStatus('idle');
         return;
       }
 
@@ -156,15 +172,35 @@ export default function AuthPage({ onAuth }) {
       onAuth?.();
 
       if (!data?.session) {
-        setFormError(
-          'Registrazione completata. Controlla la tua email per confermare e poi accedi.'
-        );
+        setSubmittedEmail(email);
+        setStatus('check_email');
         return;
       }
 
+      setStatus('done');
       navigate('/app/onboarding');
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleResendEmail() {
+    if (!submittedEmail || status !== 'check_email') return;
+    setIsResending(true);
+    setResendMessage('');
+    setResendError('');
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: submittedEmail,
+      });
+      if (error) {
+        setResendError(getAuthErrorMessage(error, { isLogin: false }));
+        return;
+      }
+      setResendMessage('Email inviata di nuovo.');
+    } finally {
+      setIsResending(false);
     }
   }
 
@@ -207,6 +243,72 @@ export default function AuthPage({ onAuth }) {
               ? 'Se hai già un account, entra e riprendi le conversazioni nelle tue stanze.'
               : 'Dopo la registrazione ti guidiamo in tre passi rapidi: stanze da seguire, persona primaria e preset del feed.'}
           </p>
+
+          {!isLogin && status === 'check_email' && (
+            <div className={`${cardBaseClass} border-slate-800 bg-slate-950/60 p-4 sm:p-5 space-y-3`}>
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-sky-400" aria-hidden />
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                  Passo successivo
+                </p>
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold text-slate-50">
+                  Controlla la tua email
+                </h3>
+                <p className="text-sm text-slate-200">
+                  Ti abbiamo inviato un link di conferma a{' '}
+                  <span className="font-semibold text-white">{submittedEmail}</span>. Aprilo per attivare l’account, poi torna qui e accedi.
+                </p>
+                <p className="text-xs text-slate-400">
+                  Se non la vedi, controlla Spam/Promozioni. A volte serve un minuto.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={`${buttonPrimaryClass} px-4 py-2`}
+                  onClick={() => navigate('/auth/login')}
+                >
+                  Vai alla pagina di accesso
+                </button>
+                <button
+                  type="button"
+                  disabled={isResending}
+                  className={`${buttonSecondaryClass} px-4 py-2 ${isResending ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  onClick={handleResendEmail}
+                >
+                  {isResending ? 'Invio in corso...' : 'Rimanda email'}
+                </button>
+                <button
+                  type="button"
+                  className="text-xs text-slate-400 hover:text-slate-200 underline-offset-4 underline"
+                  onClick={() => {
+                    setStatus('idle');
+                    setForm((prev) => ({ ...prev, email: submittedEmail }));
+                  }}
+                >
+                  Cambia email
+                </button>
+                <button
+                  type="button"
+                  className="text-xs text-slate-400 hover:text-slate-200 underline-offset-4 underline"
+                  onClick={() => navigate('/auth/login')}
+                >
+                  Ho già confermato
+                </button>
+              </div>
+              {(resendMessage || resendError) && (
+                <p
+                  className={`text-xs ${
+                    resendError ? 'text-red-300' : 'text-emerald-300'
+                  }`}
+                >
+                  {resendError || resendMessage}
+                </p>
+              )}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-3 text-sm">
             {formError && (
