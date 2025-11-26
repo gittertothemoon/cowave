@@ -79,7 +79,7 @@ export function AuthProvider({ children }) {
           .from('profiles')
           .select('*')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
         if (error) {
           console.error('Errore nel recupero del profilo', error);
           setProfile(null);
@@ -110,7 +110,7 @@ export function AuthProvider({ children }) {
           .from('profiles')
           .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
         if (!isMounted) return;
         if (error) {
           console.error('Errore nel recupero del profilo', error);

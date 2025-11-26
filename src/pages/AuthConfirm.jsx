@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import CoWaveLogo from '../components/CoWaveLogo.jsx';
 import {
   buttonPrimaryClass,
@@ -10,12 +10,8 @@ import {
   bodyTextClass,
 } from '../components/ui/primitives.js';
 import { supabase } from '../lib/supabaseClient.js';
-import { cleanAuthNoiseFromUrl } from '../lib/url.js';
-import { useAuth } from '../state/AuthContext.jsx';
 
 export default function AuthConfirm() {
-  const navigate = useNavigate();
-  const { refreshProfile } = useAuth();
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
   const hasHandledRef = useRef(false);
@@ -27,17 +23,10 @@ export default function AuthConfirm() {
 
     async function handleConfirmation() {
       if (typeof window === 'undefined') return;
-      const currentUrl = new URL(window.location.href);
-      const searchParams = new URLSearchParams(currentUrl.search);
-      const hashFragment = currentUrl.hash?.startsWith('#')
-        ? currentUrl.hash.slice(1)
-        : currentUrl.hash ?? '';
-      const hashParams = hashFragment ? new URLSearchParams(hashFragment) : null;
-      const tokenHash =
-        searchParams.get('token_hash') || hashParams?.get('token_hash');
-      const type =
-        searchParams.get('type') || hashParams?.get('type') || 'signup';
-      const nextParam = searchParams.get('next') || hashParams?.get('next');
+      const searchParams = new URLSearchParams(window.location.search);
+      const tokenHash = searchParams.get('token_hash');
+      const type = searchParams.get('type');
+      const nextParam = searchParams.get('next');
 
       if (!tokenHash || !type) {
         setError(
@@ -57,39 +46,28 @@ export default function AuthConfirm() {
           throw verifyError;
         }
 
-        let session = data?.session ?? null;
-        if (session?.access_token && session?.refresh_token) {
-          const { data: persistedSession, error: sessionError } =
-            await supabase.auth.setSession({
-              access_token: session.access_token,
-              refresh_token: session.refresh_token,
-            });
-          if (!isActive) return;
+        if (data?.session) {
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          });
           if (sessionError) {
             throw sessionError;
           }
-          session = persistedSession?.session ?? session;
         }
 
-        const userId = session?.user?.id || data?.user?.id || data?.session?.user?.id;
-        const nextProfile = await refreshProfile(userId);
-        if (!isActive) return;
-
-        cleanAuthNoiseFromUrl();
         setStatus('success');
-
-        const destination =
-          nextParam ??
-          (nextProfile?.is_onboarded ? '/app' : '/onboarding');
-        navigate(destination, { replace: true });
+        window.location.replace(nextParam || '/onboarding');
       } catch (err) {
         if (!isActive) return;
         console.error('Errore nella verifica del token', err);
-        cleanAuthNoiseFromUrl();
         setError(
           'Non siamo riusciti a confermare l’email. Richiedi un nuovo link e riprova.'
         );
         setStatus('error');
+      } finally {
+        if (!isActive) return;
+        setStatus((prev) => (prev === 'loading' ? 'error' : prev));
       }
     }
 
@@ -98,7 +76,7 @@ export default function AuthConfirm() {
     return () => {
       isActive = false;
     };
-  }, [navigate, refreshProfile]);
+  }, []);
 
   return (
     <div className="min-h-screen relative flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 overflow-hidden">

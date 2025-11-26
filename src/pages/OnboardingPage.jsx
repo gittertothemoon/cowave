@@ -164,6 +164,34 @@ export default function OnboardingPage() {
     };
 
     try {
+      const { data: existingProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Errore nel recupero del profilo prima del salvataggio', profileError);
+        setSaveError(
+          'Non siamo riusciti a preparare il tuo profilo. Riprova tra poco.'
+        );
+        return;
+      }
+
+      if (!existingProfile) {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .upsert({ id: user.id });
+
+        if (insertError) {
+          console.error('Errore durante la creazione del profilo', insertError);
+          setSaveError(
+            'Non siamo riusciti a creare il tuo profilo. Riprova tra poco.'
+          );
+          return;
+        }
+      }
+
       const { data: updatedProfile, error } = await supabase
         .from('profiles')
         .update({
@@ -172,7 +200,7 @@ export default function OnboardingPage() {
         })
         .eq('id', user.id)
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Errore durante il salvataggio del profilo', error);
