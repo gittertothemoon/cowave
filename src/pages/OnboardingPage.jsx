@@ -88,22 +88,46 @@ export default function OnboardingPage() {
   const [customPersonaError, setCustomPersonaError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const selectionLimit = 5;
-  const minSelection = 3;
+  const maxSelectable = Math.min(5, rooms.length);
+  const minRequired = Math.min(3, rooms.length);
   const customPersonaFormId = 'custom-persona-form';
   const focusRingClass =
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
   const nickname =
     currentUser?.nickname?.trim().split(' ')?.[0] || currentUser?.nickname || 'Tu';
 
+  const selectedCount = useMemo(() => {
+    const availableIds = new Set(rooms.map((room) => room.id));
+    return selectedRooms.filter((id) => availableIds.has(id)).length;
+  }, [selectedRooms, rooms]);
+
   const canComplete =
-    selectedRooms.length >= minSelection && selectedPersonaId && !!selectedPreset;
+    selectedCount >= minRequired && selectedPersonaId && !!selectedPreset;
 
   useEffect(() => {
     if (!rooms.length) {
       loadRooms();
     }
   }, [rooms.length, loadRooms]);
+
+  useEffect(() => {
+    setSelectedRooms((prev) => {
+      const availableIds = new Set(rooms.map((room) => room.id));
+      const filtered = prev.filter((id) => availableIds.has(id)).slice(0, maxSelectable);
+      if (
+        filtered.length === prev.length &&
+        filtered.every((id, idx) => id === prev[idx])
+      ) {
+        return prev;
+      }
+      if (minRequired === 0) {
+        setRoomError('');
+      } else if (filtered.length < minRequired) {
+        setRoomError(`Seleziona almeno ${minRequired} stanze per continuare.`);
+      }
+      return filtered;
+    });
+  }, [rooms, maxSelectable, minRequired]);
 
   useEffect(() => {
     if (initialRoomIds?.length || selectedRooms.length > 0) return;
@@ -132,18 +156,18 @@ export default function OnboardingPage() {
     setSelectedRooms((prev) => {
       if (prev.includes(roomId)) {
         const next = prev.filter((id) => id !== roomId);
-        if (next.length < minSelection) {
-          setRoomError(`Seleziona almeno ${minSelection} stanze per continuare.`);
+        if (next.length < minRequired && minRequired > 0) {
+          setRoomError(`Seleziona almeno ${minRequired} stanze per continuare.`);
         } else {
           setRoomError('');
         }
         return next;
       }
-      if (prev.length >= selectionLimit) {
-        setRoomError(`Puoi scegliere al massimo ${selectionLimit} stanze ora.`);
+      if (prev.length >= maxSelectable) {
+        setRoomError(`Puoi scegliere al massimo ${maxSelectable} stanze ora.`);
         return prev;
       }
-      if (prev.length + 1 >= minSelection) {
+      if (prev.length + 1 >= minRequired || minRequired === 0) {
         setRoomError('');
       }
       return [...prev, roomId];
@@ -257,14 +281,14 @@ export default function OnboardingPage() {
             <div className="flex items-center justify-between flex-wrap gap-2">
               <p className={eyebrowClass}>Step 1</p>
               <p className="text-xs text-slate-400">
-                {selectedRooms.length}/{selectionLimit} selezionate
+                {selectedCount}/{maxSelectable} selezionate
               </p>
             </div>
             <h2 className={`${pageTitleClass} text-2xl`}>
               Scegli le stanze da cui partire
             </h2>
             <p className={bodyTextClass}>
-              Seleziona da {minSelection} a {selectionLimit} stanze che ti somigliano. Useremo queste per costruire il tuo primo feed e potrai cambiarle quando vuoi dal profilo.
+              Scegli fino a {maxSelectable} stanze (minimo {minRequired}). Useremo queste per costruire il tuo primo feed e potrai cambiarle quando vuoi dal profilo.
             </p>
             {roomError && (
               <p
@@ -276,8 +300,31 @@ export default function OnboardingPage() {
               </p>
             )}
             {!roomsInfo.length ? (
-              <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-5 text-sm text-slate-300">
-                Nessuna stanza disponibile in questo momento. Ricarica tra poco o riprova più tardi.
+              <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-5 text-sm text-slate-300 space-y-3">
+                <div className="space-y-1">
+                  <p className="text-base font-semibold text-white">
+                    Nessuna stanza disponibile ora
+                  </p>
+                  <p>
+                    Non ci sono stanze da seguire in questo momento. Riprova oppure vai al feed: potrai scegliere le stanze più tardi dal profilo.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={loadRooms}
+                    className={`${buttonPrimaryClass} text-sm font-semibold`}
+                  >
+                    Riprova
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/feed')}
+                    className={`rounded-2xl border border-white/10 px-3 py-2 text-sm text-slate-200 hover:border-white/20 ${focusRingClass}`}
+                  >
+                    Vai al feed
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="grid max-h-[520px] overflow-y-auto pr-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -312,12 +359,29 @@ export default function OnboardingPage() {
                           <p className="text-xs text-slate-400 mt-1 line-clamp-2">
                             {room.description}
                           </p>
-                          <p className="text-[11px] text-slate-300 mt-2">
-                            {stats.threadCount} thread · {stats.repliesCount} risposte
-                            {stats.repliesLast24h
-                              ? ` (oggi ${stats.repliesLast24h})`
-                              : ''}
-                          </p>
+                          <div className="text-[11px] text-slate-300 mt-2">
+                            {(stats.threadCount > 0 || stats.repliesCount > 0) ? (
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span>
+                                  {stats.threadCount} thread • {stats.repliesCount} risposte
+                                </span>
+                                {stats.repliesLast24h ? (
+                                  <span className="text-[10px] text-slate-400">
+                                    (oggi {stats.repliesLast24h})
+                                  </span>
+                                ) : null}
+                              </div>
+                            ) : (
+                              <div className="flex flex-wrap items-center gap-2 text-slate-300">
+                                <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-slate-200">
+                                  Nuova
+                                </span>
+                                <span className="text-[10px] text-slate-400">
+                                  Ancora nessun thread. Inizia tu.
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <span
                           className={`text-[11px] uppercase tracking-[0.2em] px-2 py-1 rounded-full ${

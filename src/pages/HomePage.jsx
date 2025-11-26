@@ -228,12 +228,29 @@ export default function HomePage() {
                     {isFollowed ? 'Seguita' : 'Suggerita'}
                   </span>
                 </div>
-                <p className="text-[12px] text-slate-200 mt-2">
-                  {stats.threadCount} thread · {stats.repliesCount} risposte{' '}
-                  {stats.repliesLast24h
-                    ? `(oggi ${stats.repliesLast24h})`
-                    : ''}
-                </p>
+                <div className="mt-2 text-[12px] text-slate-200">
+                  {(stats.threadCount > 0 || stats.repliesCount > 0) ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>
+                        {stats.threadCount} thread • {stats.repliesCount} risposte
+                      </span>
+                      {stats.repliesLast24h ? (
+                        <span className="text-[11px] text-slate-400">
+                          (oggi {stats.repliesLast24h})
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap items-center gap-2 text-slate-300">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] uppercase tracking-[0.16em] text-slate-200">
+                        Nuova
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        Ancora nessun thread. Inizia tu.
+                      </span>
+                    </div>
+                  )}
+                </div>
                 <div className="flex flex-wrap gap-1 mt-2 text-[10px] text-slate-400">
                   {room.tags?.slice(0, 3).map((tag) => (
                     <span
