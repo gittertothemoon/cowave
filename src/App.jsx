@@ -18,8 +18,9 @@ import AchievementCelebrationPortal from './features/achievements/AchievementCel
 import { useAuth } from './state/AuthContext.jsx';
 
 export default function App() {
-  const { profile } = useAuth();
+  const { profile, authReady, isAuthReady } = useAuth();
   const { activePersonaId, setActivePersonaId } = useAppState();
+  const ready = authReady ?? isAuthReady;
   const isOnboarded = Boolean(profile?.is_onboarded);
 
   return (
@@ -33,7 +34,7 @@ export default function App() {
           path="/app/onboarding"
           element={
             <ProtectedRoute>
-              {isOnboarded ? (
+              {isOnboarded && ready ? (
                 <Navigate to="/app" replace />
               ) : (
                 <OnboardingPage />
@@ -45,7 +46,7 @@ export default function App() {
           path="/onboarding"
           element={
             <ProtectedRoute>
-              {isOnboarded ? (
+              {isOnboarded && ready ? (
                 <Navigate to="/app" replace />
               ) : (
                 <OnboardingPage />
@@ -57,7 +58,10 @@ export default function App() {
           path="/app"
           element={
             <ProtectedRoute>
-              <OnboardedRoute isOnboarded={isOnboarded}>
+              <OnboardedRoute
+                authReady={ready}
+                isOnboarded={isOnboarded}
+              >
                 <MainLayout
                   activePersonaId={activePersonaId}
                   onPersonaChange={setActivePersonaId}
@@ -99,8 +103,8 @@ export default function App() {
   );
 }
 
-function OnboardedRoute({ isOnboarded, children }) {
-  if (!isOnboarded) {
+function OnboardedRoute({ isOnboarded, authReady, children }) {
+  if (isOnboarded === false && authReady) {
     return <Navigate to="/app/onboarding" replace />;
   }
 

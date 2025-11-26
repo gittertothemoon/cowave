@@ -164,41 +164,16 @@ export default function OnboardingPage() {
     };
 
     try {
-      const { data: existingProfile, error: profileError } = await supabase
+      const { data: upsertedProfile, error } = await supabase
         .from('profiles')
-        .select('id')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error('Errore nel recupero del profilo prima del salvataggio', profileError);
-        setSaveError(
-          'Non siamo riusciti a preparare il tuo profilo. Riprova tra poco.'
-        );
-        return;
-      }
-
-      if (!existingProfile) {
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .upsert({ id: user.id });
-
-        if (insertError) {
-          console.error('Errore durante la creazione del profilo', insertError);
-          setSaveError(
-            'Non siamo riusciti a creare il tuo profilo. Riprova tra poco.'
-          );
-          return;
-        }
-      }
-
-      const { data: updatedProfile, error } = await supabase
-        .from('profiles')
-        .update({
-          is_onboarded: true,
-          onboarding: onboardingData,
-        })
-        .eq('id', user.id)
+        .upsert(
+          {
+            id: user.id,
+            is_onboarded: true,
+            onboarding: onboardingData,
+          },
+          { onConflict: 'id' }
+        )
         .select('*')
         .maybeSingle();
 
@@ -210,8 +185,15 @@ export default function OnboardingPage() {
         return;
       }
 
+      if (!upsertedProfile) {
+        setSaveError(
+          'Profilo non trovato dopo il salvataggio. Riprova tra qualche istante.'
+        );
+        return;
+      }
+
       updateProfileState(
-        updatedProfile ?? {
+        upsertedProfile ?? {
           is_onboarded: true,
           onboarding: onboardingData,
         }
@@ -286,69 +268,75 @@ export default function OnboardingPage() {
                 {roomError}
               </p>
             )}
-            <div className="grid max-h-[520px] overflow-y-auto pr-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {roomsInfo.map((room) => {
-                const stats = room.stats ?? {
-                  threadCount: 0,
-                  repliesCount: 0,
-                  repliesLast24h: 0,
-                };
-                const isSelected = selectedRooms.includes(room.id);
-                const isRecommended = recommendedRoomIds.includes(room.id);
-                return (
-                  <button
-                    key={room.id}
-                    type="button"
-                    onClick={() => toggleRoom(room.id)}
-                    className={`text-left rounded-2xl border px-4 py-4 transition-colors bg-slate-950/60 backdrop-blur ${focusRingClass} ${
-                      isSelected
-                        ? 'border-accent/70 bg-accent/15 shadow-glow'
-                        : 'border-white/10 hover:border-white/25'
-                    }`}
-                    aria-pressed={isSelected}
-                    aria-label={`${isSelected ? 'Rimuovi' : 'Segui'} la stanza ${
-                      room.name
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-base font-semibold text-white">
-                          {room.name}
-                        </p>
-                        <p className="text-xs text-slate-400 mt-1 line-clamp-2">
-                          {room.description}
-                        </p>
-                        <p className="text-[11px] text-slate-300 mt-2">
-                          {stats.threadCount} thread · {stats.repliesCount} risposte
-                          {stats.repliesLast24h
-                            ? ` (oggi ${stats.repliesLast24h})`
-                            : ''}
-                        </p>
-                      </div>
-                      <span
-                        className={`text-[11px] uppercase tracking-[0.2em] px-2 py-1 rounded-full ${
-                          isSelected
-                            ? 'bg-accent text-slate-950'
-                            : 'bg-white/5 text-slate-400'
-                        }`}
-                      >
-                        {isSelected ? 'Scelta' : isRecommended ? 'Suggerita' : 'Segui'}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-1 mt-3" aria-hidden="true">
-                      {room.tags.map((tag) => (
+            {!roomsInfo.length ? (
+              <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-5 text-sm text-slate-300">
+                Nessuna stanza disponibile in questo momento. Ricarica tra poco o riprova più tardi.
+              </div>
+            ) : (
+              <div className="grid max-h-[520px] overflow-y-auto pr-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {roomsInfo.map((room) => {
+                  const stats = room.stats ?? {
+                    threadCount: 0,
+                    repliesCount: 0,
+                    repliesLast24h: 0,
+                  };
+                  const isSelected = selectedRooms.includes(room.id);
+                  const isRecommended = recommendedRoomIds.includes(room.id);
+                  return (
+                    <button
+                      key={room.id}
+                      type="button"
+                      onClick={() => toggleRoom(room.id)}
+                      className={`text-left rounded-2xl border px-4 py-4 transition-colors bg-slate-950/60 backdrop-blur ${focusRingClass} ${
+                        isSelected
+                          ? 'border-accent/70 bg-accent/15 shadow-glow'
+                          : 'border-white/10 hover:border-white/25'
+                      }`}
+                      aria-pressed={isSelected}
+                      aria-label={`${isSelected ? 'Rimuovi' : 'Segui'} la stanza ${
+                        room.name
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-base font-semibold text-white">
+                            {room.name}
+                          </p>
+                          <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                            {room.description}
+                          </p>
+                          <p className="text-[11px] text-slate-300 mt-2">
+                            {stats.threadCount} thread · {stats.repliesCount} risposte
+                            {stats.repliesLast24h
+                              ? ` (oggi ${stats.repliesLast24h})`
+                              : ''}
+                          </p>
+                        </div>
                         <span
-                          key={`${room.id}-${tag}`}
-                          className="text-[10px] px-2 py-1 rounded-full border border-white/10 bg-slate-900/70 text-slate-300"
+                          className={`text-[11px] uppercase tracking-[0.2em] px-2 py-1 rounded-full ${
+                            isSelected
+                              ? 'bg-accent text-slate-950'
+                              : 'bg-white/5 text-slate-400'
+                          }`}
                         >
-                          #{tag}
+                          {isSelected ? 'Scelta' : isRecommended ? 'Suggerita' : 'Segui'}
                         </span>
-                      ))}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                      </div>
+                      <div className="flex flex-wrap gap-1 mt-3" aria-hidden="true">
+                        {room.tags.map((tag) => (
+                          <span
+                            key={`${room.id}-${tag}`}
+                            className="text-[10px] px-2 py-1 rounded-full border border-white/10 bg-slate-900/70 text-slate-300"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
           <section className={`${cardBaseClass} p-4 sm:p-5 space-y-4`}>
@@ -360,6 +348,11 @@ export default function OnboardingPage() {
             {nickname}, con quale tono vuoi parlare nei primi thread? Puoi cambiare o
             creare nuove personas in ogni momento.
           </p>
+          {!personas.length && (
+            <p className="text-xs text-rose-200">
+              Nessuna persona predefinita trovata: creane una personalizzata per iniziare.
+            </p>
+          )}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {personas.map((persona) => {
               const isSelected = persona.id === selectedPersonaId;

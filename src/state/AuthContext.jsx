@@ -14,7 +14,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [profile, setProfile] = useState(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
 
@@ -61,7 +61,7 @@ export function AuthProvider({ children }) {
       authSubscription = data?.subscription ?? null;
 
       if (isMounted) {
-        setIsAuthReady(true);
+        setAuthReady(true);
       }
     }
 
@@ -153,7 +153,8 @@ export function AuthProvider({ children }) {
       user,
       profile,
       isAuthenticated: Boolean(user),
-      isAuthReady,
+      authReady,
+      isAuthReady: authReady,
       isProfileLoading,
       refreshProfile,
       updateProfileState,
@@ -165,7 +166,7 @@ export function AuthProvider({ children }) {
       session,
       user,
       profile,
-      isAuthReady,
+      authReady,
       isProfileLoading,
       refreshProfile,
       updateProfileState,

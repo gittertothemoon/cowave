@@ -27,13 +27,15 @@ export default function AuthConfirm() {
       const tokenHash = searchParams.get('token_hash');
       const type = searchParams.get('type');
       const nextParam = searchParams.get('next');
-      const nextDestination = nextParam || '/onboarding';
+      const nextDestination = nextParam || '/app/onboarding';
 
       if (!tokenHash || !type) {
-        setError(
-          'Link di conferma non valido o scaduto. Richiedi un nuovo link e riprova.'
-        );
-        setStatus('error');
+        if (isActive) {
+          setError(
+            'Link di conferma non valido o scaduto. Richiedi un nuovo link e riprova.'
+          );
+          setStatus('error');
+        }
         return;
       }
 
@@ -47,23 +49,20 @@ export default function AuthConfirm() {
           throw verifyError;
         }
 
-        if (data?.session) {
+        const sessionTokens = data?.session;
+        if (sessionTokens) {
           const { error: sessionError } = await supabase.auth.setSession({
-            access_token: data.session.access_token,
-            refresh_token: data.session.refresh_token,
+            access_token: sessionTokens.access_token,
+            refresh_token: sessionTokens.refresh_token,
           });
           if (!isActive) return;
-          if (sessionError) {
-            throw sessionError;
-          }
+          if (sessionError) throw sessionError;
         }
 
         const { data: sessionData, error: sessionCheckError } =
           await supabase.auth.getSession();
         if (!isActive) return;
-        if (sessionCheckError) {
-          throw sessionCheckError;
-        }
+        if (sessionCheckError) throw sessionCheckError;
 
         if (sessionData?.session) {
           setStatus('success');
@@ -72,19 +71,16 @@ export default function AuthConfirm() {
         }
 
         setError(
-          'Email confermata, ma non siamo riusciti a creare la sessione. Accedi di nuovo per continuare.'
+          'Email confermata, ma non siamo riusciti a completare la sessione. Accedi di nuovo.'
         );
         setStatus('error');
       } catch (err) {
         if (!isActive) return;
         console.error('Errore nella verifica del token', err);
         setError(
-          'Non siamo riusciti a confermare l’email. Richiedi un nuovo link e riprova.'
+          'Non siamo riusciti a confermare l’accesso. Richiedi un nuovo link e riprova.'
         );
         setStatus('error');
-      } finally {
-        if (!isActive) return;
-        setStatus((prev) => (prev === 'loading' ? 'error' : prev));
       }
     }
 

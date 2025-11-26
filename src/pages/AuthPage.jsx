@@ -27,6 +27,7 @@ export default function AuthPage({ onAuth }) {
   } = useAppState();
   const {
     isAuthenticated,
+    authReady,
     isAuthReady,
     signIn,
     signUp,
@@ -47,14 +48,15 @@ export default function AuthPage({ onAuth }) {
   const nameId = useId();
   const emailId = useId();
   const passwordId = useId();
+  const ready = authReady ?? isAuthReady;
 
   useEffect(() => {
-    if (!isAuthReady || isProfileLoading || !isAuthenticated) return;
+    if (!ready || isProfileLoading || !isAuthenticated) return;
     const destination = profile?.is_onboarded ? '/app' : '/app/onboarding';
     navigate(destination, { replace: true });
   }, [
     isAuthenticated,
-    isAuthReady,
+    ready,
     isProfileLoading,
     profile?.is_onboarded,
     navigate,
