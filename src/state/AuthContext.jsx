@@ -20,6 +20,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let isMounted = true;
+    let authSubscription = null;
 
     if (typeof window !== 'undefined') {
       const pathname = window.location.pathname;
@@ -38,30 +39,37 @@ export function AuthProvider({ children }) {
           console.error('Errore nel recupero della sessione Supabase', error);
           setSession(null);
           setUser(null);
-          return;
+        } else {
+          setSession(data?.session ?? null);
+          setUser(data?.session?.user ?? null);
         }
-        setSession(data?.session ?? null);
-        setUser(data?.session?.user ?? null);
-      } finally {
+      } catch (err) {
         if (isMounted) {
-          setIsAuthReady(true);
+          console.error('Errore inatteso nel recupero della sessione Supabase', err);
+          setSession(null);
+          setUser(null);
         }
+      }
+
+      if (!isMounted) return;
+
+      const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+        if (!isMounted) return;
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
+      });
+      authSubscription = data?.subscription ?? null;
+
+      if (isMounted) {
+        setIsAuthReady(true);
       }
     }
 
     loadSession();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange(
-      (_event, nextSession) => {
-        setSession(nextSession);
-        setUser(nextSession?.user ?? null);
-        setIsAuthReady(true);
-      }
-    );
-
     return () => {
       isMounted = false;
-      subscription?.subscription?.unsubscribe();
+      authSubscription?.unsubscribe();
     };
   }, []);
 

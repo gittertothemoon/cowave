@@ -27,6 +27,7 @@ export default function AuthConfirm() {
       const tokenHash = searchParams.get('token_hash');
       const type = searchParams.get('type');
       const nextParam = searchParams.get('next');
+      const nextDestination = nextParam || '/onboarding';
 
       if (!tokenHash || !type) {
         setError(
@@ -51,13 +52,29 @@ export default function AuthConfirm() {
             access_token: data.session.access_token,
             refresh_token: data.session.refresh_token,
           });
+          if (!isActive) return;
           if (sessionError) {
             throw sessionError;
           }
         }
 
-        setStatus('success');
-        window.location.replace(nextParam || '/onboarding');
+        const { data: sessionData, error: sessionCheckError } =
+          await supabase.auth.getSession();
+        if (!isActive) return;
+        if (sessionCheckError) {
+          throw sessionCheckError;
+        }
+
+        if (sessionData?.session) {
+          setStatus('success');
+          window.location.replace(nextDestination);
+          return;
+        }
+
+        setError(
+          'Email confermata, ma non siamo riusciti a creare la sessione. Accedi di nuovo per continuare.'
+        );
+        setStatus('error');
       } catch (err) {
         if (!isActive) return;
         console.error('Errore nella verifica del token', err);

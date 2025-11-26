@@ -42,6 +42,18 @@ export default function App() {
           }
         />
         <Route
+          path="/onboarding"
+          element={
+            <ProtectedRoute>
+              {isOnboarded ? (
+                <Navigate to="/app" replace />
+              ) : (
+                <OnboardingPage />
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/app"
           element={
             <ProtectedRoute>
