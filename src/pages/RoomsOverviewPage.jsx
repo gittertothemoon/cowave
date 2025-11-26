@@ -149,7 +149,7 @@ export default function RoomsOverviewPage() {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <Link
-              to={`/app/rooms/${room.id}`}
+              to={`/rooms/${room.id}`}
               className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
             >
               <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
@@ -179,7 +179,7 @@ export default function RoomsOverviewPage() {
         <div className="flex items-center justify-between text-[11px] text-slate-500">
           <span>Creata il {formatDate(room.createdAt)}</span>
           <Link
-            to={`/app/rooms/${room.id}`}
+            to={`/rooms/${room.id}`}
             className="text-sky-300 hover:text-sky-200 text-xs"
           >
             Entra →
@@ -221,7 +221,7 @@ export default function RoomsOverviewPage() {
             ) : null}
           </div>
           <Link
-            to={`/app/rooms/${room.id}`}
+            to={`/rooms/${room.id}`}
             className={`${buttonSecondaryClass} text-xs`}
           >
             Apri

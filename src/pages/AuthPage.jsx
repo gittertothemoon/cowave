@@ -52,7 +52,7 @@ export default function AuthPage({ onAuth }) {
 
   useEffect(() => {
     if (!ready || isProfileLoading || !isAuthenticated) return;
-    const destination = profile?.is_onboarded ? '/app' : '/app/onboarding';
+    const destination = profile?.is_onboarded ? '/feed' : '/onboarding';
     navigate(destination, { replace: true });
   }, [
     isAuthenticated,
@@ -143,8 +143,8 @@ export default function AuthPage({ onAuth }) {
         const nextProfile = await refreshProfile(data?.user?.id);
         const destination =
           nextProfile?.is_onboarded || profile?.is_onboarded
-            ? '/app'
-            : '/app/onboarding';
+            ? '/feed'
+            : '/onboarding';
         navigate(destination, { replace: true });
         return;
       }
@@ -185,7 +185,7 @@ export default function AuthPage({ onAuth }) {
       }
 
       setStatus('done');
-      navigate('/app/onboarding');
+      navigate('/onboarding');
     } finally {
       setIsSubmitting(false);
     }

@@ -124,7 +124,7 @@ export default function ThreadPage() {
       if (typeof window === 'undefined') return;
       const shareUrl =
         getCanonicalUrl() ||
-        `${window.location.origin}/app/threads/${threadId}`;
+        `${window.location.origin}/threads/${threadId}`;
       navigator?.clipboard?.writeText(shareUrl).catch(() => {});
       setCopyFeedback('Link copiato.');
       window.setTimeout(() => setCopyFeedback(''), 1200);
@@ -214,7 +214,7 @@ export default function ThreadPage() {
         <p className="text-sm text-red-200">Thread non trovato.</p>
         <button
           type="button"
-          onClick={() => navigate('/app/rooms')}
+          onClick={() => navigate('/rooms')}
           className={`${buttonGhostClass} mt-2 text-sm`}
         >
           Torna alle stanze
@@ -224,8 +224,8 @@ export default function ThreadPage() {
   }
 
   const roomLink = thread?.roomId
-    ? `/app/rooms/${thread.roomId}`
-    : '/app/rooms';
+    ? `/rooms/${thread.roomId}`
+    : '/rooms';
   const theme = room?.theme ?? {
     primary: '#38bdf8',
     secondary: '#a78bfa',

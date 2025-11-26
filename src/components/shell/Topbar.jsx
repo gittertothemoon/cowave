@@ -57,28 +57,28 @@ export default function Topbar({
   const navItems = [
     {
       label: 'Feed',
-      to: '/app',
+      to: '/feed',
       icon: 'feed',
       exact: true,
-      match: (path) => path === '/app',
+      match: (path) => path === '/feed' || path === '/app',
     },
     {
       label: 'Stanze',
-      to: '/app/rooms',
+      to: '/rooms',
       icon: 'rooms',
-      match: (path) => path.startsWith('/app/rooms'),
+      match: (path) => path.startsWith('/rooms') || path.startsWith('/app/rooms'),
     },
     {
       label: 'Profilo',
-      to: '/app/profile',
+      to: '/profile',
       icon: 'profile',
-      match: (path) => path.startsWith('/app/profile'),
+      match: (path) => path.startsWith('/profile') || path.startsWith('/app/profile'),
     },
     {
       label: 'Impostazioni',
-      to: '/app/settings',
+      to: '/settings',
       icon: 'settings',
-      match: (path) => path.startsWith('/app/settings'),
+      match: (path) => path.startsWith('/settings') || path.startsWith('/app/settings'),
     },
   ];
 
@@ -89,7 +89,7 @@ export default function Topbar({
           <div className="flex h-[4.75rem] md:h-16 items-center gap-3 md:gap-4 relative">
             <div className="absolute inset-0 flex items-center justify-center md:hidden pointer-events-none">
               <Link
-                to="/app"
+                to="/feed"
                 className="pointer-events-auto flex items-center text-slate-100"
                 aria-label="Vai alla home CoWave"
               >
@@ -111,7 +111,7 @@ export default function Topbar({
               </div>
             </button>
             <Link
-              to="/app"
+              to="/feed"
               className="hidden md:flex items-center gap-2 text-slate-200 -ml-20 lg:-ml-24"
               aria-label="Vai alla home CoWave"
             >
@@ -229,7 +229,7 @@ export default function Topbar({
                     <button
                       type="button"
                       onClick={() => {
-                        navigate('/app/profile');
+                        navigate('/profile');
                         setPersonaMenuOpen(false);
                       }}
                       className="w-full border-t border-white/5 px-3 py-1.5 text-left text-[11px] text-slate-400 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"

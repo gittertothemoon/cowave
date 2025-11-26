@@ -152,7 +152,7 @@ export default function Sidebar({
   const handleStartThread = () => {
     const targetRoomId = selectedRoomId || nextRoomId;
     if (targetRoomId) {
-      handleNavigate(`/app/rooms/${targetRoomId}`, {
+      handleNavigate(`/rooms/${targetRoomId}`, {
         state: { highlightCreateThread: true },
       });
       return;
@@ -251,7 +251,7 @@ export default function Sidebar({
             </button>
             <button
               type="button"
-              onClick={() => handleNavigate('/app/settings/esperienza')}
+              onClick={() => handleNavigate('/settings/esperienza')}
               className={`${buttonSecondaryClass} rounded-xl text-[13px] px-3 py-2 justify-center`}
             >
               Strumenti avanzati
@@ -274,7 +274,7 @@ export default function Sidebar({
                 <li key={room.id}>
                   <button
                     type="button"
-                    onClick={() => handleNavigate(`/app/rooms/${room.id}`)}
+                    onClick={() => handleNavigate(`/rooms/${room.id}`)}
                     className="w-full text-left rounded-2xl border transition bg-slate-950/80 hover:border-white/25 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                     style={{
                       borderColor: `${accent}30`,
@@ -358,7 +358,7 @@ export default function Sidebar({
                 <li key={room.id}>
                   <button
                     type="button"
-                    onClick={() => handleNavigate(`/app/rooms/${room.id}`)}
+                    onClick={() => handleNavigate(`/rooms/${room.id}`)}
                     className="group w-full text-left rounded-2xl border transition overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 hover:-translate-y-0.5"
                     style={{
                       borderColor: `${accent}35`,
@@ -417,7 +417,7 @@ export default function Sidebar({
                     <li key={room.id}>
                       <button
                         type="button"
-                        onClick={() => handleNavigate(`/app/rooms/${room.id}`)}
+                        onClick={() => handleNavigate(`/rooms/${room.id}`)}
                         className="w-full text-left px-3 py-2 rounded-2xl border border-slate-800 bg-slate-950/40 text-xs text-slate-300 hover:border-white/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                         style={{
                           boxShadow: `inset 0 0 0 1px ${accent}20`,
@@ -492,7 +492,7 @@ export default function Sidebar({
         onClose={() => setIsCreateRoomOpen(false)}
         onCreated={(roomId) => {
           setIsCreateRoomOpen(false);
-          handleNavigate('/app/rooms', {
+          handleNavigate('/rooms', {
             state: {
               roomProposedMessage: 'Grazie! La tua stanza è stata inviata in revisione.',
             },

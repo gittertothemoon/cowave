@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../state/AuthContext.jsx';
 
 export default function ProtectedRoute({ children }) {
@@ -9,6 +9,7 @@ export default function ProtectedRoute({ children }) {
     isProfileLoading,
   } = useAuth();
   const ready = authReady ?? isAuthReady;
+  const location = useLocation();
 
   if (!ready || isProfileLoading) {
     return (
@@ -21,7 +22,14 @@ export default function ProtectedRoute({ children }) {
   }
 
   if (ready && !isAuthenticated) {
-    return <Navigate to="/" replace />;
+    const redirectPath = `${location.pathname}${location.search}`;
+    return (
+      <Navigate
+        to="/"
+        replace
+        state={{ from: redirectPath }}
+      />
+    );
   }
 
   return children;

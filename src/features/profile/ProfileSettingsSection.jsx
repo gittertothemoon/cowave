@@ -10,17 +10,17 @@ const actions = [
   {
     label: 'Modifica profilo',
     description: 'Aggiorna nome, bio e preferenze.',
-    to: '/app/settings#profilo',
+    to: '/settings#profilo',
   },
   {
     label: 'Gestisci persona attiva',
     description: 'Scegli voce, tono e palette per navigare.',
-    to: '/app/settings#persona-attiva',
+    to: '/settings#persona-attiva',
   },
   {
     label: 'Apri strumenti avanzati',
     description: 'Preset feed, esperimenti e debug.',
-    to: '/app/settings/esperienza',
+    to: '/settings/esperienza',
   },
 ];
 

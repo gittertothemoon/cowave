@@ -22,8 +22,8 @@ export default function ProfileHeader({
   const initials = getInitials(user?.displayName);
   const joinedText = user?.joinedLabel ?? 'Da poco su CoWave';
   const quickActions = [
-    { label: 'Modifica profilo', to: '/app/settings#profilo' },
-    { label: 'Persona attiva', to: '/app/settings#persona-attiva' },
+    { label: 'Modifica profilo', to: '/settings#profilo' },
+    { label: 'Persona attiva', to: '/settings#persona-attiva' },
   ];
 
   return (

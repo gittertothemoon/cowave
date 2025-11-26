@@ -172,7 +172,7 @@ export default function SettingsPage() {
               Salva profilo
             </button>
             <Link
-              to="/app/profile"
+              to="/profile"
               className={`${buttonSecondaryClass} rounded-full`}
             >
               Torna al profilo
@@ -243,7 +243,7 @@ export default function SettingsPage() {
           Sessione mindful, radar e slider dell’algoritmo sono negli Strumenti avanzati.
         </p>
         <Link
-          to="/app/settings/esperienza"
+          to="/settings/esperienza"
           className={`${buttonSecondaryClass} inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] rounded-full`}
         >
           Vai agli strumenti avanzati →

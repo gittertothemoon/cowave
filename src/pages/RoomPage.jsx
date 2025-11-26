@@ -148,7 +148,7 @@ export default function RoomPage() {
     setTitleError('');
     setBodyError('');
     setIsNewThreadOpen(false);
-    navigate(`/app/threads/${thread.id}`);
+    navigate(`/threads/${thread.id}`);
   }
 
   async function handleToggleFollow() {
@@ -224,7 +224,7 @@ export default function RoomPage() {
         </p>
         <button
           type="button"
-          onClick={() => navigate('/app/rooms')}
+          onClick={() => navigate('/rooms')}
           className={`${buttonPrimaryClass} mt-3 text-sm`}
         >
           Torna alle stanze
@@ -245,7 +245,7 @@ export default function RoomPage() {
         <div className="relative space-y-3">
           <button
             type="button"
-            onClick={() => navigate('/app/rooms')}
+            onClick={() => navigate('/rooms')}
             className={`${buttonGhostClass} text-[11px] text-left`}
           >
             ← Torna alle stanze

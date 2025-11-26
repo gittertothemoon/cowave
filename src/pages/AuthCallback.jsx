@@ -37,7 +37,7 @@ export default function AuthCallback() {
 
       if (!hasCode && !hasNoise && !hasHashTokens) {
         setIsProcessing(false);
-        navigate('/app', { replace: true });
+        navigate('/feed', { replace: true });
         return;
       }
 
@@ -73,7 +73,7 @@ export default function AuthCallback() {
 
         cleanAuthNoiseFromUrl();
         const destination =
-          nextProfile?.is_onboarded === false ? '/app/onboarding' : '/app';
+          nextProfile?.is_onboarded === false ? '/onboarding' : '/feed';
         navigate(destination, { replace: true });
       } catch (err) {
         if (!isActive) return;

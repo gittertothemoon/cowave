@@ -34,7 +34,7 @@ export default function ThreadCard({ thread }) {
   return (
     <article className="relative">
       <Link
-        to={`/app/threads/${thread.id}`}
+        to={`/threads/${thread.id}`}
         className={`${cardBaseClass} glass-panel--interactive relative block p-4 sm:p-5 overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950`}
         aria-label={cardLabel}
       >

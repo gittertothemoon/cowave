@@ -36,7 +36,7 @@ export default function ProfileRoomsSection({ rooms }) {
           </p>
         </div>
         <Link
-          to="/app/onboarding"
+          to="/onboarding"
           className="text-sm text-accent hover:text-accentSoft"
         >
           Gestisci stanze →
@@ -65,7 +65,7 @@ export default function ProfileRoomsSection({ rooms }) {
                   </p>
                 </div>
                 <Link
-                  to={`/app/rooms/${room.id}`}
+                  to={`/rooms/${room.id}`}
                   className="text-[12px] text-accent hover:text-accentSoft"
                 >
                   <span className="hidden md:inline">Vai alla stanza ↗</span>

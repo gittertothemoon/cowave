@@ -84,7 +84,7 @@ export default function CreateRoomModal({ open, onClose, onCreated }) {
       if (roomId) {
         onCreated?.(roomId);
         if (!onCreated) {
-          navigate(`/app/rooms/${roomId}`);
+          navigate(`/rooms/${roomId}`);
         }
       }
       setNameError('');

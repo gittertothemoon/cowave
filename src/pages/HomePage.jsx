@@ -63,7 +63,7 @@ export default function HomePage() {
 
   function handleStartThread() {
     if (nextRoomId) {
-      navigate(`/app/rooms/${nextRoomId}`, {
+      navigate(`/rooms/${nextRoomId}`, {
         state: { highlightCreateThread: true },
       });
     } else {
@@ -72,11 +72,7 @@ export default function HomePage() {
   }
 
   function goToRooms() {
-    if (nextRoomId) {
-      navigate(`/app/rooms/${nextRoomId}`);
-    } else {
-      setIsCreateRoomOpen(true);
-    }
+    navigate('/rooms');
   }
 
   function dismissWelcome() {
@@ -176,12 +172,12 @@ export default function HomePage() {
         </button>
         <p className="text-[11px] text-slate-500">
         Vuoi controllare meglio il feed?{' '}
-        <Link
-          to="/app/settings/esperienza"
-          className="text-sky-400 hover:text-sky-300 underline"
-        >
-          Vai agli strumenti avanzati
-        </Link>
+          <Link
+            to="/settings/esperienza"
+            className="text-sky-400 hover:text-sky-300 underline"
+          >
+            Vai agli strumenti avanzati
+          </Link>
         .
       </p>
     </div>
@@ -209,7 +205,7 @@ export default function HomePage() {
             return (
               <Link
                 key={room.id}
-                to={`/app/rooms/${room.id}`}
+                to={`/rooms/${room.id}`}
                 className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 hover:border-accent/50 hover:-translate-y-0.5 transition transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                 aria-label={`Apri la stanza ${room.name}`}
               >
@@ -318,7 +314,7 @@ export default function HomePage() {
         onClose={() => setIsCreateRoomOpen(false)}
         onCreated={(roomId) => {
           setIsCreateRoomOpen(false);
-          navigate('/app/rooms', {
+          navigate('/rooms', {
             state: {
               roomProposedMessage: 'Grazie! La tua stanza è stata inviata in revisione.',
             },

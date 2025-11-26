@@ -20,7 +20,7 @@ export default function AchievementCelebrationPortal() {
       onContinue={shiftAchievementCelebration}
       onViewAchievements={() => {
         shiftAchievementCelebration();
-        navigate('/app/profile');
+        navigate('/profile');
       }}
     />
   );

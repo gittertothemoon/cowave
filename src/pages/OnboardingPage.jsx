@@ -211,7 +211,7 @@ export default function OnboardingPage() {
         primaryPersonaId: selectedPersonaId,
         algorithmPreset: selectedPreset,
       });
-      navigate('/app', { replace: true });
+      navigate('/feed', { replace: true });
     } catch (err) {
       console.error('Errore inatteso durante l’onboarding', err);
       setSaveError(

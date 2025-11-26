@@ -27,7 +27,7 @@ export default function AuthConfirm() {
       const tokenHash = searchParams.get('token_hash');
       const type = searchParams.get('type');
       const nextParam = searchParams.get('next');
-      const nextDestination = nextParam || '/app/onboarding';
+      const nextDestination = nextParam || '/onboarding';
 
       if (!tokenHash || !type) {
         if (isActive) {
