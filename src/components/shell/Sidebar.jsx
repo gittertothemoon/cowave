@@ -492,7 +492,11 @@ export default function Sidebar({
         onClose={() => setIsCreateRoomOpen(false)}
         onCreated={(roomId) => {
           setIsCreateRoomOpen(false);
-          handleNavigate(`/app/rooms/${roomId}`);
+          handleNavigate('/app/rooms', {
+            state: {
+              roomProposedMessage: 'Grazie! La tua stanza è stata inviata in revisione.',
+            },
+          });
         }}
       />
     </>

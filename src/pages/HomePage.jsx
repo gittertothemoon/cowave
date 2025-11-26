@@ -172,7 +172,7 @@ export default function HomePage() {
           className={`${buttonPrimaryClass} w-full sm:w-auto sm:ml-auto text-white shadow-[0_18px_38px_rgba(56,189,248,0.28)] transition-transform hover:-translate-y-0.5 hover:shadow-[0_20px_45px_rgba(56,189,248,0.35)]`}
         >
           <span className="text-lg leading-none">＋</span>
-          Crea stanza
+          Proponi stanza
         </button>
         <p className="text-[11px] text-slate-500">
         Vuoi controllare meglio il feed?{' '}
@@ -318,7 +318,11 @@ export default function HomePage() {
         onClose={() => setIsCreateRoomOpen(false)}
         onCreated={(roomId) => {
           setIsCreateRoomOpen(false);
-          navigate(`/app/rooms/${roomId}`);
+          navigate('/app/rooms', {
+            state: {
+              roomProposedMessage: 'Grazie! La tua stanza è stata inviata in revisione.',
+            },
+          });
         }}
       />
     </div>

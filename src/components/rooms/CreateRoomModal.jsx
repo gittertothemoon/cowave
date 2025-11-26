@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../ui/Modal.jsx';
 import { useAppState } from '../../state/AppStateContext.jsx';
@@ -10,21 +10,42 @@ import {
   bodyTextClass,
 } from '../ui/primitives.js';
 
+function slugifyRoomName(value) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/(^-|-$)+/g, '')
+    .slice(0, 64);
+}
+
 export default function CreateRoomModal({ open, onClose, onCreated }) {
   const navigate = useNavigate();
   const { createRoom } = useAppState();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [slug, setSlug] = useState('');
+  const [slugEdited, setSlugEdited] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
   const [tags, setTags] = useState('');
   const [nameError, setNameError] = useState('');
+  const [slugError, setSlugError] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const nameId = useId();
   const descriptionId = useId();
+  const slugId = useId();
   const tagsId = useId();
 
   const quickTags = ['focus', 'deep talk', 'rituali', 'tecnico', 'creatori'];
+
+  useEffect(() => {
+    if (slugEdited) return;
+    const nextSlug = slugifyRoomName(name);
+    setSlug(nextSlug);
+  }, [name, slugEdited]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -32,12 +53,24 @@ export default function CreateRoomModal({ open, onClose, onCreated }) {
       setNameError('Inserisci un nome per la stanza.');
       return;
     }
+    const safeSlug = slugifyRoomName(slug || name);
+    if (!safeSlug) {
+      setSlugError('Scegli uno slug (URL) leggibile e senza caratteri speciali.');
+      return;
+    }
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(safeSlug)) {
+      setSlugError('Lo slug può contenere solo lettere minuscole, numeri e trattini.');
+      return;
+    }
+    setSlugError('');
+    setSlug(safeSlug);
     setSubmitError('');
     setIsSubmitting(true);
     try {
       const { roomId, error } = await createRoom({
         name: name.trim(),
         description: description.trim(),
+        slug: safeSlug,
         isPrivate,
         tags: tags
           .split(',')
@@ -57,6 +90,8 @@ export default function CreateRoomModal({ open, onClose, onCreated }) {
       setNameError('');
       setName('');
       setDescription('');
+      setSlug('');
+      setSlugEdited(false);
       setIsPrivate(false);
       setTags('');
       handleClose();
@@ -67,14 +102,15 @@ export default function CreateRoomModal({ open, onClose, onCreated }) {
 
   function handleClose() {
     setNameError('');
+    setSlugError('');
     onClose?.();
   }
 
   return (
-    <Modal open={open} onClose={handleClose} title="Nuova stanza">
+    <Modal open={open} onClose={handleClose} title="Proponi una stanza">
       <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300 mb-3">
-        Dai un nome chiaro, una descrizione breve e qualche tag: chi entra saprà il tono
-        e l’obiettivo della stanza.
+        Dai un nome chiaro, una descrizione breve e qualche tag: la proposta verrà revisionata
+        prima di essere pubblica.
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 text-slate-100">
@@ -99,6 +135,34 @@ export default function CreateRoomModal({ open, onClose, onCreated }) {
           />
           {nameError && (
             <p className="text-xs text-red-400 mt-1">{nameError}</p>
+          )}
+        </div>
+        <div className="space-y-1">
+          <label className={labelClass} htmlFor={slugId}>
+            URL (slug)
+          </label>
+          <input
+            type="text"
+            className={`${inputBaseClass} ${
+              slugError ? 'border-red-500 focus:border-red-500/70 focus:ring-red-500/70' : ''
+            }`}
+            value={slug}
+            onChange={(e) => {
+              const nextValue = e.target.value;
+              setSlug(nextValue);
+              setSlugEdited(nextValue.trim().length > 0);
+              if (slugError) setSlugError('');
+            }}
+            placeholder="es. creators-lab"
+            required
+            id={slugId}
+            aria-invalid={Boolean(slugError)}
+          />
+          <p className={`${bodyTextClass} text-[11px] text-slate-400`}>
+            Solo lettere minuscole, numeri e trattini. È l’indirizzo della stanza.
+          </p>
+          {slugError && (
+            <p className="text-xs text-red-400 mt-1">{slugError}</p>
           )}
         </div>
         <div className="space-y-1">
@@ -177,7 +241,7 @@ export default function CreateRoomModal({ open, onClose, onCreated }) {
               className={`${buttonPrimaryClass} w-full sm:w-auto text-sm text-center`}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Creo…' : 'Crea stanza'}
+              {isSubmitting ? 'Invio…' : 'Proponi stanza'}
             </button>
           </div>
         </div>

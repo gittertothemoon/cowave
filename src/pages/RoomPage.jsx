@@ -23,11 +23,14 @@ export default function RoomPage() {
   const { user } = useAuth();
   const {
     rooms,
+    roomsById,
     roomsStatus,
+    myRoomsStatus,
     threadsByRoom,
     threadListsMeta,
     followedRoomIds,
     loadRooms,
+    loadMyRooms,
     loadFollowedRooms,
     loadThreadsForRoom,
     createThread,
@@ -56,12 +59,25 @@ export default function RoomPage() {
     }
   }, [user?.id, loadFollowedRooms]);
 
+  useEffect(() => {
+    if (user?.id) {
+      loadMyRooms(user.id);
+    }
+  }, [user?.id, loadMyRooms]);
+
   const room = useMemo(
-    () =>
-      rooms.find(
+    () => {
+      const byId = roomsById?.[roomParam];
+      if (byId) return byId;
+      const bySlug = Object.values(roomsById ?? {}).find(
+        (entry) => entry?.slug === roomParam
+      );
+      if (bySlug) return bySlug;
+      return rooms.find(
         (entry) => entry.id === roomParam || entry.slug === roomParam
-      ),
-    [rooms, roomParam]
+      );
+    },
+    [rooms, roomsById, roomParam]
   );
 
   const threadMeta = threadListsMeta[room?.id ?? roomParam] ?? {};
@@ -72,6 +88,9 @@ export default function RoomPage() {
   const hasMoreThreads = threadMeta.hasMore;
   const shouldOpenThread = location.state?.highlightCreateThread;
   const isFollowed = room ? followedRoomIds.includes(room.id) : false;
+  const isRoomLoading = (roomsStatus.loading || myRoomsStatus.loading) && !room;
+  const loadError = roomsStatus.error || myRoomsStatus.error;
+  const isApprovedPublic = room?.status === 'approved' && room?.isPublic;
 
   useEffect(() => {
     if (room?.id && !threadMeta.ids) {
@@ -91,10 +110,15 @@ export default function RoomPage() {
     glow: 'rgba(59,130,246,0.35)',
   };
   const accentGradient = `linear-gradient(120deg, ${theme.primary}, ${theme.secondary})`;
+  const statusMeta = getStatusMeta(room?.status);
 
   async function handleCreateThread(e) {
     e.preventDefault();
     setActionError('');
+    if (!isApprovedPublic) {
+      setActionError('Puoi aprire thread solo dopo l’approvazione della stanza.');
+      return;
+    }
     const trimmedTitle = title.trim();
     const trimmedBody = body.trim();
     if (!trimmedTitle) {
@@ -129,8 +153,12 @@ export default function RoomPage() {
 
   async function handleToggleFollow() {
     if (!room?.id) return;
+    if (!isApprovedPublic) {
+      setActionError('Puoi seguire solo le stanze approvate e pubbliche.');
+      return;
+    }
     if (!user?.id) {
-      setActionError('Accedi per seguire questa stanza.');
+      setActionError('Accedi per seguire le stanze.');
       return;
     }
     setPendingFollowId(room.id);
@@ -146,10 +174,14 @@ export default function RoomPage() {
   function openComposer() {
     setTitleError('');
     setBodyError('');
+    if (!isApprovedPublic) {
+      setActionError('La stanza è in revisione: i thread si attivano dopo l’approvazione.');
+      return;
+    }
     setIsNewThreadOpen(true);
   }
 
-  if (roomsStatus.loading && !room) {
+  if (isRoomLoading) {
     return (
       <div className="space-y-4">
         <div className={`${cardBaseClass} animate-pulse p-4 space-y-3`}>
@@ -166,7 +198,7 @@ export default function RoomPage() {
     );
   }
 
-  if (roomsStatus.error && !room) {
+  if (loadError && !room) {
     return (
       <div className={`${cardBaseClass} p-4 space-y-2 text-sm text-red-200`}>
         <p className="font-semibold">Non riesco a caricare questa stanza.</p>
@@ -184,7 +216,7 @@ export default function RoomPage() {
     );
   }
 
-  if (!room && !roomsStatus.loading) {
+  if (!room && !isRoomLoading) {
     return (
       <div className={`${cardBaseClass} p-4`}>
         <p className="text-sm text-red-200" role="status" aria-live="assertive">
@@ -225,9 +257,28 @@ export default function RoomPage() {
               <p className={`${bodyTextClass} mt-1`}>
                 {room?.description || 'Spazio di conversazione dedicato.'}
               </p>
+              <div className="flex flex-wrap items-center gap-2">
+                {statusMeta ? (
+                  <span
+                    className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-medium ${statusMeta.className}`}
+                  >
+                    {statusMeta.label}
+                  </span>
+                ) : null}
+                {!isApprovedPublic ? (
+                  <span className="text-[11px] text-slate-400">
+                    Visibile solo a te finché non viene approvata.
+                  </span>
+                ) : null}
+              </div>
               <p className="text-[12px] text-slate-500">
                 Thread e risposte più recenti sono in alto. Segui la stanza per tenere tutto nel tuo feed.
               </p>
+              {!user?.id && isApprovedPublic ? (
+                <p className="text-[12px] text-slate-400">
+                  Accedi per seguire le stanze e vedere i nuovi thread nel feed.
+                </p>
+              ) : null}
               {actionError ? (
                 <p className="text-[12px] text-red-300">{actionError}</p>
               ) : null}
@@ -236,19 +287,32 @@ export default function RoomPage() {
               <button
                 type="button"
                 onClick={openComposer}
-                className={`${buttonPrimaryClass} w-full md:w-auto inline-flex items-center justify-center gap-2`}
+                className={`${buttonPrimaryClass} w-full md:w-auto inline-flex items-center justify-center gap-2 ${
+                  !isApprovedPublic ? 'opacity-60 cursor-not-allowed' : ''
+                }`}
                 style={{ backgroundImage: accentGradient }}
+                disabled={!isApprovedPublic}
               >
                 Crea thread
               </button>
-              <button
-                type="button"
-                onClick={handleToggleFollow}
-                className={`${buttonSecondaryClass} w-full md:w-auto text-sm`}
-                disabled={pendingFollowId === room?.id}
-              >
-                {isFollowed ? 'Smetti di seguire' : 'Segui questa stanza'}
-              </button>
+              {isApprovedPublic ? (
+                <button
+                  type="button"
+                  onClick={handleToggleFollow}
+                  className={`${buttonSecondaryClass} w-full md:w-auto text-sm`}
+                  disabled={pendingFollowId === room?.id || !user?.id}
+                >
+                  {user?.id
+                    ? isFollowed
+                      ? 'Smetti di seguire'
+                      : 'Segui questa stanza'
+                    : 'Accedi per seguire'}
+                </button>
+              ) : (
+                <span className="text-[12px] text-slate-400 text-center md:text-left">
+                  Follow e thread si attivano dopo l’approvazione.
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -262,7 +326,9 @@ export default function RoomPage() {
           </span>
         </div>
         <p className="text-[12px] text-slate-500">
-          Apri un thread per proporre un tema nuovo o entra in uno esistente per rispondere.
+          {isApprovedPublic
+            ? 'Apri un thread per proporre un tema nuovo o entra in uno esistente per rispondere.'
+            : 'La stanza è in revisione: i thread saranno disponibili quando verrà approvata.'}
         </p>
 
         {threadsError ? (
@@ -301,18 +367,28 @@ export default function RoomPage() {
         {!isThreadsLoading && roomThreads.length === 0 && !threadsError ? (
           <div className={`${cardBaseClass} p-4 text-sm text-slate-300`}>
             <p className="font-medium text-slate-100">
-              Ancora nessun thread. Vuoi aprire la conversazione?
+              {isApprovedPublic
+                ? 'Ancora nessun thread. Vuoi aprire la conversazione?'
+                : 'Thread non disponibili finché la stanza è in revisione.'}
             </p>
-            <p className="mt-1 text-xs text-slate-400">
-              Proponi un tema chiaro per rompere il ghiaccio.
-            </p>
-            <button
-              type="button"
-              onClick={openComposer}
-              className={`${buttonPrimaryClass} mt-3 text-sm`}
-            >
-              Crea un nuovo thread
-            </button>
+            {isApprovedPublic ? (
+              <>
+                <p className="mt-1 text-xs text-slate-400">
+                  Proponi un tema chiaro per rompere il ghiaccio.
+                </p>
+                <button
+                  type="button"
+                  onClick={openComposer}
+                  className={`${buttonPrimaryClass} mt-3 text-sm`}
+                >
+                  Crea un nuovo thread
+                </button>
+              </>
+            ) : (
+              <p className="mt-1 text-xs text-slate-400">
+                Ti avviseremo quando la stanza sarà approvata.
+              </p>
+            )}
           </div>
         ) : null}
 
@@ -413,4 +489,26 @@ export default function RoomPage() {
       </Modal>
     </div>
   );
+}
+
+function getStatusMeta(status) {
+  if (status === 'approved') {
+    return {
+      label: 'Approvata',
+      className: 'border-emerald-400/50 bg-emerald-500/10 text-emerald-100',
+    };
+  }
+  if (status === 'rejected') {
+    return {
+      label: 'Rifiutata',
+      className: 'border-slate-400/40 bg-slate-500/20 text-slate-100',
+    };
+  }
+  if (status === 'pending') {
+    return {
+      label: 'In revisione',
+      className: 'border-amber-400/50 bg-amber-500/10 text-amber-100',
+    };
+  }
+  return null;
 }

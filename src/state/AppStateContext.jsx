@@ -12,8 +12,10 @@ import { ACHIEVEMENT_IDS } from '../features/achievements/achievementsConfig.js'
 import { appDataReducer, initialDataState } from './appDataReducer.js';
 import {
   followRoom as followRoomRequest,
+  createRoom as createRoomRequest,
   listFollowedRoomIds,
-  listRooms,
+  listMyRooms,
+  listPublicRooms,
   unfollowRoom as unfollowRoomRequest,
 } from '../data/rooms';
 import {
@@ -25,7 +27,6 @@ import {
   createComment as createCommentRequest,
   listCommentsByThread,
 } from '../data/comments';
-import { supabase } from '../lib/supabaseClient.js';
 
 const AppStateContext = createContext(null);
 const USER_STORAGE_KEY = 'cowave-user';
@@ -131,8 +132,11 @@ function decorateComment(comment, authorName = 'Utente') {
 
 function slugify(value) {
   return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-{2,}/g, '-')
     .replace(/(^-|-$)+/g, '')
     .slice(0, 64);
 }
@@ -268,6 +272,14 @@ export function AppStateProvider({ children }) {
     [dataState.roomOrder, dataState.roomsById]
   );
 
+  const myRooms = useMemo(
+    () =>
+      (dataState.myRoomIds ?? [])
+        .map((id) => dataState.roomsById[id])
+        .filter(Boolean),
+    [dataState.myRoomIds, dataState.roomsById]
+  );
+
   const threads = useMemo(
     () =>
       Object.values(dataState.threadsById).sort(
@@ -300,6 +312,7 @@ export function AppStateProvider({ children }) {
   const postsByThread = commentsByThread;
 
   const roomsStatus = dataState.roomsStatus;
+  const myRoomsStatus = dataState.myRoomsStatus;
   const threadListsMeta = dataState.threadsByRoom;
   const commentListsMeta = dataState.commentsByThread;
 
@@ -379,7 +392,7 @@ export function AppStateProvider({ children }) {
 
   const loadRooms = useCallback(async () => {
     dispatch({ type: 'ROOMS_LOADING' });
-    const { rooms: fetchedRooms, error } = await listRooms();
+    const { rooms: fetchedRooms, error } = await listPublicRooms();
     if (error) {
       dispatch({ type: 'ROOMS_ERROR', error });
       return { rooms: [], error };
@@ -391,6 +404,21 @@ export function AppStateProvider({ children }) {
   useEffect(() => {
     loadRooms();
   }, [loadRooms]);
+
+  const loadMyRooms = useCallback(async (userId) => {
+    if (!userId) {
+      dispatch({ type: 'MY_ROOMS_LOADED', rooms: [], append: false });
+      return { rooms: [], error: null };
+    }
+    dispatch({ type: 'MY_ROOMS_LOADING' });
+    const { rooms: fetchedRooms, error } = await listMyRooms(userId);
+    if (error) {
+      dispatch({ type: 'MY_ROOMS_ERROR', error });
+      return { rooms: [], error };
+    }
+    dispatch({ type: 'MY_ROOMS_LOADED', rooms: fetchedRooms, append: false });
+    return { rooms: fetchedRooms, error: null };
+  }, []);
 
   const loadFollowedRooms = useCallback(async (userId) => {
     const { roomIds, error } = await listFollowedRoomIds(userId);
@@ -633,38 +661,23 @@ export function AppStateProvider({ children }) {
 
   const createRoom = useCallback(
     async ({ name, description, isPrivate = false, slug }) => {
-      const cleanedName = name?.trim();
-      if (!cleanedName) return { roomId: null, error: new Error('Inserisci un nome valido.') };
-      const payload = {
-        name: cleanedName,
-        description: description?.trim() || null,
-        is_public: !isPrivate,
-        slug: slug?.trim() || slugify(cleanedName),
-      };
-      const { data, error } = await supabase
-        .from('rooms')
-        .insert(payload)
-        .select('id, slug, name, description, is_public, created_at')
-        .maybeSingle();
-      if (error) {
-        const message =
-          error.code === '42501'
-            ? 'Non hai i permessi per creare una stanza. Se ti serve, scrivi al team.'
-            : 'Non riesco a creare la stanza ora. Riprova tra poco.';
+      const trimmedName = name?.trim() ?? '';
+      if (!trimmedName) {
+        return { roomId: null, error: new Error('Inserisci un nome valido.') };
+      }
+      const { room, error } = await createRoomRequest({
+        name: trimmedName,
+        description: description?.trim() ?? '',
+        slug: slug?.trim() || slugify(trimmedName),
+        isPublic: !isPrivate,
+      });
+      if (error || !room) {
         return {
           roomId: null,
-          error: new Error(message),
+          error: error ?? new Error('Non riesco a creare la stanza ora.'),
         };
       }
-      const room = {
-        id: data.id,
-        slug: data.slug,
-        name: data.name,
-        description: data.description,
-        isPublic: Boolean(data.is_public ?? true),
-        createdAt: data.created_at,
-      };
-      dispatch({ type: 'ROOMS_LOADED', rooms: [room] });
+      dispatch({ type: 'MY_ROOMS_LOADED', rooms: [room], append: true });
       return { roomId: room.id, error: null };
     },
     []
@@ -742,8 +755,10 @@ export function AppStateProvider({ children }) {
     () => ({
       personas,
       rooms,
+      myRooms,
       roomsById: dataState.roomsById,
       roomsStatus,
+      myRoomsStatus,
       threads,
       threadsById: dataState.threadsById,
       threadsByRoom,
@@ -772,6 +787,7 @@ export function AppStateProvider({ children }) {
       unlockAchievement,
       addCustomPersona,
       loadRooms,
+      loadMyRooms,
       loadFollowedRooms,
       followRoom,
       unfollowRoom,
@@ -788,8 +804,10 @@ export function AppStateProvider({ children }) {
     [
       personas,
       rooms,
+      myRooms,
       dataState.roomsById,
       roomsStatus,
+      myRoomsStatus,
       threads,
       dataState.threadsById,
       threadsByRoom,

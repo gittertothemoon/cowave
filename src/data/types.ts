@@ -5,6 +5,8 @@ export type RoomRecord = {
   description: string | null;
   is_public: boolean | null;
   created_at: string;
+  created_by: string | null;
+  status: RoomStatus | null;
 };
 
 export type ThreadRecord = {
@@ -25,6 +27,8 @@ export type CommentRecord = {
   created_at: string;
 };
 
+export type RoomStatus = 'pending' | 'approved' | 'rejected';
+
 export type Room = {
   id: string;
   slug: string | null;
@@ -32,6 +36,8 @@ export type Room = {
   description: string | null;
   isPublic: boolean;
   createdAt: string;
+  createdBy: string | null;
+  status: RoomStatus | 'sconosciuto';
 };
 
 export type Thread = {

@@ -3,12 +3,14 @@ const emptyStatus = { loading: false, error: null };
 export const initialDataState = {
   roomsById: {},
   roomOrder: [],
+  myRoomIds: [],
   threadsById: {},
   threadsByRoom: {},
   commentsById: {},
   commentsByThread: {},
   follows: [],
   roomsStatus: { ...emptyStatus },
+  myRoomsStatus: { ...emptyStatus },
 };
 
 export function appDataReducer(state, action) {
@@ -21,10 +23,12 @@ export function appDataReducer(state, action) {
     }
     case 'ROOMS_LOADED': {
       const nextRoomsById = { ...state.roomsById };
-      (action.rooms ?? []).forEach((room) => {
-        nextRoomsById[room.id] = room;
+      const incomingRooms = (action.rooms ?? []).filter((room) => room?.id);
+      incomingRooms.forEach((room) => {
+        nextRoomsById[room.id] = { ...nextRoomsById[room.id], ...room };
       });
-      const orderedIds = Object.values(nextRoomsById)
+      const orderedIds = incomingRooms
+        .slice()
         .sort((a, b) => a.name.localeCompare(b.name))
         .map((room) => room.id);
       return {
@@ -38,6 +42,37 @@ export function appDataReducer(state, action) {
       return {
         ...state,
         roomsStatus: { loading: false, error: action.error ?? 'Errore' },
+      };
+    }
+    case 'MY_ROOMS_LOADING': {
+      return {
+        ...state,
+        myRoomsStatus: { loading: true, error: null },
+      };
+    }
+    case 'MY_ROOMS_LOADED': {
+      const nextRoomsById = { ...state.roomsById };
+      (action.rooms ?? []).forEach((room) => {
+        if (!room?.id) return;
+        nextRoomsById[room.id] = { ...nextRoomsById[room.id], ...room };
+      });
+      const incomingIds = (action.rooms ?? [])
+        .map((room) => room?.id)
+        .filter(Boolean);
+      const nextIds = action.append
+        ? Array.from(new Set([...(state.myRoomIds ?? []), ...incomingIds]))
+        : Array.from(new Set(incomingIds));
+      return {
+        ...state,
+        roomsById: nextRoomsById,
+        myRoomIds: nextIds,
+        myRoomsStatus: { loading: false, error: null },
+      };
+    }
+    case 'MY_ROOMS_ERROR': {
+      return {
+        ...state,
+        myRoomsStatus: { loading: false, error: action.error ?? 'Errore' },
       };
     }
     case 'SET_FOLLOWS': {
