@@ -378,13 +378,17 @@ export default function Sidebar({
                             {room.name}
                           </p>
                           <span className="text-[11px] text-slate-400 truncate">
-                            {room.tags[0] ? `#${room.tags[0]}` : '—'}
+                            {Array.isArray(room.tags) && room.tags[0]
+                              ? `#${room.tags[0]}`
+                              : '—'}
                           </span>
                         </div>
                         <div className="flex flex-wrap gap-1.5 text-[11px] text-slate-300">
                           <Chip>{room.members} membri</Chip>
                           <Chip>{room.isPrivate ? 'Privata' : 'Aperta'}</Chip>
-                          {room.tags[1] && <Chip>#{room.tags[1]}</Chip>}
+                          {Array.isArray(room.tags) && room.tags[1] && (
+                            <Chip>#{room.tags[1]}</Chip>
+                          )}
                         </div>
                       </div>
                     </div>

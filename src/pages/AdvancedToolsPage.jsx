@@ -100,7 +100,7 @@ export default function AdvancedToolsPage() {
                   >
                     <span className="font-semibold text-white break-words">{room.name}</span>
                     <span className="text-[11px] text-slate-500">
-                      {room.tags[0] ? `#${room.tags[0]}` : '—'}
+                      {Array.isArray(room.tags) && room.tags[0] ? `#${room.tags[0]}` : '—'}
                     </span>
                   </li>
                 ))}
