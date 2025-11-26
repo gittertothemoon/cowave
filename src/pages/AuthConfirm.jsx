@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import CoWaveLogo from '../components/CoWaveLogo.jsx';
 import {
   buttonPrimaryClass,
@@ -14,7 +14,6 @@ import { cleanAuthNoiseFromUrl } from '../lib/url.js';
 import { useAuth } from '../state/AuthContext.jsx';
 
 export default function AuthConfirm() {
-  const location = useLocation();
   const navigate = useNavigate();
   const { refreshProfile } = useAuth();
   const [status, setStatus] = useState('loading');
@@ -26,11 +25,20 @@ export default function AuthConfirm() {
     hasHandledRef.current = true;
     let isActive = true;
 
-    const searchParams = new URLSearchParams(location.search);
-    const tokenHash = searchParams.get('token_hash');
-    const type = searchParams.get('type') || 'signup';
-
     async function handleConfirmation() {
+      if (typeof window === 'undefined') return;
+      const currentUrl = new URL(window.location.href);
+      const searchParams = new URLSearchParams(currentUrl.search);
+      const hashFragment = currentUrl.hash?.startsWith('#')
+        ? currentUrl.hash.slice(1)
+        : currentUrl.hash ?? '';
+      const hashParams = hashFragment ? new URLSearchParams(hashFragment) : null;
+      const tokenHash =
+        searchParams.get('token_hash') || hashParams?.get('token_hash');
+      const type =
+        searchParams.get('type') || hashParams?.get('type') || 'signup';
+      const nextParam = searchParams.get('next') || hashParams?.get('next');
+
       if (!tokenHash || !type) {
         setError(
           'Link di conferma non valido o scaduto. Richiedi un nuovo link e riprova.'
@@ -49,7 +57,21 @@ export default function AuthConfirm() {
           throw verifyError;
         }
 
-        const userId = data?.user?.id || data?.session?.user?.id;
+        let session = data?.session ?? null;
+        if (session?.access_token && session?.refresh_token) {
+          const { data: persistedSession, error: sessionError } =
+            await supabase.auth.setSession({
+              access_token: session.access_token,
+              refresh_token: session.refresh_token,
+            });
+          if (!isActive) return;
+          if (sessionError) {
+            throw sessionError;
+          }
+          session = persistedSession?.session ?? session;
+        }
+
+        const userId = session?.user?.id || data?.user?.id || data?.session?.user?.id;
         const nextProfile = await refreshProfile(userId);
         if (!isActive) return;
 
@@ -57,7 +79,8 @@ export default function AuthConfirm() {
         setStatus('success');
 
         const destination =
-          nextProfile?.is_onboarded === false ? '/app/onboarding' : '/app';
+          nextParam ??
+          (nextProfile?.is_onboarded ? '/app' : '/onboarding');
         navigate(destination, { replace: true });
       } catch (err) {
         if (!isActive) return;
@@ -75,7 +98,7 @@ export default function AuthConfirm() {
     return () => {
       isActive = false;
     };
-  }, [location.search, navigate, refreshProfile]);
+  }, [navigate, refreshProfile]);
 
   return (
     <div className="min-h-screen relative flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 overflow-hidden">
