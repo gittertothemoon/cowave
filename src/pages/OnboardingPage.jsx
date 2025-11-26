@@ -45,6 +45,7 @@ export default function OnboardingPage() {
     initialRoomIds,
     threads,
     postsByThread,
+    loadRooms,
   } = useAppState();
   const { user, updateProfileState } = useAuth();
 
@@ -97,6 +98,12 @@ export default function OnboardingPage() {
 
   const canComplete =
     selectedRooms.length >= minSelection && selectedPersonaId && !!selectedPreset;
+
+  useEffect(() => {
+    if (!rooms.length) {
+      loadRooms();
+    }
+  }, [rooms.length, loadRooms]);
 
   useEffect(() => {
     if (initialRoomIds?.length || selectedRooms.length > 0) return;

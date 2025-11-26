@@ -1,46 +1,35 @@
 import { Link } from 'react-router-dom';
 import { useAppState } from '../../state/AppStateContext.jsx';
-import { cardBaseClass, bodyTextClass } from '../ui/primitives.js';
+import { cardBaseClass, bodyTextClass, buttonSecondaryClass } from '../ui/primitives.js';
 
 export default function ThreadCard({ thread }) {
-  const { personas, rooms, postsByThread } = useAppState();
-  const persona = personas.find((p) => p.id === thread.personaId);
-  const room = rooms.find((r) => r.id === thread.roomId);
+  const { roomsById, postsByThread } = useAppState();
+  const room = roomsById?.[thread.roomId];
   const theme = room?.theme ?? {
     primary: '#a78bfa',
     secondary: '#38bdf8',
     glow: 'rgba(59,130,246,0.35)',
   };
   const posts = postsByThread?.[thread.id] ?? [];
-  const replies = posts;
-  const repliesCount = replies.length;
-  const lastActivityTimestamps = [
-    ...replies.map((p) => new Date(p.createdAt).getTime()),
-  ];
-  if (thread.initialPost) {
-    lastActivityTimestamps.push(
-      new Date(thread.initialPost.createdAt).getTime()
-    );
-  }
+  const repliesCount = posts.length;
+  const lastActivityTimestamps = posts
+    .map((p) => new Date(p.createdAt).getTime())
+    .filter((time) => !Number.isNaN(time));
   if (thread.createdAt) {
     lastActivityTimestamps.push(new Date(thread.createdAt).getTime());
   }
-  const validActivityTimes = lastActivityTimestamps.filter(
-    (time) => !Number.isNaN(time)
-  );
   const lastActivityDate =
-    validActivityTimes.length > 0
-      ? new Date(Math.max(...validActivityTimes))
+    lastActivityTimestamps.length > 0
+      ? new Date(Math.max(...lastActivityTimestamps))
       : null;
   const lastActivityText = lastActivityDate
     ? formatRelativeTime(lastActivityDate)
     : '—';
   const cardLabel = `Apri thread ${thread.title} nella stanza ${room?.name ?? 'sconosciuta'}`;
   const previewText =
-    thread.initialPost?.content ||
-    thread.rootSnippet ||
-    replies.find((p) => p.parentId === null)?.content ||
+    thread.body ||
     'Post iniziale in arrivo. Entra e scrivilo tu.';
+  const authorLabel = thread.author || 'Utente';
 
   return (
     <article className="relative">
@@ -79,7 +68,7 @@ export default function ThreadCard({ thread }) {
               {thread.title}
             </h3>
             <p className="text-[12px] text-slate-400 mt-1">
-              Avviato da {thread.author || persona?.label || 'autore sconosciuto'} ·{' '}
+              Avviato da {authorLabel} ·{' '}
               {repliesCount === 1 ? '1 risposta' : `${repliesCount} risposte`} · Ultima attività{' '}
               {lastActivityText}
             </p>
@@ -89,10 +78,10 @@ export default function ThreadCard({ thread }) {
               className="h-10 w-10 rounded-full bg-gradient-to-br from-slate-900 to-slate-700 flex items-center justify-center text-[11px] font-semibold text-white flex-shrink-0"
               aria-hidden="true"
             >
-              {persona?.label?.[0] ?? 'P'}
+              {authorLabel?.[0]?.toUpperCase() ?? 'P'}
             </span>
             <p className="text-[11px] text-slate-500 text-left sm:text-right">
-              {persona?.label ?? thread.author}
+              {authorLabel}
             </p>
           </div>
         </div>
@@ -102,8 +91,8 @@ export default function ThreadCard({ thread }) {
         </p>
 
         <div className="mt-3 flex flex-col gap-2 text-[11px] text-slate-400 sm:flex-row sm:flex-wrap sm:items-center">
-          <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-accent/30 to-accentBlue/30 text-accent border border-accent/40 w-fit">
-            Energia: {thread.energy}
+          <span className={`${buttonSecondaryClass} px-2 py-1 text-[11px]`}>
+            Autore: {authorLabel}
           </span>
           <span>
             Ultima attività:{' '}

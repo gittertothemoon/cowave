@@ -1,11 +1,31 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
-  personas as initialPersonas,
-  rooms as initialRooms,
-  threads as initialThreads,
-  postsByThread as initialPostsByThread,
-} from '../mockData.js';
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useState,
+} from 'react';
+import { personas as initialPersonas } from '../mockData.js';
 import { ACHIEVEMENT_IDS } from '../features/achievements/achievementsConfig.js';
+import { appDataReducer, initialDataState } from './appDataReducer.js';
+import {
+  followRoom as followRoomRequest,
+  listFollowedRoomIds,
+  listRooms,
+  unfollowRoom as unfollowRoomRequest,
+} from '../data/rooms';
+import {
+  createThread as createThreadRequest,
+  getThread,
+  listThreadsByRoom,
+} from '../data/threads';
+import {
+  createComment as createCommentRequest,
+  listCommentsByThread,
+} from '../data/comments';
+import { supabase } from '../lib/supabaseClient.js';
 
 const AppStateContext = createContext(null);
 const USER_STORAGE_KEY = 'cowave-user';
@@ -14,17 +34,13 @@ const ONBOARDING_KEY = 'cowave:isOnboarded';
 const ONBOARDING_WELCOME_KEY = 'cowave-just-finished-onboarding';
 const FOLLOWED_ROOMS_KEY = 'cowave-followed-rooms';
 const INITIAL_ROOMS_KEY = 'cowave-initial-rooms';
+
 const defaultUser = {
   nickname: 'Tu',
   email: '',
   unlockedAchievements: [],
   reflections: [],
   wavesSent: 0,
-};
-const defaultWaves = {
-  support: 0,
-  insight: 0,
-  question: 0,
 };
 
 function normalizeWaves(waves, fallbackWaveCount = 0) {
@@ -57,44 +73,9 @@ function getTotalWaves(waves) {
   return safe.support + safe.insight + safe.question;
 }
 
-function normalizePost(post) {
-  if (!post) return post;
-  const safeWaves = normalizeWaves(post.waves, post.waveCount);
-  return {
-    ...post,
-    waves: safeWaves,
-    waveCount: getTotalWaves(safeWaves),
-  };
-}
-
-function normalizeThreads(initialThreads, postsByThread) {
-  const repliesByThread = {};
-
-  const threadsWithInitialPost = initialThreads.map((thread) => {
-    const posts = (postsByThread?.[thread.id] ?? []).map(normalizePost);
-    const initialPost =
-      posts.find((p) => p.parentId === null) ?? null;
-    const safeInitialPost = normalizePost(initialPost);
-    const replies = posts
-      .filter((p) => p.parentId !== null)
-      .map((reply) => normalizePost(reply));
-    repliesByThread[thread.id] = replies;
-
-    return {
-      ...thread,
-      initialPost: safeInitialPost || null,
-      rootSnippet: thread.rootSnippet || safeInitialPost?.content || '',
-    };
-  });
-
-  return { threadsWithInitialPost, repliesByThread };
-}
-
 function normalizeUser(user) {
   const unlocked = Array.isArray(user?.unlockedAchievements)
-    ? user.unlockedAchievements.filter((id) =>
-        ACHIEVEMENT_IDS.includes(id)
-      )
+    ? user.unlockedAchievements.filter((id) => ACHIEVEMENT_IDS.includes(id))
     : [];
 
   return {
@@ -127,11 +108,40 @@ function getStoredIds(key) {
   }
 }
 
+function decorateThread(thread, authorName = 'Utente') {
+  const waves = normalizeWaves(thread?.waves);
+  return {
+    ...thread,
+    author: thread?.author ?? thread?.createdBy ?? authorName ?? 'Utente',
+    waves,
+    waveCount: getTotalWaves(waves),
+  };
+}
+
+function decorateComment(comment, authorName = 'Utente') {
+  const waves = normalizeWaves(comment?.waves);
+  return {
+    ...comment,
+    author: comment?.author ?? comment?.createdBy ?? authorName ?? 'Utente',
+    parentId: comment?.parentCommentId ?? null,
+    waves,
+    waveCount: getTotalWaves(waves),
+  };
+}
+
+function slugify(value) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+    .slice(0, 64);
+}
+
 export function AppStateProvider({ children }) {
-  const { threadsWithInitialPost, repliesByThread } = useMemo(
-    () => normalizeThreads(initialThreads, initialPostsByThread),
-    []
-  );
+  const [dataState, dispatch] = useReducer(appDataReducer, {
+    ...initialDataState,
+    follows: getStoredIds(FOLLOWED_ROOMS_KEY),
+  });
   const [currentUser, setCurrentUser] = useState(() => {
     if (typeof window === 'undefined') return defaultUser;
     try {
@@ -150,24 +160,16 @@ export function AppStateProvider({ children }) {
       return [];
     }
   });
-  const [rooms, setRooms] = useState(initialRooms);
-  const [threads, setThreads] = useState(threadsWithInitialPost);
-  const [postsByThread, setPostsByThread] = useState(repliesByThread);
   const [isOnboarded, setIsOnboarded] = useState(getInitialIsOnboarded);
   const [initialRoomIds, setInitialRoomIds] = useState(() =>
     getStoredIds(INITIAL_ROOMS_KEY)
-  );
-  const [followedRoomIds, setFollowedRoomIds] = useState(() =>
-    getStoredIds(FOLLOWED_ROOMS_KEY)
   );
   const [primaryPersonaId, setPrimaryPersonaId] = useState(null);
   const [algorithmPreset, setAlgorithmPreset] = useState('balanced');
   const [justFinishedOnboarding, setJustFinishedOnboarding] = useState(() => {
     if (typeof window === 'undefined') return false;
     try {
-      return (
-        window.localStorage.getItem(ONBOARDING_WELCOME_KEY) === 'true'
-      );
+      return window.localStorage.getItem(ONBOARDING_WELCOME_KEY) === 'true';
     } catch {
       return false;
     }
@@ -181,6 +183,8 @@ export function AppStateProvider({ children }) {
     pendingAchievementCelebrations,
     setPendingAchievementCelebrations,
   ] = useState([]);
+
+  const followedRoomIds = dataState.follows;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -256,14 +260,57 @@ export function AppStateProvider({ children }) {
     return [...baseList, ...customList];
   }, [currentUser?.nickname, customPersonas]);
 
-  function updateCurrentUser(updates) {
+  const rooms = useMemo(
+    () =>
+      dataState.roomOrder
+        .map((id) => dataState.roomsById[id])
+        .filter(Boolean),
+    [dataState.roomOrder, dataState.roomsById]
+  );
+
+  const threads = useMemo(
+    () =>
+      Object.values(dataState.threadsById).sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    [dataState.threadsById]
+  );
+
+  const threadsByRoom = useMemo(() => {
+    const map = {};
+    Object.entries(dataState.threadsByRoom).forEach(([roomId, meta]) => {
+      map[roomId] = meta.ids
+        .map((id) => dataState.threadsById[id])
+        .filter(Boolean);
+    });
+    return map;
+  }, [dataState.threadsByRoom, dataState.threadsById]);
+
+  const commentsByThread = useMemo(() => {
+    const map = {};
+    Object.entries(dataState.commentsByThread).forEach(([threadId, meta]) => {
+      map[threadId] = meta.ids
+        .map((id) => dataState.commentsById[id])
+        .filter(Boolean);
+    });
+    return map;
+  }, [dataState.commentsByThread, dataState.commentsById]);
+
+  const postsByThread = commentsByThread;
+
+  const roomsStatus = dataState.roomsStatus;
+  const threadListsMeta = dataState.threadsByRoom;
+  const commentListsMeta = dataState.commentsByThread;
+
+  const updateCurrentUser = useCallback((updates) => {
     setCurrentUser((prev) =>
       normalizeUser({
         ...normalizeUser(prev),
         ...updates,
       })
     );
-  }
+  }, []);
 
   function queueAchievementCelebration(achievementId) {
     if (!ACHIEVEMENT_IDS.includes(achievementId)) return;
@@ -330,173 +377,292 @@ export function AppStateProvider({ children }) {
     return id;
   }
 
-  function createRoom({ name, description, isPrivate = false, tags = [] }) {
-    const id = `room-${Date.now()}`;
-    const newRoom = {
-      id,
-      name,
-      description,
-      isPrivate,
-      tags,
-      members: 1,
-      prompts: [],
-    };
-    setRooms((prev) => [...prev, newRoom]);
-    setFollowedRoomIds((prev) =>
-      prev.includes(id) ? prev : [...prev, id]
-    );
-    return id;
-  }
+  const loadRooms = useCallback(async () => {
+    dispatch({ type: 'ROOMS_LOADING' });
+    const { rooms: fetchedRooms, error } = await listRooms();
+    if (error) {
+      dispatch({ type: 'ROOMS_ERROR', error });
+      return { rooms: [], error };
+    }
+    dispatch({ type: 'ROOMS_LOADED', rooms: fetchedRooms });
+    return { rooms: fetchedRooms, error: null };
+  }, []);
 
-  function createThread({
-    roomId,
-    title,
-    initialContent,
-    rootSnippet,
-    personaId = personas[0]?.id ?? 'dev',
-    energy = 'neutro',
-  }) {
-    const cleanedTitle = title?.trim();
-    const cleanedInitialContent = initialContent?.trim();
-    if (!cleanedTitle || !cleanedInitialContent) return null;
-    const id = `thread-${Date.now()}`;
-    const createdAt = new Date().toISOString();
-    const initialPost = {
-      id: `p-${Date.now()}`,
-      parentId: null,
-      author: currentUser?.nickname || 'Tu',
-      personaId,
-      createdAt,
-      content: cleanedInitialContent,
-      waves: { ...defaultWaves },
-      waveCount: 0,
-    };
-    const newThread = {
-      id,
-      roomId,
-      title: cleanedTitle,
-      author: currentUser?.nickname || 'Tu',
-      personaId,
-      createdAt,
-      depth: 1,
-      energy,
-      rootSnippet: rootSnippet || cleanedInitialContent,
-      branches: 0,
-      initialPost,
-    };
-    setThreads((prev) => [newThread, ...prev]);
-    setPostsByThread((prev) => ({
-      ...prev,
-      [id]: [],
-    }));
-    unlockAchievement('FIRST_THREAD');
-    return id;
-  }
+  useEffect(() => {
+    loadRooms();
+  }, [loadRooms]);
 
-  function createPost(
-    threadId,
-    { content, parentId = null, personaId, attachments = [] }
-  ) {
-    const hasImageAttachment = attachments?.some(
-      (attachment) => attachment?.type === 'image'
-    );
-    const newPost = {
-      id: `p-${Date.now()}`,
-      parentId,
-      author: currentUser?.nickname || 'Tu',
-      personaId: personaId ?? personas[0]?.id ?? 'dev',
-      createdAt: new Date().toISOString(),
-      content,
-      waves: { ...defaultWaves },
-      waveCount: 0,
-      attachments: attachments?.length
-        ? attachments.slice(0, 1)
-        : undefined,
-    };
+  const loadFollowedRooms = useCallback(async (userId) => {
+    const { roomIds, error } = await listFollowedRoomIds(userId);
+    if (!error && roomIds) {
+      dispatch({ type: 'SET_FOLLOWS', roomIds });
+    }
+    return { roomIds: roomIds ?? [], error };
+  }, []);
 
-    if (parentId === null) {
-      setThreads((prev) =>
-        prev.map((thread) => {
-          if (thread.id !== threadId || thread.initialPost) return thread;
-          return {
-            ...thread,
-            initialPost: newPost,
-            rootSnippet: thread.rootSnippet || newPost.content,
-          };
-        })
+  const followRoom = useCallback(
+    async (roomId, userId) => {
+      if (!roomId) {
+        return { error: new Error('Stanza non valida') };
+      }
+      dispatch({ type: 'ROOM_FOLLOWED', roomId });
+      const { error } = await followRoomRequest(roomId, userId);
+      if (error) {
+        dispatch({ type: 'ROOM_UNFOLLOWED', roomId });
+        return { error };
+      }
+      return { error: null };
+    },
+    []
+  );
+
+  const unfollowRoom = useCallback(
+    async (roomId, userId) => {
+      if (!roomId) {
+        return { error: new Error('Stanza non valida') };
+      }
+      dispatch({ type: 'ROOM_UNFOLLOWED', roomId });
+      const { error } = await unfollowRoomRequest(roomId, userId);
+      if (error) {
+        dispatch({ type: 'ROOM_FOLLOWED', roomId });
+        return { error };
+      }
+      return { error: null };
+    },
+    []
+  );
+
+  const loadThreadsForRoom = useCallback(
+    async (roomId, options = {}) => {
+      dispatch({ type: 'THREADS_LOADING_FOR_ROOM', roomId });
+      const { page, error } = await listThreadsByRoom(roomId, options);
+      if (error) {
+        dispatch({
+          type: 'THREAD_ERROR_FOR_ROOM',
+          roomId,
+          error,
+        });
+        return { threads: [], cursor: null, hasMore: false, error };
+      }
+      const decorated = page.items.map((thread) =>
+        decorateThread(thread)
       );
-      setPostsByThread((prev) => ({
-        ...prev,
-        [threadId]: prev[threadId] ?? [],
-      }));
-      return newPost.id;
-    }
-
-    setPostsByThread((prev) => {
-      const existing = prev[threadId] ?? [];
+      dispatch({
+        type: 'THREADS_LOADED_FOR_ROOM',
+        roomId,
+        threads: decorated,
+        cursor: page.cursor,
+        hasMore: page.hasMore,
+        replace: !options?.cursor,
+      });
       return {
-        ...prev,
-        [threadId]: [newPost, ...existing],
+        threads: decorated,
+        cursor: page.cursor,
+        hasMore: page.hasMore,
+        error: null,
       };
-    });
+    },
+    []
+  );
 
-    unlockAchievement('FIRST_REPLY');
-    if (hasImageAttachment) {
-      unlockAchievement('FIRST_IMAGE_REPLY');
-    }
-    return newPost.id;
-  }
+  const loadThreadById = useCallback(
+    async (threadId) => {
+      const cached = dataState.threadsById[threadId];
+      if (cached) {
+        return { thread: cached, error: null };
+      }
+      const { thread, error } = await getThread(threadId);
+      if (thread) {
+        const decorated = decorateThread(thread);
+        dispatch({ type: 'UPSERT_THREAD', thread: decorated });
+        return { thread: decorated, error: null };
+      }
+      return { thread: null, error };
+    },
+    [dataState.threadsById]
+  );
 
-  function addWaveToComment(threadId, commentId, waveType) {
-    if (!['support', 'insight', 'question'].includes(waveType)) return;
-
-    const incrementWave = (post) => {
-      if (!post) return post;
-      const safeWaves = normalizeWaves(post.waves, post.waveCount);
-      const nextWaves = {
-        ...safeWaves,
-        [waveType]: safeWaves[waveType] + 1,
-      };
-      return {
-        ...post,
-        waves: nextWaves,
-        waveCount: getTotalWaves(nextWaves),
-      };
-    };
-
-    setThreads((prev) =>
-      prev.map((thread) => {
-        if (thread.id !== threadId) return thread;
-        if (!thread.initialPost || thread.initialPost.id !== commentId) {
-          return thread;
-        }
+  const createThread = useCallback(
+    async ({ roomId, title, body, createdBy, authorName }) => {
+      const trimmedTitle = title?.trim();
+      const trimmedBody = body?.trim();
+      if (!trimmedTitle || !trimmedBody) {
         return {
-          ...thread,
-          initialPost: incrementWave(thread.initialPost),
+          thread: null,
+          error: new Error('Titolo e testo del thread sono obbligatori.'),
         };
-      })
-    );
-
-    setPostsByThread((prev) => {
-      const existing = prev[threadId];
-      if (!existing) return prev;
-      const updated = existing.map((post) =>
-        post.id === commentId ? incrementWave(post) : post
+      }
+      const { thread, error } = await createThreadRequest({
+        roomId,
+        title: trimmedTitle,
+        body: trimmedBody,
+        createdBy,
+      });
+      if (error || !thread) {
+        return {
+          thread: null,
+          error: error ?? new Error('Non riesco a creare il thread.'),
+        };
+      }
+      const decorated = decorateThread(
+        thread,
+        authorName || currentUser?.nickname || 'Tu'
       );
-      return {
-        ...prev,
-        [threadId]: updated,
-      };
-    });
+      dispatch({ type: 'THREAD_CREATED', thread: decorated });
+      return { thread: decorated, error: null };
+    },
+    [currentUser?.nickname]
+  );
 
-    setCurrentUser((prev) => {
-      const safeUser = normalizeUser(prev);
-      const nextSent = Number.isFinite(safeUser.wavesSent)
-        ? safeUser.wavesSent + 1
-        : 1;
-      return { ...safeUser, wavesSent: nextSent };
-    });
-  }
+  const loadCommentsForThread = useCallback(
+    async (threadId, options = {}) => {
+      dispatch({ type: 'COMMENTS_LOADING_FOR_THREAD', threadId });
+      const { page, error } = await listCommentsByThread(threadId, options);
+      if (error) {
+        dispatch({
+          type: 'COMMENTS_ERROR_FOR_THREAD',
+          threadId,
+          error,
+        });
+        return { comments: [], cursor: null, hasMore: false, error };
+      }
+      const decorated = page.items.map((comment) =>
+        decorateComment(comment)
+      );
+      dispatch({
+        type: 'COMMENTS_LOADED_FOR_THREAD',
+        threadId,
+        comments: decorated,
+        cursor: page.cursor,
+        hasMore: page.hasMore,
+        replace: !options?.cursor,
+      });
+      return {
+        comments: decorated,
+        cursor: page.cursor,
+        hasMore: page.hasMore,
+        error: null,
+      };
+    },
+    []
+  );
+
+  const createComment = useCallback(
+    async ({
+      threadId,
+      body,
+      parentCommentId = null,
+      createdBy,
+      authorName,
+    }) => {
+      const trimmedBody = body?.trim();
+      if (!trimmedBody) {
+        return {
+          comment: null,
+          error: new Error('Scrivi qualcosa prima di pubblicare.'),
+        };
+      }
+      const { comment, error } = await createCommentRequest({
+        threadId,
+        body: trimmedBody,
+        parentCommentId,
+        createdBy,
+      });
+      if (error || !comment) {
+        return {
+          comment: null,
+          error: error ?? new Error('Non riesco a pubblicare la risposta.'),
+        };
+      }
+      const decorated = decorateComment(
+        comment,
+        authorName || currentUser?.nickname || 'Tu'
+      );
+      dispatch({ type: 'COMMENT_CREATED', comment: decorated });
+      return { comment: decorated, error: null };
+    },
+    [currentUser?.nickname]
+  );
+
+  const addWaveToComment = useCallback(
+    (threadId, commentId, waveType) => {
+      if (!['support', 'insight', 'question'].includes(waveType)) return;
+      if (commentId === threadId) {
+        const thread = dataState.threadsById[threadId];
+        if (!thread) return;
+        const baseWaves = normalizeWaves(thread.waves);
+        const nextWaves = {
+          ...baseWaves,
+          [waveType]: baseWaves[waveType] + 1,
+        };
+        dispatch({
+          type: 'THREAD_PATCHED',
+          thread: {
+            ...thread,
+            waves: nextWaves,
+            waveCount: getTotalWaves(nextWaves),
+          },
+        });
+      } else {
+        const target = dataState.commentsById[commentId];
+        if (!target) return;
+        const baseWaves = normalizeWaves(target.waves);
+        const nextWaves = {
+          ...baseWaves,
+          [waveType]: baseWaves[waveType] + 1,
+        };
+        dispatch({
+          type: 'COMMENT_PATCHED',
+          comment: {
+            ...target,
+            waves: nextWaves,
+            waveCount: getTotalWaves(nextWaves),
+          },
+        });
+      }
+      setCurrentUser((prev) => {
+        const safeUser = normalizeUser(prev);
+        const nextSent = Number.isFinite(safeUser.wavesSent)
+          ? safeUser.wavesSent + 1
+          : 1;
+        return { ...safeUser, wavesSent: nextSent };
+      });
+    },
+    [dataState.commentsById, dataState.threadsById]
+  );
+
+  const createRoom = useCallback(
+    async ({ name, description, isPrivate = false, slug }) => {
+      const cleanedName = name?.trim();
+      if (!cleanedName) return null;
+      const payload = {
+        name: cleanedName,
+        description: description?.trim() || null,
+        is_public: !isPrivate,
+        slug: slug?.trim() || slugify(cleanedName),
+      };
+      const { data, error } = await supabase
+        .from('rooms')
+        .insert(payload)
+        .select('id, slug, name, description, is_public, created_at')
+        .maybeSingle();
+      if (error) {
+        console.error('Errore nella creazione stanza', error);
+        return null;
+      }
+      const room = {
+        id: data.id,
+        slug: data.slug,
+        name: data.name,
+        description: data.description,
+        isPublic: Boolean(data.is_public ?? true),
+        createdAt: data.created_at,
+      };
+      dispatch({ type: 'ROOMS_LOADED', rooms: [room] });
+      return room.id;
+    },
+    []
+  );
 
   function addReflection({ tag = 'idea', note, date }) {
     const trimmedNote = note?.trim();
@@ -528,7 +694,7 @@ export function AppStateProvider({ children }) {
     algorithmPreset: preset = 'balanced',
   }) {
     setInitialRoomIds(selectedRoomIds);
-    setFollowedRoomIds(selectedRoomIds);
+    dispatch({ type: 'SET_FOLLOWS', roomIds: selectedRoomIds });
     setPrimaryPersonaId(personaId);
     setAlgorithmPreset(preset);
     if (personaId) {
@@ -550,7 +716,7 @@ export function AppStateProvider({ children }) {
     setIsOnboarded(false);
     setJustFinishedOnboarding(false);
     setInitialRoomIds([]);
-    setFollowedRoomIds([]);
+    dispatch({ type: 'SET_FOLLOWS', roomIds: [] });
     setPrimaryPersonaId(null);
     setAlgorithmPreset('balanced');
     setActivePersonaId(initialPersonas[0]?.id ?? null);
@@ -570,7 +736,15 @@ export function AppStateProvider({ children }) {
     () => ({
       personas,
       rooms,
+      roomsById: dataState.roomsById,
+      roomsStatus,
       threads,
+      threadsById: dataState.threadsById,
+      threadsByRoom,
+      threadListsMeta,
+      commentsByThread,
+      commentsById: dataState.commentsById,
+      commentListsMeta,
       postsByThread,
       isOnboarded,
       initialRoomIds,
@@ -582,7 +756,7 @@ export function AppStateProvider({ children }) {
       justFinishedOnboarding,
       createRoom,
       createThread,
-      createPost,
+      createComment,
       addWaveToComment,
       setActivePersonaId,
       completeOnboarding,
@@ -591,7 +765,13 @@ export function AppStateProvider({ children }) {
       addReflection,
       unlockAchievement,
       addCustomPersona,
-      setFollowedRoomIds,
+      loadRooms,
+      loadFollowedRooms,
+      followRoom,
+      unfollowRoom,
+      loadThreadsForRoom,
+      loadThreadById,
+      loadCommentsForThread,
       setJustFinishedOnboarding,
       recentlyUnlockedAchievementId,
       clearRecentlyUnlockedAchievement,
@@ -600,8 +780,17 @@ export function AppStateProvider({ children }) {
       shiftAchievementCelebration,
     }),
     [
+      personas,
       rooms,
+      dataState.roomsById,
+      roomsStatus,
       threads,
+      dataState.threadsById,
+      threadsByRoom,
+      threadListsMeta,
+      commentsByThread,
+      dataState.commentsById,
+      commentListsMeta,
       postsByThread,
       isOnboarded,
       initialRoomIds,
@@ -609,7 +798,6 @@ export function AppStateProvider({ children }) {
       primaryPersonaId,
       algorithmPreset,
       activePersonaId,
-      personas,
       currentUser,
       justFinishedOnboarding,
       recentlyUnlockedAchievementId,

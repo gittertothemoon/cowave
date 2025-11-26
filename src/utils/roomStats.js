@@ -20,31 +20,20 @@ export function computeRoomStats(rooms = [], threads = [], postsByThread = {}) {
       lastActivity: null,
     };
     stats.threadCount += 1;
-    const posts = postsByThread?.[thread.id] ?? [];
-    posts.forEach((post) => {
-      const time = new Date(post.createdAt).getTime();
-      if (post.parentId !== null) {
-        stats.repliesCount += 1;
-        if (!Number.isNaN(time) && now - time <= dayMs) {
+    const comments = postsByThread?.[thread.id] ?? [];
+    comments.forEach((comment) => {
+      const time = new Date(comment.createdAt).getTime();
+      stats.repliesCount += 1;
+      if (!Number.isNaN(time)) {
+        if (now - time <= dayMs) {
           stats.repliesLast24h += 1;
         }
-      }
-      if (!Number.isNaN(time)) {
         stats.lastActivity =
           stats.lastActivity === null
             ? time
             : Math.max(stats.lastActivity, time);
       }
     });
-    if (thread.initialPost) {
-      const time = new Date(thread.initialPost.createdAt).getTime();
-      if (!Number.isNaN(time)) {
-        stats.lastActivity =
-          stats.lastActivity === null
-            ? time
-            : Math.max(stats.lastActivity, time);
-      }
-    }
     const threadTime = new Date(thread.createdAt).getTime();
     if (!Number.isNaN(threadTime)) {
       stats.lastActivity =

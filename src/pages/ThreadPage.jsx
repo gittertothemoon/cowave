@@ -1,11 +1,13 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../state/AuthContext.jsx';
 import { useAppState } from '../state/AppStateContext.jsx';
 import PostComposer from '../components/threads/PostComposer.jsx';
 import PostNode from '../components/threads/PostNode.jsx';
-import Modal from '../components/ui/Modal.jsx';
 import {
   buttonGhostClass,
+  buttonPrimaryClass,
+  buttonSecondaryClass,
   cardBaseClass,
   eyebrowClass,
   pageTitleClass,
@@ -16,53 +18,180 @@ import { getCanonicalUrl } from '../lib/url.js';
 export default function ThreadPage() {
   const { threadId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     threads,
-    postsByThread,
-    createPost,
-    rooms,
-    personas,
+    threadsById,
+    roomsById,
+    commentsByThread,
+    commentListsMeta,
+    loadThreadById,
+    loadCommentsForThread,
+    createComment,
     addWaveToComment,
+    loadRooms,
   } = useAppState();
-  const [isThreadLoading] = useState(false);
-  const [threadError] = useState(null);
-  const thread = threads.find((t) => t.id === threadId);
-  const replies = postsByThread[threadId] ?? [];
-  const initialPost = thread?.initialPost ?? null;
-  const [replyModalPostId, setReplyModalPostId] = useState(null);
-  const [collapsedParents, setCollapsedParents] = useState(() => new Set());
+
+  const existingThread = threadsById[threadId] ?? threads.find((t) => t.id === threadId);
+  const [isThreadLoading, setIsThreadLoading] = useState(!existingThread);
   const [copyFeedback, setCopyFeedback] = useState('');
-  const copyTimeoutRef = useRef(null);
-  const threadRoom = rooms.find((r) => r.id === thread?.roomId);
-  const theme = threadRoom?.theme ?? {
-    primary: '#a78bfa',
-    secondary: '#38bdf8',
-    glow: 'rgba(59,130,246,0.35)',
-  };
-  const accentGradient = `linear-gradient(120deg, ${theme.primary}, ${theme.secondary})`;
+  const [replyTarget, setReplyTarget] = useState(null);
+  const [composerError, setComposerError] = useState('');
 
   useEffect(() => {
-    return () => {
-      if (copyTimeoutRef.current) {
-        clearTimeout(copyTimeoutRef.current);
+    let isActive = true;
+    async function ensureThread() {
+      if (existingThread) {
+        setIsThreadLoading(false);
+        return;
       }
+      setIsThreadLoading(true);
+      await loadThreadById(threadId);
+      if (isActive) {
+        setIsThreadLoading(false);
+      }
+    }
+    ensureThread();
+    return () => {
+      isActive = false;
     };
-  }, []);
+  }, [existingThread, loadThreadById, threadId]);
 
-  if (threadError) {
-    return (
-      <div className="mt-4 rounded-2xl border border-red-500/40 bg-red-950/20 p-4 text-sm text-red-100">
-        <p className="font-medium">
-          Si è verificato un problema nel caricamento dei contenuti.
-        </p>
-        <p className="mt-1 text-xs text-red-200">
-          Riprova a ricaricare la pagina. Se il problema persiste, segnalalo nella stanza “Feedback CoWave”.
-        </p>
-      </div>
+  useEffect(() => {
+    loadRooms();
+  }, [loadRooms]);
+
+  useEffect(() => {
+    if (!threadId) return;
+    const meta = commentListsMeta[threadId];
+    if (!meta || (!meta.loading && (meta.ids?.length ?? 0) === 0)) {
+      loadCommentsForThread(threadId);
+    }
+  }, [commentListsMeta, loadCommentsForThread, threadId]);
+
+  const thread = threadsById[threadId] ?? existingThread ?? null;
+  const room = thread?.roomId ? roomsById?.[thread.roomId] : null;
+  const comments = commentsByThread[threadId] ?? [];
+  const commentsMeta = commentListsMeta[threadId] ?? {};
+  const isCommentsLoading =
+    commentsMeta.loading && (commentsMeta.ids?.length ?? 0) === 0;
+  const commentsError = commentsMeta.error;
+  const hasMoreComments = commentsMeta.hasMore;
+  const rootPost = thread
+    ? {
+        id: thread.id,
+        author: thread.author || 'Utente',
+        createdAt: thread.createdAt,
+        content: thread.body,
+        waves: thread.waves,
+        waveCount: thread.waveCount,
+      }
+    : null;
+
+  const sortedComments = useMemo(() => {
+    return [...comments].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
+  }, [comments]);
+
+  const repliesByParent = useMemo(() => {
+    const map = new Map();
+    sortedComments.forEach((comment) => {
+      const parentKey = comment.parentCommentId || null;
+      const existing = map.get(parentKey) ?? [];
+      existing.push(comment);
+      map.set(parentKey, existing);
+    });
+    return map;
+  }, [sortedComments]);
+
+  const repliesCount = comments.length;
+  const lastReplyDate =
+    comments.length > 0
+      ? new Date(
+          Math.max(
+            ...comments.map((p) => new Date(p.createdAt).getTime())
+          )
+        )
+      : null;
+  const lastReplyText = lastReplyDate
+    ? formatRelativeTime(lastReplyDate)
+    : null;
+
+  function handleCopyLink() {
+    try {
+      if (typeof window === 'undefined') return;
+      const shareUrl =
+        getCanonicalUrl() ||
+        `${window.location.origin}/app/threads/${threadId}`;
+      navigator?.clipboard?.writeText(shareUrl).catch(() => {});
+      setCopyFeedback('Link copiato.');
+      window.setTimeout(() => setCopyFeedback(''), 1200);
+    } catch {
+      // best effort
+    }
   }
 
-  if (isThreadLoading) {
+  async function handleSubmitComment({ content, parentId }) {
+    setComposerError('');
+    const { error } = await createComment({
+      threadId,
+      body: content,
+      parentCommentId: parentId ?? replyTarget?.id ?? null,
+      createdBy: user?.id,
+      authorName: user?.email,
+    });
+    if (error) {
+      setComposerError(
+        'Non riesco a pubblicare la risposta. Riprova tra poco.'
+      );
+      return;
+    }
+    setReplyTarget(null);
+  }
+
+  function handleLoadMore() {
+    loadCommentsForThread(threadId, { cursor: commentsMeta.cursor });
+  }
+
+  function renderReplies(parentId, depth = 0) {
+    const children = repliesByParent.get(parentId) ?? [];
+    if (children.length === 0) return null;
+    const indentClass = depth >= 1 ? 'md:pl-4 md:ml-2' : '';
+
+    return children.map((comment) => {
+      const hasChildren = (repliesByParent.get(comment.id) ?? []).length > 0;
+      return (
+        <div key={comment.id} className={`space-y-3 ${indentClass}`}>
+          <PostNode
+            post={comment}
+            actions={
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  className={`${buttonGhostClass} px-3 py-1 text-xs`}
+                  onClick={() => setReplyTarget(comment)}
+                >
+                  Rispondi
+                </button>
+              </div>
+            }
+            onSendWave={(postId, waveType) =>
+              addWaveToComment(threadId, postId, waveType)
+            }
+          />
+          {hasChildren ? (
+            <div className="space-y-3">
+              {renderReplies(comment.id, depth + 1)}
+            </div>
+          ) : null}
+        </div>
+      );
+    });
+  }
+
+  if (isThreadLoading && !thread) {
     return (
       <div className="space-y-4">
         <div className={`${cardBaseClass} animate-pulse p-4 space-y-3`}>
@@ -79,229 +208,30 @@ export default function ThreadPage() {
     );
   }
 
-  if (!thread) {
+  if (!thread && !isThreadLoading) {
     return (
       <div className={`${cardBaseClass} p-4`}>
         <p className="text-sm text-red-200">Thread non trovato.</p>
         <button
           type="button"
-          onClick={() => navigate('/app')}
+          onClick={() => navigate('/app/rooms')}
           className={`${buttonGhostClass} mt-2 text-sm`}
         >
-          Torna al feed
+          Torna alle stanze
         </button>
       </div>
     );
   }
 
-  function handleNewPost({ content, attachments }) {
-    if (!initialPost) return;
-    createPost(threadId, {
-      content,
-      parentId: initialPost.id,
-      personaId: thread.personaId,
-      attachments,
-    });
-  }
-
-  function handleCreateInitialPost({ content, attachments }) {
-    createPost(threadId, {
-      content,
-      parentId: null,
-      personaId: thread.personaId,
-      attachments,
-    });
-  }
-
-  const personaLabel =
-    personas.find((p) => p.id === thread?.personaId)?.label ?? 'Persona attiva';
-  const repliesSorted = useMemo(() => {
-    const sorted = replies
-      .slice()
-      .sort((a, b) => {
-        const timeA = new Date(a.createdAt).getTime();
-        const timeB = new Date(b.createdAt).getTime();
-        const safeA = Number.isNaN(timeA) ? 0 : timeA;
-        const safeB = Number.isNaN(timeB) ? 0 : timeB;
-        return safeB - safeA;
-      });
-    return sorted;
-  }, [replies]);
-  const postsById = useMemo(() => {
-    const map = new Map();
-    if (initialPost) {
-      map.set(initialPost.id, initialPost);
-    }
-    repliesSorted.forEach((post) => {
-      map.set(post.id, post);
-    });
-    return map;
-  }, [initialPost, repliesSorted]);
-  const repliesByParent = useMemo(() => {
-    const map = new Map();
-    repliesSorted.forEach((post) => {
-      const parentId = post.parentId ?? initialPost?.id ?? null;
-      const existing = map.get(parentId) ?? [];
-      existing.push(post);
-      map.set(parentId, existing);
-    });
-    return map;
-  }, [initialPost?.id, repliesSorted]);
-  const repliesCount = replies.length;
-  const lastReplyDate =
-    replies.length > 0
-      ? new Date(
-          Math.max(
-            ...replies.map((p) => new Date(p.createdAt).getTime())
-          )
-        )
-      : null;
-  const lastReplyText = lastReplyDate
-    ? formatRelativeTime(lastReplyDate)
-    : null;
-  const replyModalPost = replyModalPostId
-    ? postsById.get(replyModalPostId)
-    : null;
-
-  function handleCopyLink() {
-    const clearExistingTimeout = () => {
-      if (copyTimeoutRef.current) {
-        clearTimeout(copyTimeoutRef.current);
-      }
-    };
-
-    try {
-      if (typeof window === 'undefined') return;
-
-      const shareUrl =
-        getCanonicalUrl() ||
-        `${window.location.origin}/app/threads/${threadId}`;
-
-      navigator?.clipboard?.writeText(shareUrl).catch(() => {});
-
-      clearExistingTimeout();
-      setCopyFeedback('Link copiato.');
-      copyTimeoutRef.current = window.setTimeout(() => {
-        setCopyFeedback('');
-      }, 1200);
-    } catch {
-      // best-effort copy
-    }
-  }
-
-  function handleSendWave(postId, waveType) {
-    addWaveToComment(threadId, postId, waveType);
-  }
-
-  function handleReplyTo(postId) {
-    setReplyModalPostId(postId);
-  }
-
-  function handleModalReply({ content, attachments }) {
-    if (!replyModalPostId || !thread) return;
-    createPost(threadId, {
-      content,
-      parentId: replyModalPostId,
-      personaId: thread.personaId,
-      attachments,
-    });
-    setReplyModalPostId(null);
-  }
-
-  function handleToggleCollapse(postId) {
-    setCollapsedParents((prev) => {
-      const next = new Set(prev);
-      if (next.has(postId)) {
-        next.delete(postId);
-      } else {
-        next.add(postId);
-      }
-      return next;
-    });
-  }
-
-  function renderReplies(parentId, depth = 0) {
-    const children = repliesByParent.get(parentId) ?? [];
-    if (children.length === 0) return null;
-    return children.map((post) => {
-      const parentAuthor =
-        post.parentId && postsById.has(post.parentId)
-          ? postsById.get(post.parentId)?.author
-          : undefined;
-      const hasChildReplies = (repliesByParent.get(post.id) ?? []).length;
-      const isNested = depth > 0;
-      const isIndented = depth === 1;
-      const isDeepNested = depth > 1;
-      const wrapperClass = [
-        'relative space-y-3 w-full',
-        isIndented ? 'md:pl-4 md:ml-4' : '',
-      ]
-        .filter(Boolean)
-        .join(' ');
-      const cardClass = isNested
-        ? 'w-full rounded-2xl border border-slate-800/60 bg-slate-950/50 p-3'
-        : 'w-full rounded-2xl border border-accent/30 bg-slate-900/70 p-3 shadow-[0_10px_30px_rgba(56,189,248,0.08)]';
-
-      return (
-        <div key={post.id} className={wrapperClass}>
-          {isIndented && (
-            <span
-              aria-hidden="true"
-              className="absolute left-1 top-4 bottom-4 w-px bg-gradient-to-b from-accent/60 via-slate-700/80 to-transparent md:left-1"
-            />
-          )}
-          <div className={cardClass}>
-            <div className="flex items-center justify-between text-[11px] text-slate-400 mb-2">
-              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2 py-0.5 bg-white/5 text-[11px] text-slate-300">
-                {isNested
-                  ? isDeepNested
-                    ? 'Risposta nella catena'
-                    : 'Risposta a un commento'
-                  : 'Risposta al post iniziale'}
-              </span>
-              {hasChildReplies ? (
-                <span className="text-[10px] text-slate-500">
-                  {hasChildReplies} risp.
-                </span>
-              ) : null}
-            </div>
-              <PostNode
-                post={post}
-                parentAuthor={parentAuthor}
-                actions={
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    className={`${buttonGhostClass} px-3 py-1 text-xs`}
-                    onClick={() => handleReplyTo(post.id)}
-                  >
-                    Rispondi
-                  </button>
-                  {hasChildReplies ? (
-                    <button
-                      type="button"
-                      className={`${buttonGhostClass} px-3 py-1 text-xs`}
-                      onClick={() => handleToggleCollapse(post.id)}
-                    >
-                      {collapsedParents.has(post.id)
-                        ? `Mostra ${hasChildReplies}`
-                        : 'Nascondi risposte'}
-                    </button>
-                  ) : null}
-                </div>
-              }
-              onSendWave={handleSendWave}
-            />
-            {hasChildReplies && !collapsedParents.has(post.id) ? (
-              <div className="mt-3 space-y-3">
-                {renderReplies(post.id, depth + 1)}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      );
-    });
-  }
+  const roomLink = thread?.roomId
+    ? `/app/rooms/${thread.roomId}`
+    : '/app/rooms';
+  const theme = room?.theme ?? {
+    primary: '#38bdf8',
+    secondary: '#a78bfa',
+    glow: 'rgba(59,130,246,0.35)',
+  };
+  const accentGradient = `linear-gradient(120deg, ${theme.primary}, ${theme.secondary})`;
 
   return (
     <div className="space-y-5">
@@ -312,10 +242,10 @@ export default function ThreadPage() {
         <p className="text-[11px] text-slate-500 flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => navigate(`/app/rooms/${thread.roomId}`)}
+            onClick={() => navigate(roomLink)}
             className={`${buttonGhostClass} px-0 py-0 h-auto text-[11px] text-slate-300`}
           >
-            Stanza {threadRoom?.name ?? 'Stanza'}
+            Stanza {room?.name ?? 'sconosciuta'}
           </button>
           <span className="text-slate-700">→</span>
           <span className="text-slate-400">Thread</span>
@@ -324,26 +254,28 @@ export default function ThreadPage() {
           {thread.title}
         </h1>
         <p className="text-sm text-slate-400">
-          Avviato da {personaLabel} ·{' '}
+          Avviato da {thread.author || 'Utente'} ·{' '}
           {repliesCount === 1
             ? '1 risposta'
             : `${repliesCount} risposte`}
           {lastReplyText ? ` · Ultima risposta ${lastReplyText}` : ''}
         </p>
         <p className="text-[12px] text-slate-500">
-          Qui leggi il thread di questa stanza e puoi rispondere con le tue onde. Per aprire un’altra conversazione torna alla stanza e crea un nuovo thread.
+          Qui trovi il post iniziale e le risposte più recenti per questo thread.
         </p>
       </header>
 
       <section className="space-y-4">
-        {initialPost ? (
+        {rootPost ? (
           <>
             <div className="space-y-3">
               <PostNode
-                post={initialPost}
+                post={rootPost}
                 label="Post iniziale"
                 variant="root"
-                onSendWave={handleSendWave}
+                onSendWave={(postId, waveType) =>
+                  addWaveToComment(threadId, postId, waveType)
+                }
                 actions={
                   <div className="flex items-center gap-2">
                     <button
@@ -369,7 +301,7 @@ export default function ThreadPage() {
                 {repliesCount === 0 ? (
                   <>
                     <p className="text-xs text-slate-500">
-                      Nessuna risposta ancora. Inizia tu la conversazione.
+                      Nessuna risposta per ora. Inizia tu.
                     </p>
                     <p className="text-[11px] text-slate-600">
                       Le risposte più recenti sono in alto.
@@ -378,18 +310,84 @@ export default function ThreadPage() {
                 ) : null}
               </div>
 
-              <PostComposer
-                parentId={initialPost.id}
-                onSubmit={handleNewPost}
-                accentGradient={accentGradient}
-                placeholder="Scrivi una risposta a questo thread..."
-              />
-
-              {repliesCount > 0 && (
-                <div className="space-y-4 pt-1">
-                  {renderReplies(initialPost.id)}
+              {replyTarget ? (
+                <div className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-900/50 px-3 py-2 text-[12px] text-slate-300">
+                  <span>
+                    Rispondi a {replyTarget.author || 'questo messaggio'}
+                  </span>
+                  <button
+                    type="button"
+                    className={`${buttonGhostClass} text-xs`}
+                    onClick={() => setReplyTarget(null)}
+                  >
+                    Annulla
+                  </button>
                 </div>
-              )}
+              ) : null}
+
+              <PostComposer
+                parentId={replyTarget?.id ?? null}
+                onSubmit={handleSubmitComment}
+                accentGradient={accentGradient}
+                placeholder={
+                  replyTarget
+                    ? `Rispondi a ${replyTarget.author || 'questo commento'}...`
+                    : 'Scrivi una risposta a questo thread...'
+                }
+              />
+              {composerError ? (
+                <p className="text-xs text-red-300">{composerError}</p>
+              ) : null}
+
+              {commentsError ? (
+                <div className="rounded-xl border border-red-500/40 bg-red-950/20 p-3 text-sm text-red-200 space-y-2">
+                  <p className="font-semibold">
+                    Non riesco a caricare le risposte.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => loadCommentsForThread(threadId)}
+                      className={`${buttonPrimaryClass} text-xs`}
+                    >
+                      Riprova
+                    </button>
+                    <span className="text-[11px] text-red-300">
+                      Se continua, segnala il problema al team.
+                    </span>
+                  </div>
+                </div>
+              ) : null}
+
+              {isCommentsLoading ? (
+                <div className="space-y-3" aria-live="polite" role="status">
+                  {Array.from({ length: 2 }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`${cardBaseClass} animate-pulse p-4 space-y-2`}
+                    >
+                      <div className="h-4 w-1/3 rounded-full bg-slate-800/60" />
+                      <div className="h-4 w-2/3 rounded-full bg-slate-800/50" />
+                      <div className="h-3 w-1/2 rounded-full bg-slate-800/40" />
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              {repliesByParent.get(null)?.length ? (
+                <div className="space-y-4 pt-1">
+                  {renderReplies(null)}
+                  {hasMoreComments ? (
+                    <button
+                      type="button"
+                      onClick={handleLoadMore}
+                      className={`${buttonSecondaryClass} w-full text-sm`}
+                    >
+                      Carica altre risposte
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </>
         ) : (
@@ -400,44 +398,13 @@ export default function ThreadPage() {
             </p>
             <PostComposer
               parentId={null}
-              onSubmit={handleCreateInitialPost}
+              onSubmit={handleSubmitComment}
               accentGradient={accentGradient}
               placeholder="Scrivi il post iniziale per aprire questo thread..."
             />
           </div>
         )}
       </section>
-
-      <Modal
-        open={Boolean(replyModalPost)}
-        onClose={() => setReplyModalPostId(null)}
-        title={
-          replyModalPost
-            ? `Rispondi a ${replyModalPost.author || 'questo commento'}`
-            : 'Rispondi'
-        }
-      >
-        {replyModalPost && (
-          <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-3 space-y-2">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-              Commento
-            </p>
-            <p className="text-sm text-slate-200 whitespace-pre-wrap">
-              {replyModalPost.content}
-            </p>
-          </div>
-        )}
-        <PostComposer
-          parentId={replyModalPostId ?? undefined}
-          onSubmit={handleModalReply}
-          accentGradient={accentGradient}
-          placeholder={
-            replyModalPost
-              ? `Rispondi a ${replyModalPost.author || 'questo commento'}...`
-              : 'Scrivi la tua risposta...'
-          }
-        />
-      </Modal>
     </div>
   );
 }

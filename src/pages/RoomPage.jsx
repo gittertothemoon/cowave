@@ -1,140 +1,83 @@
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useId, useRef, useState } from 'react';
-import ThreadCard from '../components/threads/ThreadCard.jsx';
+import { useEffect, useMemo, useState, useId } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../state/AuthContext.jsx';
 import { useAppState } from '../state/AppStateContext.jsx';
+import ThreadCard from '../components/threads/ThreadCard.jsx';
 import Modal from '../components/ui/Modal.jsx';
 import {
   buttonPrimaryClass,
   buttonGhostClass,
+  buttonSecondaryClass,
   cardBaseClass,
   eyebrowClass,
   pageTitleClass,
-  bodyTextClass,
   inputBaseClass,
   labelClass,
+  bodyTextClass,
 } from '../components/ui/primitives.js';
 
 export default function RoomPage() {
-  const { roomId } = useParams();
+  const { roomId: roomParam } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { rooms, threads, createThread } = useAppState();
-
-  const room = rooms.find((r) => r.id === roomId);
-  const roomThreads = threads.filter((t) => t.roomId === roomId);
+  const { user } = useAuth();
+  const {
+    rooms,
+    roomsStatus,
+    threadsByRoom,
+    threadListsMeta,
+    followedRoomIds,
+    loadRooms,
+    loadFollowedRooms,
+    loadThreadsForRoom,
+    createThread,
+    followRoom,
+    unfollowRoom,
+  } = useAppState();
 
   const [isNewThreadOpen, setIsNewThreadOpen] = useState(false);
   const [title, setTitle] = useState('');
-  const [initialContent, setInitialContent] = useState('');
-  const [energy, setEnergy] = useState('costruttivo');
-  const [threadError, setThreadError] = useState('');
-  const [initialContentError, setInitialContentError] = useState('');
-  const [hasEditedTitle, setHasEditedTitle] = useState(false);
-  const [hasEditedContent, setHasEditedContent] = useState(false);
-  const [lastPromptApplied, setLastPromptApplied] = useState(null);
-  const [roomError] = useState(null);
-  const [isRoomLoading] = useState(false);
-  const titleInputRef = useRef(null);
-  const initialContentRef = useRef(null);
+  const [body, setBody] = useState('');
+  const [titleError, setTitleError] = useState('');
+  const [bodyError, setBodyError] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingFollowId, setPendingFollowId] = useState(null);
   const titleId = useId();
-  const initialContentId = useId();
-  const energyId = useId();
-  const shouldOpenThread = location.state?.highlightCreateThread;
-
-  const theme = room?.theme ?? {
-    primary: '#a78bfa',
-    secondary: '#38bdf8',
-    glow: 'rgba(59,130,246,0.35)',
-    text: '#e0f2fe',
-  };
-  const accentGradient = `linear-gradient(120deg, ${theme.primary}, ${theme.secondary})`;
-  const tagsPreview =
-    room?.tags?.length > 0
-      ? room.tags.slice(0, 2).map((tag) => `#${tag}`).join(' · ')
-      : 'Senza tag';
-  const roomPrompts = room?.prompts ?? [];
-  const energyOptions = [
-    { value: 'costruttivo', label: 'Costruttivo', hint: 'Per soluzioni e next step' },
-    { value: 'riflessivo', label: 'Riflessivo', hint: 'Per pensieri e confronto calmo' },
-    { value: 'tecnico', label: 'Tecnico', hint: 'Per dettagli, stack e how-to' },
-    { value: 'giocoso', label: 'Giocoso', hint: 'Per esperimenti leggeri' },
-    { value: 'supporto', label: 'Supporto', hint: 'Per chiedere aiuto o sostegno' },
-    { value: 'brainstorm', label: 'Brainstorm', hint: 'Per idee rapide e tante proposte' },
-  ];
-
-  function handleBack() {
-    navigate('/app/rooms');
-  }
-
-  function handleCreateThread(e) {
-    e.preventDefault();
-    const trimmedTitle = title.trim();
-    const trimmedContent = initialContent.trim();
-    if (!trimmedTitle) {
-      setThreadError('Inserisci un titolo per il thread.');
-      setInitialContentError('');
-      return;
-    }
-    if (!trimmedContent) {
-      setInitialContentError('Inserisci il testo del thread.');
-      setThreadError('');
-      return;
-    }
-    const id = createThread({
-      roomId: room.id,
-      title: trimmedTitle,
-      initialContent: trimmedContent,
-      rootSnippet: trimmedContent,
-      energy,
-    });
-    if (!id) return;
-    setThreadError('');
-    setInitialContentError('');
-    setTitle('');
-    setInitialContent('');
-    setEnergy('costruttivo');
-    setHasEditedTitle(false);
-    setHasEditedContent(false);
-    setLastPromptApplied(null);
-    closeNewThread();
-    navigate(`/app/threads/${id}`);
-  }
-
-  function closeNewThread() {
-    setThreadError('');
-    setInitialContentError('');
-    setHasEditedTitle(false);
-    setHasEditedContent(false);
-    setLastPromptApplied(null);
-    setIsNewThreadOpen(false);
-  }
-
-  function handlePromptSelect(promptText) {
-    if (!promptText) return;
-    const previousPrompt = lastPromptApplied;
-    const derivedTitle = deriveTitleFromPrompt(promptText);
-    setLastPromptApplied(promptText);
-    if (
-      !hasEditedTitle ||
-      title.trim() === '' ||
-      (previousPrompt && title === deriveTitleFromPrompt(previousPrompt))
-    ) {
-      setTitle(derivedTitle);
-      setHasEditedTitle(false);
-      setThreadError('');
-    }
-    window.setTimeout(() => {
-      initialContentRef.current?.focus();
-    }, 0);
-  }
+  const bodyId = useId();
 
   useEffect(() => {
-    if (isNewThreadOpen) {
-      window.setTimeout(() => {
-        titleInputRef.current?.focus();
-      }, 0);
+    loadRooms();
+  }, [loadRooms]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadFollowedRooms(user.id);
     }
-  }, [isNewThreadOpen]);
+  }, [user?.id, loadFollowedRooms]);
+
+  const room = useMemo(
+    () =>
+      rooms.find(
+        (entry) => entry.id === roomParam || entry.slug === roomParam
+      ),
+    [rooms, roomParam]
+  );
+
+  const threadMeta = threadListsMeta[room?.id ?? roomParam] ?? {};
+  const roomThreads = room ? threadsByRoom[room.id] ?? [] : [];
+  const isThreadsLoading =
+    threadMeta.loading && (threadMeta.ids?.length ?? 0) === 0;
+  const threadsError = threadMeta.error;
+  const hasMoreThreads = threadMeta.hasMore;
+  const shouldOpenThread = location.state?.highlightCreateThread;
+  const isFollowed = room ? followedRoomIds.includes(room.id) : false;
+
+  useEffect(() => {
+    if (room?.id && !threadMeta.ids) {
+      loadThreadsForRoom(room.id);
+    }
+  }, [room?.id, threadMeta.ids, loadThreadsForRoom]);
 
   useEffect(() => {
     if (shouldOpenThread) {
@@ -142,20 +85,106 @@ export default function RoomPage() {
     }
   }, [shouldOpenThread]);
 
-  if (roomError) {
+  const theme = room?.theme ?? {
+    primary: '#38bdf8',
+    secondary: '#a78bfa',
+    glow: 'rgba(59,130,246,0.35)',
+  };
+  const accentGradient = `linear-gradient(120deg, ${theme.primary}, ${theme.secondary})`;
+
+  async function handleCreateThread(e) {
+    e.preventDefault();
+    setActionError('');
+    const trimmedTitle = title.trim();
+    const trimmedBody = body.trim();
+    if (!trimmedTitle) {
+      setTitleError('Inserisci un titolo per il thread.');
+      return;
+    }
+    if (!trimmedBody) {
+      setBodyError('Scrivi il post iniziale del thread.');
+      return;
+    }
+    if (!room?.id) return;
+    setIsSubmitting(true);
+    const { thread, error } = await createThread({
+      roomId: room.id,
+      title: trimmedTitle,
+      body: trimmedBody,
+      createdBy: user?.id,
+      authorName: user?.email,
+    });
+    setIsSubmitting(false);
+    if (error || !thread) {
+      setActionError('Non riesco a creare il thread adesso. Riprova tra poco.');
+      return;
+    }
+    setTitle('');
+    setBody('');
+    setTitleError('');
+    setBodyError('');
+    setIsNewThreadOpen(false);
+    navigate(`/app/threads/${thread.id}`);
+  }
+
+  async function handleToggleFollow() {
+    if (!room?.id) return;
+    if (!user?.id) {
+      setActionError('Accedi per seguire questa stanza.');
+      return;
+    }
+    setPendingFollowId(room.id);
+    const { error } = isFollowed
+      ? await unfollowRoom(room.id, user.id)
+      : await followRoom(room.id, user.id);
+    if (error) {
+      setActionError('Non riesco ad aggiornare il follow. Riprova tra poco.');
+    }
+    setPendingFollowId(null);
+  }
+
+  function openComposer() {
+    setTitleError('');
+    setBodyError('');
+    setIsNewThreadOpen(true);
+  }
+
+  if (roomsStatus.loading && !room) {
     return (
-      <div className="mt-4 rounded-2xl border border-red-500/40 bg-red-950/20 p-4 text-sm text-red-100">
-        <p className="font-medium">
-          Si è verificato un problema nel caricamento dei contenuti.
-        </p>
-        <p className="mt-1 text-xs text-red-200">
-          Riprova a ricaricare la pagina. Se il problema persiste, segnalalo nella stanza “Feedback CoWave”.
-        </p>
+      <div className="space-y-4">
+        <div className={`${cardBaseClass} animate-pulse p-4 space-y-3`}>
+          <div className="h-3 w-24 rounded-full bg-slate-800/60" />
+          <div className="h-6 w-2/3 rounded-full bg-slate-800/50" />
+          <div className="h-4 w-1/2 rounded-full bg-slate-800/40" />
+        </div>
+        <div className={`${cardBaseClass} animate-pulse p-4 space-y-3`}>
+          <div className="h-4 w-1/3 rounded-full bg-slate-800/50" />
+          <div className="h-10 w-full rounded-2xl bg-slate-800/40" />
+          <div className="h-3 w-20 rounded-full bg-slate-800/50" />
+        </div>
       </div>
     );
   }
 
-  if (!room) {
+  if (roomsStatus.error && !room) {
+    return (
+      <div className={`${cardBaseClass} p-4 space-y-2 text-sm text-red-200`}>
+        <p className="font-semibold">Non riesco a caricare questa stanza.</p>
+        <p className="text-xs text-red-300">
+          Controlla la connessione e riprova.
+        </p>
+        <button
+          type="button"
+          onClick={loadRooms}
+          className={`${buttonPrimaryClass} text-sm`}
+        >
+          Riprova
+        </button>
+      </div>
+    );
+  }
+
+  if (!room && !roomsStatus.loading) {
     return (
       <div className={`${cardBaseClass} p-4`}>
         <p className="text-sm text-red-200" role="status" aria-live="assertive">
@@ -163,10 +192,10 @@ export default function RoomPage() {
         </p>
         <button
           type="button"
-          onClick={() => navigate('/app')}
+          onClick={() => navigate('/app/rooms')}
           className={`${buttonPrimaryClass} mt-3 text-sm`}
         >
-          Torna al feed
+          Torna alle stanze
         </button>
       </div>
     );
@@ -184,47 +213,42 @@ export default function RoomPage() {
         <div className="relative space-y-3">
           <button
             type="button"
-            onClick={handleBack}
+            onClick={() => navigate('/app/rooms')}
             className={`${buttonGhostClass} text-[11px] text-left`}
           >
             ← Torna alle stanze
           </button>
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="space-y-1 max-w-3xl">
               <p className={eyebrowClass}>Stanza</p>
-              <h1 className={`${pageTitleClass} text-2xl`}>{room.name}</h1>
-              <p className={`${bodyTextClass} mt-1 line-clamp-2`}>
-                {room.description}
+              <h1 className={`${pageTitleClass} text-2xl`}>{room?.name}</h1>
+              <p className={`${bodyTextClass} mt-1`}>
+                {room?.description || 'Spazio di conversazione dedicato.'}
               </p>
-              <p className="text-[12px] text-slate-400 mt-2 max-w-2xl">
-                Questa stanza ospita conversazioni dedicate a {room.name}. Entra nei thread per leggere e rispondere, oppure apri tu il prossimo tema.
+              <p className="text-[12px] text-slate-500">
+                Thread e risposte più recenti sono in alto. Segui la stanza per tenere tutto nel tuo feed.
               </p>
-              <div className="flex flex-wrap gap-2 text-[11px] text-slate-400 mt-3">
-                <span className="px-2 py-1 rounded-2xl bg-slate-950/40 border border-white/10">
-                  {room.members} membri
-                </span>
-                {room.isPrivate && (
-                  <span className="px-2 py-1 rounded-2xl bg-slate-950/40 border border-white/10">
-                    Privata
-                  </span>
-                )}
-                <span className="px-2 py-1 rounded-2xl bg-slate-950/40 border border-white/10">
-                  {tagsPreview}
-                </span>
-              </div>
+              {actionError ? (
+                <p className="text-[12px] text-red-300">{actionError}</p>
+              ) : null}
             </div>
-            <div className="w-full md:w-auto flex flex-col items-start md:items-end gap-2">
+            <div className="flex flex-col gap-2 w-full md:w-auto">
               <button
                 type="button"
-                onClick={() => setIsNewThreadOpen(true)}
+                onClick={openComposer}
                 className={`${buttonPrimaryClass} w-full md:w-auto inline-flex items-center justify-center gap-2`}
                 style={{ backgroundImage: accentGradient }}
               >
-                Crea un nuovo thread in questa stanza
+                Crea thread
               </button>
-              <p className="text-[11px] text-slate-400 md:text-right max-w-xs">
-                Crea un thread quando vuoi aprire una nuova conversazione in questa stanza.
-              </p>
+              <button
+                type="button"
+                onClick={handleToggleFollow}
+                className={`${buttonSecondaryClass} w-full md:w-auto text-sm`}
+                disabled={pendingFollowId === room?.id}
+              >
+                {isFollowed ? 'Smetti di seguire' : 'Segui questa stanza'}
+              </button>
             </div>
           </div>
         </div>
@@ -234,14 +258,32 @@ export default function RoomPage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className={eyebrowClass}>Thread della stanza</p>
           <span className="text-[11px] text-slate-500">
-            {roomThreads.length} attivi
+            {roomThreads.length} thread
           </span>
         </div>
         <p className="text-[12px] text-slate-500">
-          Ogni thread è una conversazione dedicata: entra per leggere e rispondere. Se vuoi proporre un tema nuovo, apri qui il tuo thread.
+          Apri un thread per proporre un tema nuovo o entra in uno esistente per rispondere.
         </p>
 
-        {isRoomLoading ? (
+        {threadsError ? (
+          <div className="rounded-xl border border-red-500/40 bg-red-950/20 p-3 text-sm text-red-200">
+            <p className="font-semibold">Impossibile caricare i thread.</p>
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => loadThreadsForRoom(room.id)}
+                className={`${buttonPrimaryClass} text-xs`}
+              >
+                Riprova
+              </button>
+              <span className="text-[11px] text-red-300">
+                Se continua, segnala il problema al team.
+              </span>
+            </div>
+          </div>
+        ) : null}
+
+        {isThreadsLoading ? (
           <div className="space-y-3" aria-live="polite" role="status">
             {Array.from({ length: 2 }).map((_, idx) => (
               <div
@@ -254,112 +296,93 @@ export default function RoomPage() {
               </div>
             ))}
           </div>
-        ) : roomThreads.length === 0 ? (
+        ) : null}
+
+        {!isThreadsLoading && roomThreads.length === 0 && !threadsError ? (
           <div className={`${cardBaseClass} p-4 text-sm text-slate-300`}>
             <p className="font-medium text-slate-100">
-              Nessun thread in questa stanza
+              Ancora nessun thread. Vuoi aprire la conversazione?
             </p>
             <p className="mt-1 text-xs text-slate-400">
-              Rompi il ghiaccio con il primo thread della stanza.
+              Proponi un tema chiaro per rompere il ghiaccio.
             </p>
             <button
               type="button"
-              onClick={() => setIsNewThreadOpen(true)}
+              onClick={openComposer}
               className={`${buttonPrimaryClass} mt-3 text-sm`}
             >
-              Crea un nuovo thread in questa stanza
+              Crea un nuovo thread
             </button>
           </div>
-        ) : (
+        ) : null}
+
+        {roomThreads.length > 0 ? (
           <div className="space-y-4">
             {roomThreads.map((t) => (
               <ThreadCard key={t.id} thread={t} />
             ))}
+            {hasMoreThreads ? (
+              <button
+                type="button"
+                onClick={() =>
+                  loadThreadsForRoom(room.id, { cursor: threadMeta.cursor })
+                }
+                className={`${buttonSecondaryClass} w-full text-sm`}
+              >
+                Carica altri thread
+              </button>
+            ) : null}
           </div>
-        )}
+        ) : null}
       </section>
 
       <Modal
         open={isNewThreadOpen}
-        onClose={closeNewThread}
-        title={`Nuovo thread in ${room.name}`}
+        onClose={() => setIsNewThreadOpen(false)}
+        title={`Nuovo thread in ${room?.name ?? 'stanza'}`}
       >
-        <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300 mb-3">
-          Crea uno spunto breve e chiaro: chi entra capirà subito il tono del thread.
-        </div>
         <form onSubmit={handleCreateThread} className="space-y-4 text-slate-100">
-          {roomPrompts.length > 0 ? (
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-3 space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-slate-100">
-                  Ti diamo una mano a iniziare
-                </p>
-                <span className="text-[11px] text-slate-500">
-                  Scegli uno spunto rapido
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {roomPrompts.map((prompt) => (
-                  <button
-                    type="button"
-                    key={prompt}
-                    onClick={() => handlePromptSelect(prompt)}
-                    className="text-xs sm:text-sm px-3 py-1.5 rounded-full border border-slate-700 bg-slate-950/70 text-slate-100 hover:border-accent/60 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Puoi partire da un suggerimento o scrivere il tuo thread da zero.
-              </p>
-            </div>
-          ) : null}
           <div className="space-y-1">
             <label className={labelClass} htmlFor={titleId}>
               Titolo
             </label>
             <input
               type="text"
-              ref={titleInputRef}
               className={`${inputBaseClass} ${
-                threadError ? 'border-red-500 focus:border-red-500/70 focus:ring-red-500/70' : ''
+                titleError ? 'border-red-500 focus:border-red-500/70 focus:ring-red-500/70' : ''
               }`}
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
-                setHasEditedTitle(true);
-                if (threadError) setThreadError('');
+                if (titleError) setTitleError('');
               }}
               placeholder="Es. Flusso senza feed, rituali serali…"
               required
               id={titleId}
             />
-            {threadError && (
-              <p className="text-xs text-red-400 mt-1">{threadError}</p>
+            {titleError && (
+              <p className="text-xs text-red-400 mt-1">{titleError}</p>
             )}
           </div>
           <div className="space-y-1">
-            <label className={labelClass} htmlFor={initialContentId}>
+            <label className={labelClass} htmlFor={bodyId}>
               Post iniziale
             </label>
             <textarea
               rows={4}
-              ref={initialContentRef}
               className={`${inputBaseClass} resize-none`}
-              value={initialContent}
+              value={body}
               onChange={(e) => {
-                setInitialContent(e.target.value);
-                setHasEditedContent(true);
-                if (initialContentError) setInitialContentError('');
+                setBody(e.target.value);
+                if (bodyError) setBodyError('');
               }}
               placeholder="Scrivi il post iniziale con cui vuoi aprire questa conversazione..."
-              id={initialContentId}
+              id={bodyId}
               required
             />
-            {initialContentError ? (
+            {bodyError ? (
               <p className="text-xs text-red-400 mt-1">
-                {initialContentError}
+                {bodyError}
               </p>
             ) : (
               <p className="text-[11px] text-slate-400">
@@ -367,43 +390,13 @@ export default function RoomPage() {
               </p>
             )}
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className={labelClass} htmlFor={energyId}>
-                Energia del thread
-              </label>
-              <span className="text-[11px] text-slate-500">
-                Scegli il tono che vuoi dare
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="group" aria-labelledby={energyId}>
-              {energyOptions.map((option) => {
-                const isActive = energy === option.value;
-                return (
-                  <button
-                    type="button"
-                    key={option.value}
-                    onClick={() => setEnergy(option.value)}
-                    className={`rounded-2xl border px-3 py-2 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 ${
-                      isActive
-                        ? 'border-accent/70 bg-accent/10 text-white shadow-[0_10px_24px_rgba(56,189,248,0.18)]'
-                        : 'border-slate-800 bg-slate-900/70 text-slate-200 hover:border-accent/50'
-                    }`}
-                    aria-pressed={isActive}
-                  >
-                    <p className="text-sm font-semibold">{option.label}</p>
-                    <p className="text-[12px] text-slate-400">
-                      {option.hint}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {actionError ? (
+            <p className="text-xs text-red-300">{actionError}</p>
+          ) : null}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 pt-1">
             <button
               type="button"
-              onClick={closeNewThread}
+              onClick={() => setIsNewThreadOpen(false)}
               className={`${buttonGhostClass} w-full sm:w-auto text-sm`}
             >
               Annulla
@@ -411,19 +404,13 @@ export default function RoomPage() {
             <button
               type="submit"
               className={`${buttonPrimaryClass} w-full sm:w-auto text-sm text-center`}
+              disabled={isSubmitting}
             >
-              Crea thread
+              {isSubmitting ? 'Creo...' : 'Crea thread'}
             </button>
           </div>
         </form>
       </Modal>
     </div>
   );
-}
-
-function deriveTitleFromPrompt(promptText) {
-  const cleaned = promptText?.trim() ?? '';
-  if (!cleaned) return '';
-  if (cleaned.length <= 60) return cleaned;
-  return `${cleaned.slice(0, 60).trim()}…`;
 }
