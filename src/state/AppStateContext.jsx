@@ -634,7 +634,7 @@ export function AppStateProvider({ children }) {
   const createRoom = useCallback(
     async ({ name, description, isPrivate = false, slug }) => {
       const cleanedName = name?.trim();
-      if (!cleanedName) return null;
+      if (!cleanedName) return { roomId: null, error: new Error('Inserisci un nome valido.') };
       const payload = {
         name: cleanedName,
         description: description?.trim() || null,
@@ -647,8 +647,14 @@ export function AppStateProvider({ children }) {
         .select('id, slug, name, description, is_public, created_at')
         .maybeSingle();
       if (error) {
-        console.error('Errore nella creazione stanza', error);
-        return null;
+        const message =
+          error.code === '42501'
+            ? 'Non hai i permessi per creare una stanza. Se ti serve, scrivi al team.'
+            : 'Non riesco a creare la stanza ora. Riprova tra poco.';
+        return {
+          roomId: null,
+          error: new Error(message),
+        };
       }
       const room = {
         id: data.id,
@@ -659,7 +665,7 @@ export function AppStateProvider({ children }) {
         createdAt: data.created_at,
       };
       dispatch({ type: 'ROOMS_LOADED', rooms: [room] });
-      return room.id;
+      return { roomId: room.id, error: null };
     },
     []
   );

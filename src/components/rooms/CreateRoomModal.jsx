@@ -18,39 +18,51 @@ export default function CreateRoomModal({ open, onClose, onCreated }) {
   const [isPrivate, setIsPrivate] = useState(false);
   const [tags, setTags] = useState('');
   const [nameError, setNameError] = useState('');
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const nameId = useId();
   const descriptionId = useId();
   const tagsId = useId();
 
   const quickTags = ['focus', 'deep talk', 'rituali', 'tecnico', 'creatori'];
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (!name.trim()) {
       setNameError('Inserisci un nome per la stanza.');
       return;
     }
-    const roomId = createRoom({
-      name: name.trim(),
-      description: description.trim(),
-      isPrivate,
-      tags: tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean),
-    });
-    if (roomId) {
-      onCreated?.(roomId);
-      if (!onCreated) {
-        navigate(`/app/rooms/${roomId}`);
+    setSubmitError('');
+    setIsSubmitting(true);
+    try {
+      const { roomId, error } = await createRoom({
+        name: name.trim(),
+        description: description.trim(),
+        isPrivate,
+        tags: tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
+      });
+      if (error) {
+        setSubmitError(error.message || 'Non riesco a creare la stanza ora.');
+        return;
       }
+      if (roomId) {
+        onCreated?.(roomId);
+        if (!onCreated) {
+          navigate(`/app/rooms/${roomId}`);
+        }
+      }
+      setNameError('');
+      setName('');
+      setDescription('');
+      setIsPrivate(false);
+      setTags('');
+      handleClose();
+    } finally {
+      setIsSubmitting(false);
     }
-    setNameError('');
-    setName('');
-    setDescription('');
-    setIsPrivate(false);
-    setTags('');
-    handleClose();
   }
 
   function handleClose() {
@@ -163,11 +175,15 @@ export default function CreateRoomModal({ open, onClose, onCreated }) {
             <button
               type="submit"
               className={`${buttonPrimaryClass} w-full sm:w-auto text-sm text-center`}
+              disabled={isSubmitting}
             >
-              Crea stanza
+              {isSubmitting ? 'Creo…' : 'Crea stanza'}
             </button>
           </div>
         </div>
+        {submitError ? (
+          <p className="text-xs text-red-300">{submitError}</p>
+        ) : null}
       </form>
     </Modal>
   );
