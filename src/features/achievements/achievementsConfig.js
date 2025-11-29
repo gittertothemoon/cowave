@@ -1,5 +1,5 @@
 /**
- * @typedef {'ONBOARDING_DONE' | 'FIRST_THREAD' | 'FIRST_REPLY' | 'FIRST_IMAGE_REPLY'} AchievementId
+ * @typedef {'FIRST_THREAD' | 'FIRST_COMMENT' | 'FIRST_WAVE' | 'FIRST_PHOTO' | 'CONSISTENT_3'} AchievementId
  */
 
 /**
@@ -7,37 +7,49 @@
  * @property {AchievementId} id
  * @property {string} title
  * @property {string} description
+ * @property {'bronze' | 'silver' | 'gold'} tier
  */
 
 /** @type {AchievementId[]} */
 export const ACHIEVEMENT_IDS = [
-  'ONBOARDING_DONE',
   'FIRST_THREAD',
-  'FIRST_REPLY',
-  'FIRST_IMAGE_REPLY',
+  'FIRST_COMMENT',
+  'FIRST_WAVE',
+  'FIRST_PHOTO',
+  'CONSISTENT_3',
 ];
 
 /** @type {AchievementDefinition[]} */
 export const ACHIEVEMENTS = [
   {
-    id: 'ONBOARDING_DONE',
-    title: 'Pronto a partire',
-    description: 'Hai scelto stanze, persona e ritmo per costruire il tuo feed.',
-  },
-  {
     id: 'FIRST_THREAD',
-    title: 'Primo thread creato',
-    description: 'Hai aperto la tua prima conversazione in una stanza.',
+    title: 'Primo thread aperto',
+    description: 'Hai avviato la tua prima conversazione nella community.',
+    tier: 'bronze',
   },
   {
-    id: 'FIRST_REPLY',
-    title: 'Prima risposta',
+    id: 'FIRST_COMMENT',
+    title: 'Prima risposta inviata',
     description: 'Hai scritto la tua prima risposta in un thread.',
+    tier: 'bronze',
   },
   {
-    id: 'FIRST_IMAGE_REPLY',
-    title: 'Risposta con immagine',
-    description: 'Hai aggiunto un’immagine per dare più contesto.',
+    id: 'FIRST_WAVE',
+    title: 'Prima onda inviata',
+    description: 'Hai mandato la tua prima onda di supporto o curiosità.',
+    tier: 'bronze',
+  },
+  {
+    id: 'FIRST_PHOTO',
+    title: 'Prima foto allegata',
+    description: 'Hai aggiunto una foto per dare più contesto.',
+    tier: 'bronze',
+  },
+  {
+    id: 'CONSISTENT_3',
+    title: 'Serie da 3 giorni',
+    description: 'Hai salvato una riflessione per 3 giorni di fila.',
+    tier: 'silver',
   },
 ];
 

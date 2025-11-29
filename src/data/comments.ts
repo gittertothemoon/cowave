@@ -4,20 +4,48 @@ import {
   type CommentRecord,
   type PageResult,
   type PaginationCursor,
+  type CommentAttachment,
+  type CommentAttachmentRecord,
+  type CommentWaveKind,
+  type CommentWaves,
 } from './types';
+import {
+  fetchMyWavesForComments,
+  fetchWaveCountsForComments,
+} from './commentWaves';
 
 type ListCommentsOptions = {
   limit?: number;
   cursor?: PaginationCursor | null;
+  userId?: string | null;
 };
 
 function mapComment(record: CommentRecord): Comment {
+  const attachments: CommentAttachment[] = Array.isArray(record.comment_attachments)
+    ? record.comment_attachments.map(mapAttachmentRecord)
+    : [];
   return {
     id: record.id,
     threadId: record.thread_id,
     createdBy: record.created_by,
     body: record.body,
     parentCommentId: record.parent_comment_id,
+    createdAt: record.created_at,
+    attachments,
+  };
+}
+
+function mapAttachmentRecord(record: CommentAttachmentRecord): CommentAttachment {
+  return {
+    id: record.id,
+    commentId: record.comment_id,
+    userId: record.user_id,
+    bucketId: record.bucket_id,
+    objectPath: record.object_path,
+    mimeType: record.mime_type,
+    byteSize: record.byte_size,
+    width: record.width,
+    height: record.height,
     createdAt: record.created_at,
   };
 }
@@ -36,16 +64,51 @@ function buildCursorFilter(cursor: PaginationCursor) {
   return `created_at.lt.${createdAt},and(created_at.eq.${createdAt},id.lt.${id})`;
 }
 
+function buildEmptyWaves(): CommentWaves {
+  return { support: 0, insight: 0, question: 0 };
+}
+
+function normalizeWaveKinds(kinds: CommentWaveKind[] | undefined) {
+  const allowed: CommentWaveKind[] = ['support', 'insight', 'question'];
+  if (!Array.isArray(kinds)) return [];
+  return kinds.filter((kind) => allowed.includes(kind));
+}
+
 export async function listCommentsByThread(
   threadId: string,
   options: ListCommentsOptions = {}
-): Promise<{ page: PageResult<Comment>; error: Error | null }> {
+): Promise<{
+  page: PageResult<Comment>;
+  error: Error | null;
+  wavesError?: Error | null;
+}> {
   const limit = Number.isFinite(options.limit) ? Math.max(1, options.limit as number) : 10;
 
   try {
     let query = supabase
       .from('comments')
-      .select('id, thread_id, created_by, body, parent_comment_id, created_at')
+      .select(
+        `
+          id,
+          thread_id,
+          created_by,
+          body,
+          parent_comment_id,
+          created_at,
+          comment_attachments (
+            id,
+            comment_id,
+            user_id,
+            bucket_id,
+            object_path,
+            mime_type,
+            byte_size,
+            width,
+            height,
+            created_at
+          )
+        `
+      )
       .eq('thread_id', threadId)
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
@@ -74,13 +137,52 @@ export async function listCommentsByThread(
           }
         : null;
 
+    const baseComments = trimmed.map(mapComment);
+    const commentIds = baseComments.map((comment) => comment.id);
+    let wavesError: Error | null = null;
+
+    let countsByComment: Record<string, CommentWaves> = {};
+    let myWavesByComment: Record<string, CommentWaveKind[]> = {};
+
+    if (commentIds.length > 0) {
+      const { countsByComment: counts, error: countError } =
+        await fetchWaveCountsForComments(commentIds);
+      if (countError) {
+        wavesError = countError;
+      } else {
+        countsByComment = counts;
+      }
+
+      const { wavesByComment, error: myError } = await fetchMyWavesForComments(
+        commentIds,
+        options.userId ?? null
+      );
+      if (myError) {
+        wavesError = wavesError ?? myError;
+      } else {
+        myWavesByComment = wavesByComment;
+      }
+    }
+
+    const mergedItems = baseComments.map((comment) => {
+      const waves = countsByComment[comment.id] ?? buildEmptyWaves();
+      const myWaves = normalizeWaveKinds(myWavesByComment[comment.id]);
+      return {
+        ...comment,
+        waves,
+        myWaves,
+        waveCount: (waves.support ?? 0) + (waves.insight ?? 0) + (waves.question ?? 0),
+      };
+    });
+
     return {
       page: {
-        items: trimmed.map(mapComment),
+        items: mergedItems,
         cursor: hasMore ? nextCursor : null,
         hasMore,
       },
       error: null,
+      wavesError,
     };
   } catch (err) {
     return {

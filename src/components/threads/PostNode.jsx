@@ -1,7 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_ATTACHMENT_BYTES,
+  validateAttachmentFile,
+} from '../../data/commentAttachments';
 import {
   cardBaseClass,
-  cardMutedClass,
   bodyTextClass,
 } from '../ui/primitives.js';
 
@@ -30,10 +34,25 @@ export default function PostNode({
   label,
   parentAuthor,
   actions,
-  onSendWave,
+  onToggleWave,
   variant = 'reply',
+  currentUserId = null,
+  onUploadAttachment,
+  onDeleteAttachment,
+  getSignedUrlForAttachment,
 }) {
-  const [isWaveMenuOpen, setIsWaveMenuOpen] = useState(false);
+  const [waveError, setWaveError] = useState('');
+  const [pendingWaveType, setPendingWaveType] = useState('');
+  const [attachmentError, setAttachmentError] = useState('');
+  const [pendingFile, setPendingFile] = useState(null);
+  const [pendingPreviewUrl, setPendingPreviewUrl] = useState('');
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const [attachmentUrls, setAttachmentUrls] = useState({});
+  const [openLightboxId, setOpenLightboxId] = useState(null);
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState('');
+  const fileInputRef = useRef(null);
+  const lightboxCloseRef = useRef(null);
+  const previousFocusRef = useRef(null);
   const createdAt = new Date(post.createdAt);
   const formattedDate = createdAt.toLocaleString();
   const isoCreatedAt = createdAt.toISOString();
@@ -46,6 +65,10 @@ export default function PostNode({
   const waveSummaryParts = useMemo(
     () => buildWaveSummary(waves),
     [waves.support, waves.insight, waves.question]
+  );
+  const myWaves = useMemo(
+    () => (Array.isArray(post?.myWaves) ? post.myWaves : []),
+    [post?.myWaves, post?.id]
   );
   const isRoot = variant === 'root';
   const containerClass = [
@@ -61,17 +84,188 @@ export default function PostNode({
       ? 'border border-accent/50 bg-accent/15 text-accent'
       : 'border border-slate-700 bg-slate-900/70 text-slate-300',
   ].join(' ');
-  const waveButtonClass = [
-    'inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[13px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60',
-    isWaveMenuOpen
-      ? 'border-accent/60 text-white bg-slate-900/90 shadow-[0_10px_30px_rgba(56,189,248,0.18)]'
-      : 'border-slate-800 bg-slate-900/70 text-slate-200 hover:border-accent/60 hover:text-white',
-  ].join(' ');
+  const attachments = Array.isArray(post.attachments) ? post.attachments : [];
+  const hasThreadContext = Boolean(post?.threadId);
+  const isOwner =
+    hasThreadContext &&
+    Boolean(currentUserId) &&
+    Boolean(post?.createdBy) &&
+    post.createdBy === currentUserId;
+  const canAttach = Boolean(isOwner && onUploadAttachment);
+  const showAttachmentAction = Boolean(canAttach);
+  const allowedTypesLabel = useMemo(
+    () =>
+      ALLOWED_IMAGE_TYPES.map(
+        (type) => type?.split('/')?.[1]?.toUpperCase?.() || type
+      ).join(', '),
+    []
+  );
 
-  function handleWaveSelect(type) {
-    if (!type) return;
-    onSendWave?.(post.id, type);
-    setIsWaveMenuOpen(false);
+  async function handleWaveToggle(type) {
+    if (!type || !hasThreadContext || !onToggleWave) return;
+    if (pendingWaveType) return;
+    setWaveError('');
+    setPendingWaveType(type);
+    try {
+      const result = (await onToggleWave(post.id, type)) ?? {};
+      if (result.error) {
+        setWaveError(
+          result.error?.message ||
+            'Non riesco a salvare questa onda. Riprova tra poco.'
+        );
+      }
+    } catch (err) {
+      setWaveError(
+        err?.message ||
+          'Connessione instabile: non ho registrato l’onda.'
+      );
+    } finally {
+      setPendingWaveType('');
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (pendingPreviewUrl) {
+        URL.revokeObjectURL(pendingPreviewUrl);
+      }
+    };
+  }, [pendingPreviewUrl]);
+
+  useEffect(() => {
+    let isActive = true;
+    async function hydrateSignedUrls() {
+      if (!attachments.length) {
+        setAttachmentUrls({});
+        return;
+      }
+      if (!getSignedUrlForAttachment) return;
+      const next = {};
+      for (const attachment of attachments) {
+        const { url } = await getSignedUrlForAttachment(attachment);
+        if (url) {
+          next[attachment.id] = url;
+        }
+      }
+      if (!isActive) return;
+      setAttachmentUrls((prev) => {
+        const merged = {};
+        attachments.forEach((attachment) => {
+          if (next[attachment.id]) {
+            merged[attachment.id] = next[attachment.id];
+          } else if (prev[attachment.id]) {
+            merged[attachment.id] = prev[attachment.id];
+          }
+        });
+        return merged;
+      });
+    }
+    hydrateSignedUrls();
+    return () => {
+      isActive = false;
+    };
+  }, [attachments, getSignedUrlForAttachment]);
+
+  useEffect(() => {
+    if (!openLightboxId) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setOpenLightboxId(null);
+      }
+    };
+    previousFocusRef.current = document?.activeElement ?? null;
+    document.addEventListener('keydown', handleKeyDown);
+    lightboxCloseRef.current?.focus({ preventScroll: true });
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
+        previousFocusRef.current.focus();
+      }
+    };
+  }, [openLightboxId]);
+
+  function handleAttachmentButton() {
+    setAttachmentError('');
+    fileInputRef.current?.click();
+  }
+
+  function clearPendingAttachment() {
+    if (pendingPreviewUrl) {
+      URL.revokeObjectURL(pendingPreviewUrl);
+    }
+    setPendingFile(null);
+    setPendingPreviewUrl('');
+  }
+
+  function handleAttachmentChange(event) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      clearPendingAttachment();
+      return;
+    }
+    const validation = validateAttachmentFile(file);
+    if (!validation.ok) {
+      clearPendingAttachment();
+      setAttachmentError(validation.reason);
+      return;
+    }
+    if (pendingPreviewUrl) {
+      URL.revokeObjectURL(pendingPreviewUrl);
+    }
+    setPendingFile(file);
+    setPendingPreviewUrl(URL.createObjectURL(file));
+    setAttachmentError('');
+  }
+
+  async function handleAttachmentUpload() {
+    if (!pendingFile || !onUploadAttachment || isUploadingAttachment) return;
+    setIsUploadingAttachment(true);
+    const { attachment, error } = await onUploadAttachment(pendingFile);
+    if (error || !attachment) {
+      setAttachmentError(
+        error?.message ||
+          'Non riesco a caricare la foto adesso. Riprova tra poco.'
+      );
+      setIsUploadingAttachment(false);
+      return;
+    }
+    clearPendingAttachment();
+    setAttachmentError('');
+    setIsUploadingAttachment(false);
+  }
+
+  async function handleDeleteAttachmentClick(attachment) {
+    if (!onDeleteAttachment || !attachment) return;
+    const shouldConfirm =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(max-width: 640px)').matches;
+    if (shouldConfirm) {
+      const confirmed = window.confirm('Rimuovere foto?');
+      if (!confirmed) return;
+    }
+    setDeletingAttachmentId(attachment.id);
+    const { error } = await onDeleteAttachment(attachment);
+    if (error) {
+      setAttachmentError(
+        error.message || 'Non sono riuscito a rimuovere la foto.'
+      );
+    }
+    setDeletingAttachmentId('');
+  }
+
+  async function handleOpenLightbox(attachmentId) {
+    setOpenLightboxId(attachmentId);
+    const target = attachments.find((att) => att.id === attachmentId);
+    if (!target || !getSignedUrlForAttachment) return;
+    const { url } = await getSignedUrlForAttachment(target);
+    if (url) {
+      setAttachmentUrls((prev) => ({ ...prev, [attachmentId]: url }));
+    }
+  }
+
+  function closeLightbox() {
+    setOpenLightboxId(null);
   }
 
   return (
@@ -105,109 +299,298 @@ export default function PostNode({
       </div>
 
       <p className={`${bodyTextClass} text-sm whitespace-pre-wrap`}>
-        {post.content}
+        {post.content || post.body}
       </p>
 
-      {post.attachments?.length > 0 && (
-        <AttachmentPreview attachments={post.attachments} />
-      )}
+      {hasThreadContext ? (
+        <div className="space-y-2">
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleAttachmentChange}
+          />
 
-      <div className="pt-1 space-y-2">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2 sm:space-y-1">
-            <button
-              type="button"
-              className={waveButtonClass}
-              onClick={() => setIsWaveMenuOpen((open) => !open)}
-              aria-expanded={isWaveMenuOpen}
-            >
-              <WaveIcon active={isWaveMenuOpen} />
-              <span>Manda un’onda</span>
-            </button>
-            {isWaveMenuOpen ? (
-              <div className={`${cardMutedClass} border border-slate-800 px-3 py-2 rounded-2xl space-y-2`}>
-                <p className="text-[12px] font-semibold text-slate-200">
-                  Scegli il tipo di onda
+          {attachments.length > 0 ? (
+            <AttachmentGrid
+              attachments={attachments}
+              attachmentUrls={attachmentUrls}
+              onOpen={handleOpenLightbox}
+              onDelete={handleDeleteAttachmentClick}
+              canDelete={isOwner}
+              deletingAttachmentId={deletingAttachmentId}
+            />
+          ) : null}
+
+          {canAttach && attachments.length === 0 ? (
+            <div className="rounded-xl border border-slate-800 bg-slate-900/50 px-3 py-2 text-[12px] text-slate-400">
+              Nessuna foto allegata qui. Aggiungine una per dare più colore alla risposta.
+            </div>
+          ) : null}
+
+          {pendingPreviewUrl ? (
+            <AttachmentUploadPreview
+              previewUrl={pendingPreviewUrl}
+              fileName={pendingFile?.name}
+              fileSize={pendingFile?.size}
+              isUploading={isUploadingAttachment}
+              allowedTypesLabel={allowedTypesLabel}
+              onCancel={clearPendingAttachment}
+              onConfirm={handleAttachmentUpload}
+            />
+          ) : null}
+
+          {attachmentError ? (
+            <p className="text-[11px] text-amber-200">
+              {attachmentError}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="pt-1 space-y-3">
+        {hasThreadContext ? (
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 px-3 py-3">
+            <div className="mb-2 flex items-start justify-between gap-2">
+              <div>
+                <p className="text-[12px] font-semibold text-slate-100">
+                  Onde
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  {waveOptions.map((option) => (
+                <p className="text-[11px] text-slate-400">
+                  Sostieni, condividi un insight o fai una domanda.
+                </p>
+              </div>
+              <span className="rounded-full bg-slate-800/70 px-2 py-1 text-[11px] font-semibold text-slate-200">
+                {totalWaves === 1 ? '1 onda' : `${totalWaves} onde`}
+              </span>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              {waveOptions.map((option) => {
+                const isActive = myWaves.includes(option.type);
+                const isPending = pendingWaveType === option.type;
+                const count = Number.isFinite(waves[option.type])
+                  ? waves[option.type]
+                  : 0;
+                return (
                   <button
                     key={option.type}
                     type="button"
-                    className="group flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-950/70 px-3 py-2 text-left hover:border-accent/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
-                    onClick={() => handleWaveSelect(option.type)}
+                    className={`group flex min-h-[44px] flex-1 items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed disabled:opacity-60 ${
+                      isActive
+                        ? 'border-sky-400/70 bg-sky-900/60 text-white shadow-[0_10px_30px_rgba(56,189,248,0.18)]'
+                        : 'border-slate-800 bg-slate-950/70 text-slate-200 hover:border-sky-400/50'
+                    }`}
+                    aria-pressed={isActive}
+                    aria-label={`${option.label}: ${option.description}`}
+                    onClick={() => handleWaveToggle(option.type)}
+                    disabled={Boolean(pendingWaveType)}
                   >
                     <WaveTypeDot type={option.type} />
-                    <div>
-                      <p className="text-[13px] font-semibold text-slate-100">
+                    <div className="flex flex-1 flex-col">
+                      <span className="text-[13px] font-semibold text-slate-100">
                         {option.label}
-                      </p>
-                      <p className="text-[11px] text-slate-400">
-                          {option.description}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        {option.description}
+                      </span>
+                    </div>
+                    <span className="rounded-full border border-slate-700 bg-slate-900/70 px-2 py-1 text-[11px] font-semibold text-slate-100">
+                      {isPending ? '...' : count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {waveError ? (
+              <p className="pt-2 text-[11px] text-amber-200">
+                {waveError}
+              </p>
             ) : null}
           </div>
+        ) : null}
 
-          {actions ? (
-            <div className="flex flex-wrap items-center gap-2">
-              {actions}
-            </div>
-          ) : null}
-        </div>
+        {showAttachmentAction || actions ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {showAttachmentAction ? (
+              <button
+                type="button"
+                onClick={handleAttachmentButton}
+                disabled={isUploadingAttachment}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:border-accent/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span aria-hidden="true">📎</span>
+                <span>{isUploadingAttachment ? 'Carico...' : 'Allega foto'}</span>
+              </button>
+            ) : null}
+            {actions}
+          </div>
+        ) : null}
 
         {totalWaves > 0 ? (
           <WaveSummary waves={waves} parts={waveSummaryParts} total={totalWaves} />
         ) : null}
       </div>
+
+      {openLightboxId ? (
+        <AttachmentLightbox
+          attachment={attachments.find((att) => att.id === openLightboxId)}
+          url={attachmentUrls[openLightboxId]}
+          onClose={closeLightbox}
+          closeRef={lightboxCloseRef}
+        />
+      ) : null}
     </article>
   );
 }
 
-function AttachmentPreview({ attachments }) {
-  const imageAttachment = attachments.find(
-    (attachment) => attachment?.type === 'image'
-  );
-
-  if (!imageAttachment) return null;
-
+function AttachmentGrid({
+  attachments,
+  attachmentUrls,
+  onOpen,
+  onDelete,
+  canDelete,
+  deletingAttachmentId,
+}) {
+  if (!attachments?.length) return null;
   return (
-    <div className="mt-1 overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60">
-      <img
-        src={imageAttachment.url}
-        alt={imageAttachment.name || 'Immagine allegata'}
-        className="aspect-video w-full object-cover"
-      />
+    <div className="flex flex-wrap gap-2" aria-label="Foto allegate">
+      {attachments.map((attachment) => {
+        const url = attachmentUrls?.[attachment.id];
+        return (
+          <div
+            key={attachment.id}
+            className="group relative"
+          >
+            <button
+              type="button"
+              onClick={() => onOpen?.(attachment.id)}
+              className="relative h-20 w-20 rounded-xl border border-slate-800 bg-slate-950/70 p-0.5 sm:h-24 sm:w-24 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+            >
+              {url ? (
+                <img
+                  src={url}
+                  alt="Apri immagine allegata"
+                  className="h-full w-full rounded-[10px] object-cover"
+                />
+              ) : (
+                <span className="flex h-full items-center justify-center rounded-[10px] bg-slate-900/80 text-[11px] text-slate-400">
+                  Link sicuro in preparazione…
+                </span>
+              )}
+            </button>
+            {canDelete ? (
+              <button
+                type="button"
+                onClick={() => onDelete?.(attachment)}
+                disabled={deletingAttachmentId === attachment.id}
+                className="absolute -right-1 -top-1 rounded-full border border-slate-800 bg-slate-900/90 px-2 py-0.5 text-[11px] font-semibold text-slate-200 opacity-0 shadow-lg transition group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {deletingAttachmentId === attachment.id ? '...' : 'Rimuovi'}
+              </button>
+            ) : null}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-function WaveIcon({ active = false }) {
+function AttachmentUploadPreview({
+  previewUrl,
+  fileName,
+  fileSize,
+  isUploading,
+  allowedTypesLabel = 'JPG, PNG, WEBP o GIF',
+  onCancel,
+  onConfirm,
+}) {
   return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path
-        className={active ? 'text-sky-300' : 'text-slate-300'}
-        d="M3 14c1.7-3 3.3-3 5 0s3.3 3 5 0 3.3-3 5 0"
-      />
-      <path
-        className={active ? 'text-sky-200' : 'text-slate-500'}
-        d="M4.5 9c1.2-2.2 2.4-2.2 3.6 0s2.4 2.2 3.6 0 2.4-2.2 3.6 0"
-      />
-    </svg>
+    <div className="flex items-start gap-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-3">
+      <div className="relative h-24 w-24 overflow-hidden rounded-xl border border-slate-800">
+        <img
+          src={previewUrl}
+          alt={fileName || 'Anteprima immagine'}
+          className="h-full w-full object-cover"
+        />
+      </div>
+      <div className="flex flex-1 flex-col gap-2 text-[12px]">
+        <p className="font-semibold text-slate-100 line-clamp-2">
+          {fileName || 'Immagine allegata'}
+        </p>
+        <p className="text-[11px] text-slate-400">
+          {formatBytes(fileSize)} · {allowedTypesLabel} · max {Math.round(MAX_ATTACHMENT_BYTES / (1024 * 1024))} MB
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isUploading}
+            className="rounded-xl bg-accent/80 px-3 py-1.5 text-[12px] font-semibold text-slate-950 shadow-lg shadow-accent/20 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isUploading ? 'Carico...' : 'Carica adesso'}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isUploading}
+            className="rounded-xl border border-slate-700 px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:border-accent/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Annulla
+          </button>
+        </div>
+      </div>
+    </div>
   );
+}
+
+function AttachmentLightbox({ attachment, url, onClose, closeRef }) {
+  if (!attachment) return null;
+  const handleBackdropClick = (event) => {
+    if (event.target === event.currentTarget) {
+      onClose?.();
+    }
+  };
+  return (
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-center bg-black/80 px-4 py-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Foto allegata"
+      onClick={handleBackdropClick}
+    >
+      <div className="relative w-full max-w-4xl">
+        <button
+          type="button"
+          ref={closeRef}
+          onClick={onClose}
+          className="absolute right-0 top-0 rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-[12px] font-semibold text-slate-100 shadow-lg hover:border-accent/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+        >
+          Chiudi
+        </button>
+        <div className="mt-10 flex max-h-[70vh] items-center justify-center overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/80 p-2">
+          {url ? (
+            <img
+              src={url}
+              alt="Foto allegata"
+              className="max-h-[66vh] w-full object-contain"
+            />
+          ) : (
+            <p className="text-sm text-slate-200">
+              Sto recuperando il link sicuro...
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function formatBytes(value) {
+  if (!Number.isFinite(value)) return '';
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function WaveSummary({ parts, total, waves }) {

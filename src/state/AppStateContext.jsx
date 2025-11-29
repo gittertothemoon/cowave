@@ -27,6 +27,16 @@ import {
   createComment as createCommentRequest,
   listCommentsByThread,
 } from '../data/comments';
+import {
+  deleteCommentAttachment,
+  getSignedUrlForAttachment as fetchSignedAttachmentUrl,
+  uploadCommentAttachment,
+} from '../data/commentAttachments';
+import {
+  deleteCommentWave,
+  upsertCommentWave,
+} from '../data/commentWaves';
+import { unlockAchievementForUser } from '../data/achievements';
 
 const AppStateContext = createContext(null);
 const USER_STORAGE_KEY = 'cowave-user';
@@ -43,6 +53,52 @@ const defaultUser = {
   reflections: [],
   wavesSent: 0,
 };
+
+function normalizeAchievementId(id) {
+  if (!id || typeof id !== 'string') return null;
+  const cleaned = id.trim().toUpperCase();
+  return ACHIEVEMENT_IDS.includes(cleaned) ? cleaned : null;
+}
+
+function parseUnlockEntry(entry) {
+  const rawId =
+    typeof entry === 'string'
+      ? entry
+      : typeof entry?.id === 'string'
+        ? entry.id
+        : typeof entry?.achievementId === 'string'
+          ? entry.achievementId
+          : typeof entry?.achievement_id === 'string'
+            ? entry.achievement_id
+            : null;
+  const id = normalizeAchievementId(rawId);
+  if (!id) return null;
+  const unlockedAt =
+    typeof entry?.unlockedAt === 'string'
+      ? entry.unlockedAt
+      : typeof entry?.unlocked_at === 'string'
+        ? entry.unlocked_at
+        : null;
+  return { id, unlockedAt };
+}
+
+function normalizeUnlockedAchievements(list) {
+  if (!Array.isArray(list)) return [];
+  const map = new Map();
+  list.forEach((item) => {
+    const parsed = parseUnlockEntry(item);
+    if (!parsed) return;
+    const existing = map.get(parsed.id);
+    if (!existing || (!existing.unlockedAt && parsed.unlockedAt)) {
+      map.set(parsed.id, parsed);
+    }
+  });
+  return Array.from(map.values()).sort((a, b) => {
+    const aTime = a.unlockedAt ? new Date(a.unlockedAt).getTime() : Infinity;
+    const bTime = b.unlockedAt ? new Date(b.unlockedAt).getTime() : Infinity;
+    return aTime - bTime;
+  });
+}
 
 function normalizeWaves(waves, fallbackWaveCount = 0) {
   const base =
@@ -69,22 +125,24 @@ function normalizeWaves(waves, fallbackWaveCount = 0) {
   return safe;
 }
 
+function normalizeWaveKinds(kinds) {
+  const allowed = ['support', 'insight', 'question'];
+  if (!Array.isArray(kinds)) return [];
+  return kinds.filter((kind) => allowed.includes(kind));
+}
+
 function getTotalWaves(waves) {
   const safe = normalizeWaves(waves);
   return safe.support + safe.insight + safe.question;
 }
 
 function normalizeUser(user) {
-  const unlocked = Array.isArray(user?.unlockedAchievements)
-    ? user.unlockedAchievements.filter((id) => ACHIEVEMENT_IDS.includes(id))
-    : [];
-
   return {
     ...defaultUser,
     ...(user && typeof user === 'object' ? user : {}),
     reflections: Array.isArray(user?.reflections) ? user.reflections : [],
     wavesSent: Number.isFinite(user?.wavesSent) ? user.wavesSent : 0,
-    unlockedAchievements: [...new Set(unlocked)],
+    unlockedAchievements: normalizeUnlockedAchievements(user?.unlockedAchievements),
   };
 }
 
@@ -124,8 +182,10 @@ function decorateComment(comment, authorName = 'Utente') {
   return {
     ...comment,
     author: comment?.author ?? comment?.createdBy ?? authorName ?? 'Utente',
+    content: comment?.content ?? comment?.body ?? '',
     parentId: comment?.parentCommentId ?? null,
     waves,
+    myWaves: normalizeWaveKinds(comment?.myWaves),
     waveCount: getTotalWaves(waves),
   };
 }
@@ -326,7 +386,7 @@ export function AppStateProvider({ children }) {
   }, []);
 
   function queueAchievementCelebration(achievementId) {
-    if (!ACHIEVEMENT_IDS.includes(achievementId)) return;
+    if (!normalizeAchievementId(achievementId)) return;
     setPendingAchievementCelebrations((prev) => {
       if (prev.includes(achievementId)) return prev;
       return [...prev, achievementId];
@@ -339,12 +399,21 @@ export function AppStateProvider({ children }) {
     );
   }
 
-  function unlockAchievement(achievementId) {
-    if (!ACHIEVEMENT_IDS.includes(achievementId)) return false;
+  function unlockAchievement(
+    achievementId,
+    unlockedAt = null,
+    { silent = false } = {}
+  ) {
+    const normalizedId = normalizeAchievementId(achievementId);
+    if (!normalizedId) return false;
+    const timestamp = unlockedAt || new Date().toISOString();
     let unlocked = false;
     setCurrentUser((prev) => {
       const safeUser = normalizeUser(prev);
-      if (safeUser.unlockedAchievements.includes(achievementId)) {
+      const existing = (safeUser.unlockedAchievements ?? []).some(
+        (item) => item.id === normalizedId
+      );
+      if (existing) {
         return safeUser;
       }
       unlocked = true;
@@ -352,16 +421,63 @@ export function AppStateProvider({ children }) {
         ...safeUser,
         unlockedAchievements: [
           ...safeUser.unlockedAchievements,
-          achievementId,
+          { id: normalizedId, unlockedAt: timestamp },
         ],
       };
     });
-    if (unlocked) {
-      setRecentlyUnlockedAchievementId(achievementId);
-      queueAchievementCelebration(achievementId);
+    if (unlocked && !silent) {
+      setRecentlyUnlockedAchievementId(normalizedId);
+      queueAchievementCelebration(normalizedId);
     }
     return unlocked;
   }
+
+  const awardAchievement = useCallback(
+    async (
+      achievementId,
+      userId,
+      { silentIfExists = false } = {}
+    ) => {
+      const normalizedId = normalizeAchievementId(achievementId);
+      if (!normalizedId) {
+        return { unlocked: false, error: new Error('Traguardo non valido.') };
+      }
+      if (!userId) {
+        return {
+          unlocked: false,
+          error: new Error('Accedi per sbloccare i traguardi.'),
+        };
+      }
+
+      const alreadyUnlocked = (normalizeUnlockedAchievements(currentUser?.unlockedAchievements) ?? []).some(
+        (item) => item.id === normalizedId
+      );
+      if (alreadyUnlocked) {
+        return { unlocked: false, error: null };
+      }
+
+      const { unlocked, unlockedAt, error } = await unlockAchievementForUser({
+        achievementId: normalizedId,
+        userId,
+      });
+
+      if (error) {
+        return { unlocked: false, error };
+      }
+
+      if (unlocked) {
+        unlockAchievement(normalizedId, unlockedAt ?? undefined);
+        return { unlocked: true, error: null };
+      }
+
+      if (unlockedAt && (!silentIfExists || !alreadyUnlocked)) {
+        unlockAchievement(normalizedId, unlockedAt, { silent: true });
+      }
+
+      return { unlocked: false, error: null };
+    },
+    [currentUser?.unlockedAchievements, unlockAchievement]
+  );
 
   function clearRecentlyUnlockedAchievement() {
     setRecentlyUnlockedAchievementId(null);
@@ -537,15 +653,21 @@ export function AppStateProvider({ children }) {
         authorName || currentUser?.nickname || 'Tu'
       );
       dispatch({ type: 'THREAD_CREATED', thread: decorated });
+      if (createdBy) {
+        awardAchievement('FIRST_THREAD', createdBy).catch(() => {});
+      }
       return { thread: decorated, error: null };
     },
-    [currentUser?.nickname]
+    [currentUser?.nickname, awardAchievement]
   );
 
   const loadCommentsForThread = useCallback(
     async (threadId, options = {}) => {
       dispatch({ type: 'COMMENTS_LOADING_FOR_THREAD', threadId });
-      const { page, error } = await listCommentsByThread(threadId, options);
+      const { page, error, wavesError } = await listCommentsByThread(
+        threadId,
+        options
+      );
       if (error) {
         dispatch({
           type: 'COMMENTS_ERROR_FOR_THREAD',
@@ -570,6 +692,7 @@ export function AppStateProvider({ children }) {
         cursor: page.cursor,
         hasMore: page.hasMore,
         error: null,
+        wavesError: wavesError ?? null,
       };
     },
     []
@@ -607,56 +730,125 @@ export function AppStateProvider({ children }) {
         authorName || currentUser?.nickname || 'Tu'
       );
       dispatch({ type: 'COMMENT_CREATED', comment: decorated });
+      if (createdBy) {
+        awardAchievement('FIRST_COMMENT', createdBy).catch(() => {});
+      }
       return { comment: decorated, error: null };
     },
-    [currentUser?.nickname]
+    [currentUser?.nickname, awardAchievement]
   );
 
-  const addWaveToComment = useCallback(
-    (threadId, commentId, waveType) => {
-      if (!['support', 'insight', 'question'].includes(waveType)) return;
-      if (commentId === threadId) {
-        const thread = dataState.threadsById[threadId];
-        if (!thread) return;
-        const baseWaves = normalizeWaves(thread.waves);
-        const nextWaves = {
-          ...baseWaves,
-          [waveType]: baseWaves[waveType] + 1,
-        };
-        dispatch({
-          type: 'THREAD_PATCHED',
-          thread: {
-            ...thread,
-            waves: nextWaves,
-            waveCount: getTotalWaves(nextWaves),
-          },
-        });
-      } else {
-        const target = dataState.commentsById[commentId];
-        if (!target) return;
-        const baseWaves = normalizeWaves(target.waves);
-        const nextWaves = {
-          ...baseWaves,
-          [waveType]: baseWaves[waveType] + 1,
-        };
+  const toggleWaveOnComment = useCallback(
+    async ({ threadId, commentId, waveType, userId }) => {
+      if (!['support', 'insight', 'question'].includes(waveType)) {
+        return { error: new Error('Tipo di onda non valido.') };
+      }
+      if (!userId) {
+        return { error: new Error('Accedi per mandare un’onda.') };
+      }
+      if (!commentId) {
+        return { error: new Error('Commento non trovato.') };
+      }
+
+      const target = dataState.commentsById[commentId];
+      if (!target) {
+        return { error: new Error('Commento non trovato.') };
+      }
+
+      const baseWaves = normalizeWaves(target.waves);
+      const baseMyWaves = normalizeWaveKinds(target.myWaves);
+      const hasWave = baseMyWaves.includes(waveType);
+      const nextMyWaves = hasWave
+        ? baseMyWaves.filter((kind) => kind !== waveType)
+        : [...baseMyWaves, waveType];
+      const nextWaves = {
+        ...baseWaves,
+        [waveType]: Math.max(0, baseWaves[waveType] + (hasWave ? -1 : 1)),
+      };
+
+      dispatch({
+        type: 'COMMENT_PATCHED',
+        comment: {
+          ...target,
+          waves: nextWaves,
+          myWaves: nextMyWaves,
+          waveCount: getTotalWaves(nextWaves),
+        },
+      });
+
+      const action = hasWave ? deleteCommentWave : upsertCommentWave;
+      const { error } = await action({
+        commentId,
+        userId,
+        kind: waveType,
+      });
+
+      if (error) {
         dispatch({
           type: 'COMMENT_PATCHED',
           comment: {
             ...target,
-            waves: nextWaves,
-            waveCount: getTotalWaves(nextWaves),
+            waves: baseWaves,
+            myWaves: baseMyWaves,
+            waveCount: getTotalWaves(baseWaves),
           },
         });
+        return { error };
       }
-      setCurrentUser((prev) => {
-        const safeUser = normalizeUser(prev);
-        const nextSent = Number.isFinite(safeUser.wavesSent)
-          ? safeUser.wavesSent + 1
-          : 1;
-        return { ...safeUser, wavesSent: nextSent };
-      });
+
+      if (!hasWave) {
+        setCurrentUser((prev) => {
+          const safeUser = normalizeUser(prev);
+          const nextSent = Number.isFinite(safeUser.wavesSent)
+            ? safeUser.wavesSent + 1
+            : 1;
+          return { ...safeUser, wavesSent: nextSent };
+        });
+        if (userId) {
+          awardAchievement('FIRST_WAVE', userId).catch(() => {});
+        }
+      }
+
+      return { error: null };
     },
-    [dataState.commentsById, dataState.threadsById]
+    [dataState.commentsById, awardAchievement]
+  );
+
+  const addAttachmentToComment = useCallback(
+    async ({ commentId, file, userId }) => {
+      const { attachment, error } = await uploadCommentAttachment({
+        file,
+        userId,
+        commentId,
+      });
+      if (attachment) {
+        dispatch({
+          type: 'ATTACHMENT_ADDED',
+          commentId,
+          attachment,
+        });
+        if (userId) {
+          awardAchievement('FIRST_PHOTO', userId).catch(() => {});
+        }
+      }
+      return { attachment, error };
+    },
+    [awardAchievement]
+  );
+
+  const removeAttachmentFromComment = useCallback(
+    async (attachment) => {
+      const { success, error } = await deleteCommentAttachment(attachment);
+      if (success) {
+        dispatch({
+          type: 'ATTACHMENT_REMOVED',
+          commentId: attachment.commentId,
+          attachmentId: attachment.id,
+        });
+      }
+      return { success, error };
+    },
+    []
   );
 
   const createRoom = useCallback(
@@ -728,7 +920,6 @@ export function AppStateProvider({ children }) {
     } catch {
       // ignore storage errors
     }
-    unlockAchievement('ONBOARDING_DONE');
   }
 
   function resetOnboarding() {
@@ -778,13 +969,17 @@ export function AppStateProvider({ children }) {
       createRoom,
       createThread,
       createComment,
-      addWaveToComment,
+      toggleWaveOnComment,
+      addAttachmentToComment,
+      removeAttachmentFromComment,
+      getSignedUrlForAttachment: fetchSignedAttachmentUrl,
       setActivePersonaId,
       completeOnboarding,
       resetOnboarding,
       updateCurrentUser,
       addReflection,
       unlockAchievement,
+      awardAchievement,
       addCustomPersona,
       loadRooms,
       loadMyRooms,
@@ -826,6 +1021,11 @@ export function AppStateProvider({ children }) {
       justFinishedOnboarding,
       recentlyUnlockedAchievementId,
       pendingAchievementCelebrations,
+      addAttachmentToComment,
+      removeAttachmentFromComment,
+      fetchSignedAttachmentUrl,
+      toggleWaveOnComment,
+      awardAchievement,
     ]
   );
 

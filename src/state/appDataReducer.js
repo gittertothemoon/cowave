@@ -290,6 +290,42 @@ export function appDataReducer(state, action) {
         },
       };
     }
+    case 'ATTACHMENT_ADDED': {
+      const { commentId, attachment } = action;
+      if (!commentId || !attachment) return state;
+      const comment = state.commentsById[commentId];
+      if (!comment) return state;
+      const existingAttachments = Array.isArray(comment.attachments)
+        ? comment.attachments
+        : [];
+      const nextAttachments = [
+        attachment,
+        ...existingAttachments.filter((att) => att.id !== attachment.id),
+      ];
+      return {
+        ...state,
+        commentsById: {
+          ...state.commentsById,
+          [commentId]: { ...comment, attachments: nextAttachments },
+        },
+      };
+    }
+    case 'ATTACHMENT_REMOVED': {
+      const { commentId, attachmentId } = action;
+      if (!commentId || !attachmentId) return state;
+      const comment = state.commentsById[commentId];
+      if (!comment) return state;
+      const nextAttachments = (comment.attachments ?? []).filter(
+        (att) => att.id !== attachmentId
+      );
+      return {
+        ...state,
+        commentsById: {
+          ...state.commentsById,
+          [commentId]: { ...comment, attachments: nextAttachments },
+        },
+      };
+    }
     case 'COMMENT_PATCHED': {
       const comment = action.comment;
       if (!comment?.id) return state;

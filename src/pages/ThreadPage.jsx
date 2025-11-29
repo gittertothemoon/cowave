@@ -28,8 +28,11 @@ export default function ThreadPage() {
     loadThreadById,
     loadCommentsForThread,
     createComment,
-    addWaveToComment,
+    toggleWaveOnComment,
     loadRooms,
+    addAttachmentToComment,
+    removeAttachmentFromComment,
+    getSignedUrlForAttachment,
   } = useAppState();
 
   const existingThread = threadsById[threadId] ?? threads.find((t) => t.id === threadId);
@@ -65,9 +68,9 @@ export default function ThreadPage() {
     if (!threadId) return;
     const meta = commentListsMeta[threadId];
     if (!meta || (!meta.loading && (meta.ids?.length ?? 0) === 0)) {
-      loadCommentsForThread(threadId);
+      loadCommentsForThread(threadId, { userId: user?.id ?? null });
     }
-  }, [commentListsMeta, loadCommentsForThread, threadId]);
+  }, [commentListsMeta, loadCommentsForThread, threadId, user?.id]);
 
   const thread = threadsById[threadId] ?? existingThread ?? null;
   const room = thread?.roomId ? roomsById?.[thread.roomId] : null;
@@ -152,7 +155,10 @@ export default function ThreadPage() {
   }
 
   function handleLoadMore() {
-    loadCommentsForThread(threadId, { cursor: commentsMeta.cursor });
+    loadCommentsForThread(threadId, {
+      cursor: commentsMeta.cursor,
+      userId: user?.id ?? null,
+    });
   }
 
   function renderReplies(parentId, depth = 0) {
@@ -166,6 +172,16 @@ export default function ThreadPage() {
         <div key={comment.id} className={`space-y-3 ${indentClass}`}>
           <PostNode
             post={comment}
+            currentUserId={user?.id ?? null}
+            onUploadAttachment={(file) =>
+              addAttachmentToComment({
+                commentId: comment.id,
+                file,
+                userId: user?.id ?? '',
+              })
+            }
+            onDeleteAttachment={removeAttachmentFromComment}
+            getSignedUrlForAttachment={getSignedUrlForAttachment}
             actions={
               <div className="flex flex-wrap items-center gap-2">
                 <button
@@ -177,8 +193,13 @@ export default function ThreadPage() {
                 </button>
               </div>
             }
-            onSendWave={(postId, waveType) =>
-              addWaveToComment(threadId, postId, waveType)
+            onToggleWave={(postId, waveType) =>
+              toggleWaveOnComment({
+                threadId,
+                commentId: postId,
+                waveType,
+                userId: user?.id ?? null,
+              })
             }
           />
           {hasChildren ? (
@@ -273,8 +294,13 @@ export default function ThreadPage() {
                 post={rootPost}
                 label="Post iniziale"
                 variant="root"
-                onSendWave={(postId, waveType) =>
-                  addWaveToComment(threadId, postId, waveType)
+                onToggleWave={(postId, waveType) =>
+                  toggleWaveOnComment({
+                    threadId,
+                    commentId: postId,
+                    waveType,
+                    userId: user?.id ?? null,
+                  })
                 }
                 actions={
                   <div className="flex items-center gap-2">
@@ -347,7 +373,11 @@ export default function ThreadPage() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => loadCommentsForThread(threadId)}
+                      onClick={() =>
+                        loadCommentsForThread(threadId, {
+                          userId: user?.id ?? null,
+                        })
+                      }
                       className={`${buttonPrimaryClass} text-xs`}
                     >
                       Riprova
