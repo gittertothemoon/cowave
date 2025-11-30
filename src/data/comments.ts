@@ -8,6 +8,7 @@ import {
   type CommentAttachmentRecord,
   type CommentWaveKind,
   type CommentWaves,
+  type ProfileRecord,
 } from './types';
 import {
   fetchMyWavesForComments,
@@ -20,10 +21,18 @@ type ListCommentsOptions = {
   userId?: string | null;
 };
 
-function mapComment(record: CommentRecord): Comment {
+function mapComment(
+  record: CommentRecord,
+  authorProfile?: ProfileRecord | null
+): Comment {
   const attachments: CommentAttachment[] = Array.isArray(record.comment_attachments)
     ? record.comment_attachments.map(mapAttachmentRecord)
     : [];
+  const profile = authorProfile ?? record.profiles ?? null;
+  const authorName =
+    profile?.username?.trim() ||
+    profile?.display_name?.trim() ||
+    null;
   return {
     id: record.id,
     threadId: record.thread_id,
@@ -32,6 +41,9 @@ function mapComment(record: CommentRecord): Comment {
     parentCommentId: record.parent_comment_id,
     createdAt: record.created_at,
     attachments,
+    isDeleted: Boolean(record.is_deleted),
+    deletedAt: record.deleted_at ?? null,
+    authorName,
   };
 }
 
@@ -95,6 +107,8 @@ export async function listCommentsByThread(
           body,
           parent_comment_id,
           created_at,
+          is_deleted,
+          deleted_at,
           comment_attachments (
             id,
             comment_id,
@@ -137,7 +151,40 @@ export async function listCommentsByThread(
           }
         : null;
 
-    const baseComments = trimmed.map(mapComment);
+    const authorIds = Array.from(
+      new Set(
+        trimmed
+          .map((row) => row.created_by)
+          .filter((id): id is string => Boolean(id))
+      )
+    );
+    let profilesById: Record<string, ProfileRecord> = {};
+    if (authorIds.length > 0) {
+      const { data: authorProfiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, display_name')
+        .in('id', authorIds);
+      if (profilesError) {
+        console.error('Errore nel recupero dei profili autore', profilesError);
+      } else if (Array.isArray(authorProfiles)) {
+        profilesById = Object.fromEntries(
+          authorProfiles
+            .filter((profile) => profile?.id)
+            .map((profile) => [profile.id, profile])
+        );
+      }
+    }
+
+    const baseComments = trimmed.map((record) => {
+      const profile = profilesById[record.created_by ?? ''];
+      const mapped = mapComment(record, profile);
+      const authorName =
+        mapped.authorName ||
+        profile?.username?.trim() ||
+        profile?.display_name?.trim() ||
+        'Utente';
+      return { ...mapped, authorName };
+    });
     const commentIds = baseComments.map((comment) => comment.id);
     let wavesError: Error | null = null;
 
@@ -213,7 +260,9 @@ export async function createComment(
     const { data, error } = await supabase
       .from('comments')
       .insert(payload)
-      .select('id, thread_id, created_by, body, parent_comment_id, created_at')
+      .select(
+        'id, thread_id, created_by, body, parent_comment_id, created_at, is_deleted, deleted_at'
+      )
       .maybeSingle();
 
     if (error) {
@@ -237,21 +286,27 @@ export async function createComment(
 
 export async function deleteComment(
   commentId: string
-): Promise<{ success: boolean; error: Error | null }> {
+): Promise<{ success: boolean; error: Error | null; deletedAt?: string | null }> {
   try {
-    const { error } = await supabase
+    const deletedAt = new Date().toISOString();
+    const { data, error } = await supabase
       .from('comments')
-      .delete()
-      .eq('id', commentId);
+      .update({ is_deleted: true, deleted_at: deletedAt })
+      .eq('id', commentId)
+      .select('id, deleted_at')
+      .maybeSingle();
 
-    if (error) {
+    if (error || !data) {
       return {
         success: false,
-        error: buildError('Non riesco a eliminare la risposta', error),
+        error: buildError(
+          'Non riesco a eliminare la risposta',
+          error ?? new Error('Commento non trovato.')
+        ),
       };
     }
 
-    return { success: true, error: null };
+    return { success: true, error: null, deletedAt: data?.deleted_at ?? deletedAt };
   } catch (err) {
     return {
       success: false,

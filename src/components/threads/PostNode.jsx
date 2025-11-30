@@ -57,9 +57,10 @@ export default function PostNode({
   const formattedDate = createdAt.toLocaleString();
   const isoCreatedAt = createdAt.toISOString();
   const initials = (post.author?.[0] ?? 'U').toUpperCase();
+  const isDeleted = Boolean(post?.isDeleted);
   const waves = useMemo(
-    () => normalizeWaveShape(post?.waves),
-    [post?.waves, post?.id]
+    () => (isDeleted ? emptyWaves : normalizeWaveShape(post?.waves)),
+    [post?.waves, post?.id, isDeleted]
   );
   const totalWaves = waves.support + waves.insight + waves.question;
   const waveSummaryParts = useMemo(
@@ -67,8 +68,8 @@ export default function PostNode({
     [waves.support, waves.insight, waves.question]
   );
   const myWaves = useMemo(
-    () => (Array.isArray(post?.myWaves) ? post.myWaves : []),
-    [post?.myWaves, post?.id]
+    () => (isDeleted ? [] : Array.isArray(post?.myWaves) ? post.myWaves : []),
+    [post?.myWaves, post?.id, isDeleted]
   );
   const isRoot = variant === 'root';
   const containerClass = [
@@ -84,15 +85,19 @@ export default function PostNode({
       ? 'border border-accent/50 bg-accent/15 text-accent'
       : 'border border-slate-700 bg-slate-900/70 text-slate-300',
   ].join(' ');
-  const attachments = Array.isArray(post.attachments) ? post.attachments : [];
+  const attachments = isDeleted
+    ? []
+    : Array.isArray(post.attachments)
+      ? post.attachments
+      : [];
   const hasThreadContext = Boolean(post?.threadId);
   const isOwner =
     hasThreadContext &&
     Boolean(currentUserId) &&
     Boolean(post?.createdBy) &&
     post.createdBy === currentUserId;
-  const canAttach = Boolean(isOwner && onUploadAttachment);
-  const showAttachmentAction = Boolean(canAttach);
+  const canAttach = Boolean(isOwner && onUploadAttachment && !isDeleted);
+  const showAttachmentAction = Boolean(canAttach && !isDeleted);
   const allowedTypesLabel = useMemo(
     () =>
       ALLOWED_IMAGE_TYPES.map(
@@ -100,9 +105,10 @@ export default function PostNode({
       ).join(', '),
     []
   );
+  const displayContent = isDeleted ? 'Commento eliminato' : post.content || post.body;
 
   async function handleWaveToggle(type) {
-    if (!type || !hasThreadContext || !onToggleWave) return;
+    if (!type || !hasThreadContext || !onToggleWave || isDeleted) return;
     if (pendingWaveType) return;
     setWaveError('');
     setPendingWaveType(type);
@@ -185,6 +191,7 @@ export default function PostNode({
   }, [openLightboxId]);
 
   function handleAttachmentButton() {
+    if (isDeleted) return;
     setAttachmentError('');
     fileInputRef.current?.click();
   }
@@ -198,6 +205,7 @@ export default function PostNode({
   }
 
   function handleAttachmentChange(event) {
+    if (isDeleted) return;
     const file = event.target.files?.[0];
     if (!file) {
       clearPendingAttachment();
@@ -218,7 +226,7 @@ export default function PostNode({
   }
 
   async function handleAttachmentUpload() {
-    if (!pendingFile || !onUploadAttachment || isUploadingAttachment) return;
+    if (!pendingFile || !onUploadAttachment || isUploadingAttachment || isDeleted) return;
     setIsUploadingAttachment(true);
     const { attachment, error } = await onUploadAttachment(pendingFile);
     if (error || !attachment) {
@@ -298,11 +306,15 @@ export default function PostNode({
         </div>
       </div>
 
-      <p className={`${bodyTextClass} text-sm whitespace-pre-wrap`}>
-        {post.content || post.body}
+      <p
+        className={`${bodyTextClass} text-sm whitespace-pre-wrap ${
+          isDeleted ? 'text-slate-500 italic' : ''
+        }`}
+      >
+        {displayContent}
       </p>
 
-      {hasThreadContext ? (
+      {hasThreadContext && !isDeleted ? (
         <div className="space-y-2">
           <input
             type="file"
@@ -350,7 +362,7 @@ export default function PostNode({
       ) : null}
 
       <div className="pt-1 space-y-3">
-        {hasThreadContext ? (
+        {hasThreadContext && !isDeleted ? (
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 px-3 py-3">
             <div className="mb-2 flex items-start justify-between gap-2">
               <div>
@@ -410,7 +422,7 @@ export default function PostNode({
           </div>
         ) : null}
 
-        {showAttachmentAction || actions ? (
+        {!isDeleted && (showAttachmentAction || actions) ? (
           <div className="flex flex-wrap items-center gap-2">
             {showAttachmentAction ? (
               <button
@@ -427,7 +439,7 @@ export default function PostNode({
           </div>
         ) : null}
 
-        {totalWaves > 0 ? (
+        {!isDeleted && totalWaves > 0 ? (
           <WaveSummary waves={waves} parts={waveSummaryParts} total={totalWaves} />
         ) : null}
       </div>

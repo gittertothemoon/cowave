@@ -49,16 +49,47 @@ export default function AuthPage({ onAuth }) {
   const emailId = useId();
   const passwordId = useId();
   const ready = authReady ?? isAuthReady;
+  const fromState = location.state?.from;
+  const onboardingPaths = ['/onboarding', '/app/onboarding'];
+
+  function normalizeFromPath(value) {
+    if (!value) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object' && value?.pathname) {
+      return `${value.pathname}${value.search ?? ''}${value.hash ?? ''}`;
+    }
+    return '';
+  }
+
+  const requestedPath = normalizeFromPath(fromState);
+
+  function resolveDestination({ isOnboarded }) {
+    if (isOnboarded === false) {
+      return '/onboarding';
+    }
+    if (
+      requestedPath &&
+      !requestedPath.startsWith('/auth') &&
+      requestedPath !== '/login' &&
+      !onboardingPaths.includes(requestedPath)
+    ) {
+      return requestedPath;
+    }
+    return '/feed';
+  }
 
   useEffect(() => {
     if (!ready || isProfileLoading || !isAuthenticated) return;
-    const destination = profile?.is_onboarded ? '/feed' : '/onboarding';
+    const destination = resolveDestination({
+      isOnboarded: profile?.is_onboarded === true,
+    });
     navigate(destination, { replace: true });
   }, [
     isAuthenticated,
     ready,
     isProfileLoading,
     profile?.is_onboarded,
+    requestedPath,
     navigate,
   ]);
 
@@ -141,10 +172,10 @@ export default function AuthPage({ onAuth }) {
         });
         onAuth?.();
         const nextProfile = await refreshProfile(data?.user?.id);
-        const destination =
-          nextProfile?.is_onboarded || profile?.is_onboarded
-            ? '/feed'
-            : '/onboarding';
+        const destination = resolveDestination({
+          isOnboarded:
+            nextProfile?.is_onboarded === true || profile?.is_onboarded === true,
+        });
         navigate(destination, { replace: true });
         return;
       }

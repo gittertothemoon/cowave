@@ -18,7 +18,7 @@ import { getCanonicalUrl } from '../lib/url.js';
 export default function ThreadPage() {
   const { threadId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const {
     threads,
     threadsById,
@@ -32,6 +32,7 @@ export default function ThreadPage() {
     loadRooms,
     addAttachmentToComment,
     removeAttachmentFromComment,
+    deleteComment: softDeleteComment,
     getSignedUrlForAttachment,
   } = useAppState();
 
@@ -40,6 +41,8 @@ export default function ThreadPage() {
   const [copyFeedback, setCopyFeedback] = useState('');
   const [replyTarget, setReplyTarget] = useState(null);
   const [composerError, setComposerError] = useState('');
+  const [commentActionError, setCommentActionError] = useState('');
+  const [deletingCommentId, setDeletingCommentId] = useState('');
 
   useEffect(() => {
     let isActive = true;
@@ -136,22 +139,70 @@ export default function ThreadPage() {
     }
   }
 
-  async function handleSubmitComment({ content, parentId }) {
+  async function handleSubmitComment({ content, parentId, attachmentFile = null }) {
     setComposerError('');
-    const { error } = await createComment({
+    setCommentActionError('');
+    const authorName =
+      profile?.username?.trim() ||
+      profile?.display_name?.trim() ||
+      user?.email ||
+      'Utente';
+    const { comment, error } = await createComment({
       threadId,
       body: content,
       parentCommentId: parentId ?? replyTarget?.id ?? null,
       createdBy: user?.id,
-      authorName: user?.email,
+      authorName,
     });
-    if (error) {
+    if (error || !comment) {
       setComposerError(
         'Non riesco a pubblicare la risposta. Riprova tra poco.'
       );
       return;
     }
+    if (attachmentFile && comment.id) {
+      const newCommentId = comment.id;
+      const { error: attachmentError, attachment } = await addAttachmentToComment({
+        commentId: newCommentId,
+        file: attachmentFile,
+        userId: user?.id ?? '',
+      });
+      if (attachmentError) {
+        setComposerError(
+          attachmentError.message ||
+            'Risposta pubblicata, ma non sono riuscito a caricare l’immagine.'
+        );
+      } else if (attachment) {
+        await loadCommentsForThread(threadId, {
+          userId: user?.id ?? null,
+        });
+      }
+    }
     setReplyTarget(null);
+  }
+
+  async function handleDeleteComment(targetComment) {
+    if (!targetComment?.id) return;
+    setCommentActionError('');
+    const shouldConfirm =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(max-width: 640px)').matches;
+    if (shouldConfirm) {
+      const confirmed = window.confirm('Eliminare questo commento?');
+      if (!confirmed) return;
+    }
+    setDeletingCommentId(targetComment.id);
+    const { success, error } = await softDeleteComment(targetComment.id);
+    if (!success || error) {
+      setCommentActionError(
+        error?.message ||
+          'Non riesco a eliminare il commento ora. Riprova.'
+      );
+    } else if (replyTarget?.id === targetComment.id) {
+      setReplyTarget(null);
+    }
+    setDeletingCommentId('');
   }
 
   function handleLoadMore() {
@@ -168,6 +219,33 @@ export default function ThreadPage() {
 
     return children.map((comment) => {
       const hasChildren = (repliesByParent.get(comment.id) ?? []).length > 0;
+      const canDelete = Boolean(
+        comment?.createdBy &&
+          user?.id &&
+          comment.createdBy === user.id
+      );
+      const isDeleted = Boolean(comment?.isDeleted);
+      const actionButtons = isDeleted ? null : (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className={`${buttonGhostClass} px-3 py-1 text-xs`}
+            onClick={() => setReplyTarget(comment)}
+          >
+            Rispondi
+          </button>
+          {canDelete ? (
+            <button
+              type="button"
+              className={`${buttonGhostClass} px-3 py-1 text-xs text-rose-200`}
+              onClick={() => handleDeleteComment(comment)}
+              disabled={deletingCommentId === comment.id}
+            >
+              {deletingCommentId === comment.id ? '...' : 'Elimina'}
+            </button>
+          ) : null}
+        </div>
+      );
       return (
         <div key={comment.id} className={`space-y-3 ${indentClass}`}>
           <PostNode
@@ -182,17 +260,7 @@ export default function ThreadPage() {
             }
             onDeleteAttachment={removeAttachmentFromComment}
             getSignedUrlForAttachment={getSignedUrlForAttachment}
-            actions={
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  className={`${buttonGhostClass} px-3 py-1 text-xs`}
-                  onClick={() => setReplyTarget(comment)}
-                >
-                  Rispondi
-                </button>
-              </div>
-            }
+            actions={actionButtons}
             onToggleWave={(postId, waveType) =>
               toggleWaveOnComment({
                 threadId,
@@ -363,6 +431,9 @@ export default function ThreadPage() {
               />
               {composerError ? (
                 <p className="text-xs text-red-300">{composerError}</p>
+              ) : null}
+              {commentActionError ? (
+                <p className="text-xs text-red-300">{commentActionError}</p>
               ) : null}
 
               {commentsError ? (

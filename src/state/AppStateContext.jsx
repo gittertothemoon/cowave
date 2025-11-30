@@ -26,6 +26,7 @@ import {
 import {
   createComment as createCommentRequest,
   listCommentsByThread,
+  deleteComment as deleteCommentRequest,
 } from '../data/comments';
 import {
   deleteCommentAttachment,
@@ -178,15 +179,26 @@ function decorateThread(thread, authorName = 'Utente') {
 }
 
 function decorateComment(comment, authorName = 'Utente') {
-  const waves = normalizeWaves(comment?.waves);
+  const isDeleted = Boolean(comment?.isDeleted);
+  const waves = isDeleted ? { support: 0, insight: 0, question: 0 } : normalizeWaves(comment?.waves);
+  const myWaves = isDeleted ? [] : normalizeWaveKinds(comment?.myWaves);
+  const baseContent = comment?.content ?? comment?.body ?? '';
+  const content = isDeleted ? 'Commento eliminato' : baseContent;
+  const author =
+    comment?.author ??
+    comment?.authorName ??
+    authorName ??
+    'Utente';
   return {
     ...comment,
-    author: comment?.author ?? comment?.createdBy ?? authorName ?? 'Utente',
-    content: comment?.content ?? comment?.body ?? '',
+    author,
+    content,
     parentId: comment?.parentCommentId ?? null,
+    attachments: isDeleted ? [] : comment?.attachments ?? [],
     waves,
-    myWaves: normalizeWaveKinds(comment?.myWaves),
-    waveCount: getTotalWaves(waves),
+    myWaves,
+    waveCount: isDeleted ? 0 : getTotalWaves(waves),
+    isDeleted,
   };
 }
 
@@ -754,6 +766,9 @@ export function AppStateProvider({ children }) {
       if (!target) {
         return { error: new Error('Commento non trovato.') };
       }
+      if (target.isDeleted) {
+        return { error: new Error('Questo commento è stato eliminato.') };
+      }
 
       const baseWaves = normalizeWaves(target.waves);
       const baseMyWaves = normalizeWaveKinds(target.myWaves);
@@ -816,6 +831,13 @@ export function AppStateProvider({ children }) {
 
   const addAttachmentToComment = useCallback(
     async ({ commentId, file, userId }) => {
+      const target = dataState.commentsById?.[commentId];
+      if (target?.isDeleted) {
+        return {
+          attachment: null,
+          error: new Error('Non puoi aggiungere immagini a un commento eliminato.'),
+        };
+      }
       const { attachment, error } = await uploadCommentAttachment({
         file,
         userId,
@@ -833,7 +855,7 @@ export function AppStateProvider({ children }) {
       }
       return { attachment, error };
     },
-    [awardAchievement]
+    [awardAchievement, dataState.commentsById]
   );
 
   const removeAttachmentFromComment = useCallback(
@@ -849,6 +871,33 @@ export function AppStateProvider({ children }) {
       return { success, error };
     },
     []
+  );
+
+  const deleteComment = useCallback(
+    async (commentId) => {
+      if (!commentId) {
+        return { success: false, error: new Error('Commento non valido.') };
+      }
+      const target = dataState.commentsById[commentId];
+      const { success, error, deletedAt } = await deleteCommentRequest(commentId);
+      if (success && target) {
+        dispatch({
+          type: 'COMMENT_PATCHED',
+          comment: {
+            ...target,
+            isDeleted: true,
+            deletedAt: deletedAt ?? new Date().toISOString(),
+            attachments: [],
+            waves: { support: 0, insight: 0, question: 0 },
+            myWaves: [],
+            waveCount: 0,
+            content: 'Commento eliminato',
+          },
+        });
+      }
+      return { success, error };
+    },
+    [dataState.commentsById]
   );
 
   const createRoom = useCallback(
@@ -972,6 +1021,7 @@ export function AppStateProvider({ children }) {
       toggleWaveOnComment,
       addAttachmentToComment,
       removeAttachmentFromComment,
+      deleteComment,
       getSignedUrlForAttachment: fetchSignedAttachmentUrl,
       setActivePersonaId,
       completeOnboarding,
@@ -1023,6 +1073,7 @@ export function AppStateProvider({ children }) {
       pendingAchievementCelebrations,
       addAttachmentToComment,
       removeAttachmentFromComment,
+      deleteComment,
       fetchSignedAttachmentUrl,
       toggleWaveOnComment,
       awardAchievement,

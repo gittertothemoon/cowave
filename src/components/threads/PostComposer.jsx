@@ -60,21 +60,11 @@ export default function PostComposer({
     e.preventDefault();
     if (isEmpty) return;
     const hasAttachment = Boolean(selectedImage && previewUrl);
-    const attachments =
-      hasAttachment
-        ? [
-            {
-              id:
-                typeof crypto !== 'undefined' && crypto.randomUUID
-                  ? crypto.randomUUID()
-                  : `att-${Date.now()}`,
-              type: 'image',
-              url: previewUrl,
-              name: selectedImage.name,
-            },
-          ]
-        : undefined;
-    onSubmit?.({ content: value, parentId, attachments });
+    onSubmit?.({
+      content: value,
+      parentId,
+      attachmentFile: hasAttachment ? selectedImage : null,
+    });
     setValue('');
     clearSelectedImage({ revoke: !hasAttachment });
   }

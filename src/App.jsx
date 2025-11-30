@@ -19,24 +19,26 @@ import { useAuth } from './state/AuthContext.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 
 export default function App() {
-  const { profile, authReady, isAuthReady } = useAuth();
+  const {
+    profile,
+    authReady,
+    isAuthReady,
+    isProfileReady,
+    isProfileLoading,
+  } = useAuth();
   const { activePersonaId, setActivePersonaId } = useAppState();
   const ready = authReady ?? isAuthReady;
+  const profileReady = (isProfileReady ?? !isProfileLoading) && !isProfileLoading;
   const isOnboarded = Boolean(profile?.is_onboarded);
 
   const protectedAppLayout = (
     <ProtectedRoute>
-      <OnboardedRoute
-        authReady={ready}
-        isOnboarded={isOnboarded}
+      <MainLayout
+        activePersonaId={activePersonaId}
+        onPersonaChange={setActivePersonaId}
       >
-        <MainLayout
-          activePersonaId={activePersonaId}
-          onPersonaChange={setActivePersonaId}
-        >
-          <Outlet />
-        </MainLayout>
-      </OnboardedRoute>
+        <Outlet />
+      </MainLayout>
     </ProtectedRoute>
   );
 
@@ -44,6 +46,7 @@ export default function App() {
     <>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<AuthPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/confirm" element={<AuthConfirm />} />
         <Route path="/auth/*" element={<AuthPage />} />
@@ -51,7 +54,7 @@ export default function App() {
           path="/app/onboarding"
           element={
             <ProtectedRoute>
-              {isOnboarded && ready ? (
+              {isOnboarded && ready && profileReady ? (
                 <Navigate to="/feed" replace />
               ) : (
                 <OnboardingPage />
@@ -63,7 +66,7 @@ export default function App() {
           path="/onboarding"
           element={
             <ProtectedRoute>
-              {isOnboarded && ready ? (
+              {isOnboarded && ready && profileReady ? (
                 <Navigate to="/feed" replace />
               ) : (
                 <OnboardingPage />
@@ -126,12 +129,4 @@ export default function App() {
       <AchievementCelebrationPortal />
     </>
   );
-}
-
-function OnboardedRoute({ isOnboarded, authReady, children }) {
-  if (isOnboarded === false && authReady) {
-    return <Navigate to="/onboarding" replace />;
-  }
-
-  return children;
 }

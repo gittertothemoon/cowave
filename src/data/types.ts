@@ -26,6 +26,9 @@ export type CommentRecord = {
   parent_comment_id: string | null;
   created_at: string;
   comment_attachments?: CommentAttachmentRecord[];
+  is_deleted?: boolean | null;
+  deleted_at?: string | null;
+  profiles?: ProfileRecord | null;
 };
 
 export type CommentWaveKind = 'support' | 'insight' | 'question';
@@ -69,6 +72,9 @@ export type Comment = {
   waves?: CommentWaves;
   myWaves?: CommentWaveKind[];
   waveCount?: number;
+  isDeleted?: boolean;
+  deletedAt?: string | null;
+  authorName?: string | null;
 };
 
 export type PaginationCursor = {
@@ -106,6 +112,12 @@ export type CommentAttachment = {
   width: number | null;
   height: number | null;
   createdAt: string;
+};
+
+export type ProfileRecord = {
+  id: string;
+  username: string | null;
+  display_name: string | null;
 };
 
 export type ReflectionRecord = {

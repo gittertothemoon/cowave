@@ -17,6 +17,7 @@ export function AuthProvider({ children }) {
   const [authReady, setAuthReady] = useState(false);
   const [profile, setProfile] = useState(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [isProfileReady, setIsProfileReady] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -79,9 +80,11 @@ export function AuthProvider({ children }) {
       if (!userId) {
         setProfile(null);
         setIsProfileLoading(false);
+        setIsProfileReady(false);
         return null;
       }
       setIsProfileLoading(true);
+      setIsProfileReady(false);
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -91,12 +94,15 @@ export function AuthProvider({ children }) {
         if (error) {
           console.error('Errore nel recupero del profilo', error);
           setProfile(null);
+          setIsProfileReady(true);
           return null;
         }
         setProfile(data ?? null);
+        setIsProfileReady(true);
         return data ?? null;
       } finally {
         setIsProfileLoading(false);
+        setIsProfileReady(true);
       }
     },
     [user?.id]
@@ -109,10 +115,12 @@ export function AuthProvider({ children }) {
         if (isMounted) {
           setProfile(null);
           setIsProfileLoading(false);
+          setIsProfileReady(true);
         }
         return;
       }
       setIsProfileLoading(true);
+      setIsProfileReady(false);
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -123,12 +131,14 @@ export function AuthProvider({ children }) {
         if (error) {
           console.error('Errore nel recupero del profilo', error);
           setProfile(null);
+          setIsProfileReady(true);
           return;
         }
         setProfile(data ?? null);
       } finally {
         if (isMounted) {
           setIsProfileLoading(false);
+          setIsProfileReady(true);
         }
       }
     }
@@ -156,6 +166,7 @@ export function AuthProvider({ children }) {
       authReady,
       isAuthReady: authReady,
       isProfileLoading,
+      isProfileReady,
       refreshProfile,
       updateProfileState,
       signIn: (params) => supabase.auth.signInWithPassword(params),
@@ -168,6 +179,7 @@ export function AuthProvider({ children }) {
       profile,
       authReady,
       isProfileLoading,
+      isProfileReady,
       refreshProfile,
       updateProfileState,
     ]

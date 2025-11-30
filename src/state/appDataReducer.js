@@ -294,7 +294,7 @@ export function appDataReducer(state, action) {
       const { commentId, attachment } = action;
       if (!commentId || !attachment) return state;
       const comment = state.commentsById[commentId];
-      if (!comment) return state;
+      if (!comment || comment.isDeleted) return state;
       const existingAttachments = Array.isArray(comment.attachments)
         ? comment.attachments
         : [];
