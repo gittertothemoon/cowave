@@ -29,6 +29,12 @@ function ThreadRedirect() {
   return <Navigate to={target} replace />;
 }
 
+function ThreadRoute() {
+  const { threadId } = useParams();
+  // Force a remount when the thread id changes so the view resets correctly
+  return <ThreadPage key={threadId} />;
+}
+
 function AppLayout({ activePersonaId, onPersonaChange }) {
   return (
     <MainLayout
@@ -76,24 +82,24 @@ export default function App() {
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/app/onboarding" element={<OnboardingPage />} />
           <Route
-            element={
-              <AppLayout
-                activePersonaId={activePersonaId}
-                onPersonaChange={setActivePersonaId}
-              />
-            }
-          >
-            <Route path="/app">
-              <Route index element={<Navigate to="feed" replace />} />
-              <Route path="feed" element={<HomePage />} />
-              <Route path="rooms" element={<RoomsOverviewPage />} />
-              <Route path="rooms/:roomId" element={<RoomPage />} />
-              <Route path="threads/:threadId" element={<ThreadPage />} />
-              <Route
-                path="profile"
-                element={<ProfilePage activePersonaId={activePersonaId} />}
-              />
-              <Route path="settings" element={<SettingsPage />} />
+          element={
+            <AppLayout
+              activePersonaId={activePersonaId}
+              onPersonaChange={setActivePersonaId}
+            />
+          }
+        >
+          <Route path="/app/*">
+            <Route index element={<Navigate to="feed" replace />} />
+            <Route path="feed" element={<HomePage />} />
+            <Route path="rooms" element={<RoomsOverviewPage />} />
+            <Route path="rooms/:roomId" element={<RoomPage />} />
+            <Route path="threads/:threadId" element={<ThreadRoute />} />
+            <Route
+              path="profile"
+              element={<ProfilePage activePersonaId={activePersonaId} />}
+            />
+            <Route path="settings" element={<SettingsPage />} />
               <Route path="settings/esperienza" element={<AdvancedToolsPage />} />
             </Route>
           </Route>
