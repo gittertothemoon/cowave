@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet, useParams } from 'react-router-dom';
 import LandingPage from './pages/LandingPage.jsx';
 import AuthPage from './pages/AuthPage.jsx';
 import AuthCallback from './pages/AuthCallback.jsx';
@@ -17,6 +17,12 @@ import ProtectedRoute from './routes/ProtectedRoute.jsx';
 import AchievementCelebrationPortal from './features/achievements/AchievementCelebrationPortal.jsx';
 import { useAuth } from './state/AuthContext.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
+
+function RoomRedirect() {
+  const { roomId } = useParams();
+  const target = roomId ? `/app/rooms/${roomId}` : '/app/rooms';
+  return <Navigate to={target} replace />;
+}
 
 export default function App() {
   const {
@@ -78,7 +84,7 @@ export default function App() {
         <Route path="/rooms" element={<Navigate to="/app/rooms" replace />} />
         <Route
           path="/rooms/:roomId"
-          element={<Navigate to="/app/rooms/:roomId" replace />}
+          element={<RoomRedirect />}
         />
         <Route
           path="/threads/:threadId"
