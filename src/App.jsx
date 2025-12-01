@@ -55,7 +55,7 @@ export default function App() {
           element={
             <ProtectedRoute>
               {isOnboarded && ready && profileReady ? (
-                <Navigate to="/feed" replace />
+                <Navigate to="/app" replace />
               ) : (
                 <OnboardingPage />
               )}
@@ -67,60 +67,66 @@ export default function App() {
           element={
             <ProtectedRoute>
               {isOnboarded && ready && profileReady ? (
-                <Navigate to="/feed" replace />
+                <Navigate to="/app" replace />
               ) : (
                 <OnboardingPage />
               )}
             </ProtectedRoute>
           }
         />
-        <Route element={protectedAppLayout}>
+        <Route path="/feed" element={<Navigate to="/app" replace />} />
+        <Route path="/rooms" element={<Navigate to="/app/rooms" replace />} />
+        <Route
+          path="/rooms/:roomId"
+          element={<Navigate to="/app/rooms/:roomId" replace />}
+        />
+        <Route
+          path="/threads/:threadId"
+          element={<Navigate to="/app/threads/:threadId" replace />}
+        />
+        <Route
+          path="/profile"
+          element={<Navigate to="/app/profile" replace />}
+        />
+        <Route
+          path="/settings"
+          element={<Navigate to="/app/settings" replace />}
+        />
+        <Route
+          path="/settings/esperienza"
+          element={<Navigate to="/app/settings/esperienza" replace />}
+        />
+        <Route path="/app" element={protectedAppLayout}>
           <Route
-            path="/feed"
+            index
             element={<HomePage activePersonaId={activePersonaId} />}
           />
           <Route
-            path="/rooms"
+            path="feed"
+            element={<Navigate to="/app" replace />}
+          />
+          <Route
+            path="rooms"
             element={<RoomsOverviewPage />}
           />
           <Route
-            path="/rooms/:roomId"
+            path="rooms/:roomId"
             element={<RoomPage activePersonaId={activePersonaId} />}
           />
           <Route
-            path="/threads/:threadId"
+            path="threads/:threadId"
             element={<ThreadPage activePersonaId={activePersonaId} />}
           />
           <Route
-            path="/profile"
+            path="profile"
             element={<ProfilePage activePersonaId={activePersonaId} />}
           />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/settings/esperienza" element={<AdvancedToolsPage />} />
-          {/* Legacy /app paths kept for compatibility */}
           <Route
-            path="/app"
-            element={<HomePage activePersonaId={activePersonaId} />}
+            path="settings"
+            element={<SettingsPage />}
           />
           <Route
-            path="/app/rooms"
-            element={<RoomsOverviewPage />}
-          />
-          <Route
-            path="/app/rooms/:roomId"
-            element={<RoomPage activePersonaId={activePersonaId} />}
-          />
-          <Route
-            path="/app/threads/:threadId"
-            element={<ThreadPage activePersonaId={activePersonaId} />}
-          />
-          <Route
-            path="/app/profile"
-            element={<ProfilePage activePersonaId={activePersonaId} />}
-          />
-          <Route path="/app/settings" element={<SettingsPage />} />
-          <Route
-            path="/app/settings/esperienza"
+            path="settings/esperienza"
             element={<AdvancedToolsPage />}
           />
         </Route>
