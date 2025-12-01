@@ -21,7 +21,7 @@ export default function NotFoundPage() {
         </p>
         <div className="flex flex-wrap gap-2 pt-1">
           <Link
-            to="/feed"
+            to="/app/feed"
             className={buttonPrimaryClass}
           >
             Vai al feed

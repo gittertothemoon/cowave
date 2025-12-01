@@ -57,7 +57,7 @@ export default function ProfileStatsSection({ stats, activity }) {
             </p>
           </div>
           <Link
-            to="/feed"
+            to="/app/feed"
             className="text-[12px] text-accent hover:text-accentSoft"
           >
             Vai al feed →

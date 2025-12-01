@@ -57,26 +57,26 @@ export default function Topbar({
   const navItems = [
     {
       label: 'Feed',
-      to: '/feed',
+      to: '/app/feed',
       icon: 'feed',
       exact: true,
-      match: (path) => path === '/feed' || path === '/app',
+      match: (path) => path === '/app' || path.startsWith('/app/feed'),
     },
     {
       label: 'Stanze',
-      to: '/rooms',
+      to: '/app/rooms',
       icon: 'rooms',
       match: (path) => path.startsWith('/rooms') || path.startsWith('/app/rooms'),
     },
     {
       label: 'Profilo',
-      to: '/profile',
+      to: '/app/profile',
       icon: 'profile',
       match: (path) => path.startsWith('/profile') || path.startsWith('/app/profile'),
     },
     {
       label: 'Impostazioni',
-      to: '/settings',
+      to: '/app/settings',
       icon: 'settings',
       match: (path) => path.startsWith('/settings') || path.startsWith('/app/settings'),
     },
@@ -89,7 +89,7 @@ export default function Topbar({
           <div className="flex h-[4.75rem] md:h-16 items-center gap-3 md:gap-4 relative">
             <div className="absolute inset-0 flex items-center justify-center md:hidden pointer-events-none">
               <Link
-                to="/feed"
+                to="/app/feed"
                 className="pointer-events-auto flex items-center text-slate-100"
                 aria-label="Vai alla home CoWave"
               >
@@ -111,7 +111,7 @@ export default function Topbar({
               </div>
             </button>
             <Link
-              to="/feed"
+              to="/app/feed"
               className="hidden md:flex items-center gap-2 text-slate-200 -ml-20 lg:-ml-24"
               aria-label="Vai alla home CoWave"
             >

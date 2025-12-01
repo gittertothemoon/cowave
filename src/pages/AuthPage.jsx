@@ -75,7 +75,7 @@ export default function AuthPage({ onAuth }) {
     ) {
       return requestedPath;
     }
-    return '/feed';
+    return '/app';
   }
 
   useEffect(() => {

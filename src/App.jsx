@@ -13,9 +13,8 @@ import SettingsPage from './pages/SettingsPage.jsx';
 import AdvancedToolsPage from './pages/AdvancedToolsPage.jsx';
 import OnboardingPage from './pages/OnboardingPage.jsx';
 import { useAppState } from './state/AppStateContext.jsx';
-import ProtectedRoute from './routes/ProtectedRoute.jsx';
+import RequireAuth from './routes/ProtectedRoute.jsx';
 import AchievementCelebrationPortal from './features/achievements/AchievementCelebrationPortal.jsx';
-import { useAuth } from './state/AuthContext.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 
 function RoomRedirect() {
@@ -24,29 +23,25 @@ function RoomRedirect() {
   return <Navigate to={target} replace />;
 }
 
-export default function App() {
-  const {
-    profile,
-    authReady,
-    isAuthReady,
-    isProfileReady,
-    isProfileLoading,
-  } = useAuth();
-  const { activePersonaId, setActivePersonaId } = useAppState();
-  const ready = authReady ?? isAuthReady;
-  const profileReady = (isProfileReady ?? !isProfileLoading) && !isProfileLoading;
-  const isOnboarded = Boolean(profile?.is_onboarded);
+function ThreadRedirect() {
+  const { threadId } = useParams();
+  const target = threadId ? `/app/threads/${threadId}` : '/app/threads';
+  return <Navigate to={target} replace />;
+}
 
-  const protectedAppLayout = (
-    <ProtectedRoute>
-      <MainLayout
-        activePersonaId={activePersonaId}
-        onPersonaChange={setActivePersonaId}
-      >
-        <Outlet />
-      </MainLayout>
-    </ProtectedRoute>
+function AppLayout({ activePersonaId, onPersonaChange }) {
+  return (
+    <MainLayout
+      activePersonaId={activePersonaId}
+      onPersonaChange={onPersonaChange}
+    >
+      <Outlet />
+    </MainLayout>
   );
+}
+
+export default function App() {
+  const { activePersonaId, setActivePersonaId } = useAppState();
 
   return (
     <>
@@ -56,31 +51,6 @@ export default function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/confirm" element={<AuthConfirm />} />
         <Route path="/auth/*" element={<AuthPage />} />
-        <Route
-          path="/app/onboarding"
-          element={
-            <ProtectedRoute>
-              {isOnboarded && ready && profileReady ? (
-                <Navigate to="/app" replace />
-              ) : (
-                <OnboardingPage />
-              )}
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/onboarding"
-          element={
-            <ProtectedRoute>
-              {isOnboarded && ready && profileReady ? (
-                <Navigate to="/app" replace />
-              ) : (
-                <OnboardingPage />
-              )}
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/feed" element={<Navigate to="/app" replace />} />
         <Route path="/rooms" element={<Navigate to="/app/rooms" replace />} />
         <Route
           path="/rooms/:roomId"
@@ -88,7 +58,7 @@ export default function App() {
         />
         <Route
           path="/threads/:threadId"
-          element={<Navigate to="/app/threads/:threadId" replace />}
+          element={<ThreadRedirect />}
         />
         <Route
           path="/profile"
@@ -102,39 +72,31 @@ export default function App() {
           path="/settings/esperienza"
           element={<Navigate to="/app/settings/esperienza" replace />}
         />
-        <Route path="/app" element={protectedAppLayout}>
+        <Route element={<RequireAuth />}>
+          <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/app/onboarding" element={<OnboardingPage />} />
           <Route
-            index
-            element={<HomePage activePersonaId={activePersonaId} />}
-          />
-          <Route
-            path="feed"
-            element={<Navigate to="/app" replace />}
-          />
-          <Route
-            path="rooms"
-            element={<RoomsOverviewPage />}
-          />
-          <Route
-            path="rooms/:roomId"
-            element={<RoomPage activePersonaId={activePersonaId} />}
-          />
-          <Route
-            path="threads/:threadId"
-            element={<ThreadPage activePersonaId={activePersonaId} />}
-          />
-          <Route
-            path="profile"
-            element={<ProfilePage activePersonaId={activePersonaId} />}
-          />
-          <Route
-            path="settings"
-            element={<SettingsPage />}
-          />
-          <Route
-            path="settings/esperienza"
-            element={<AdvancedToolsPage />}
-          />
+            element={
+              <AppLayout
+                activePersonaId={activePersonaId}
+                onPersonaChange={setActivePersonaId}
+              />
+            }
+          >
+            <Route path="/app">
+              <Route index element={<Navigate to="feed" replace />} />
+              <Route path="feed" element={<HomePage />} />
+              <Route path="rooms" element={<RoomsOverviewPage />} />
+              <Route path="rooms/:roomId" element={<RoomPage />} />
+              <Route path="threads/:threadId" element={<ThreadPage />} />
+              <Route
+                path="profile"
+                element={<ProfilePage activePersonaId={activePersonaId} />}
+              />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="settings/esperienza" element={<AdvancedToolsPage />} />
+            </Route>
+          </Route>
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

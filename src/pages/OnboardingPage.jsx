@@ -235,7 +235,7 @@ export default function OnboardingPage() {
         primaryPersonaId: selectedPersonaId,
         algorithmPreset: selectedPreset,
       });
-      navigate('/feed', { replace: true });
+      navigate('/app', { replace: true });
     } catch (err) {
       console.error('Errore inatteso durante l’onboarding', err);
       setSaveError(
@@ -319,7 +319,7 @@ export default function OnboardingPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => navigate('/feed')}
+                    onClick={() => navigate('/app/feed')}
                     className={`rounded-2xl border border-white/10 px-3 py-2 text-sm text-slate-200 hover:border-white/20 ${focusRingClass}`}
                   >
                     Vai al feed
