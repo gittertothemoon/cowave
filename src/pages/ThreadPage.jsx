@@ -14,6 +14,7 @@ import {
   bodyTextClass,
 } from '../components/ui/primitives.js';
 import { getCanonicalUrl } from '../lib/url.js';
+import { formatAuthorLabel } from '../utils/profileLabel.js';
 
 export default function ThreadPage() {
   const { threadId } = useParams();
@@ -70,7 +71,7 @@ export default function ThreadPage() {
   useEffect(() => {
     if (!threadId) return;
     const meta = commentListsMeta[threadId];
-    if (!meta || (!meta.loading && (meta.ids?.length ?? 0) === 0)) {
+    if (!meta || (!meta.loading && !meta.error && (meta.ids?.length ?? 0) === 0)) {
       loadCommentsForThread(threadId, { userId: user?.id ?? null });
     }
   }, [commentListsMeta, loadCommentsForThread, threadId, user?.id]);
@@ -142,11 +143,7 @@ export default function ThreadPage() {
   async function handleSubmitComment({ content, parentId, attachmentFile = null }) {
     setComposerError('');
     setCommentActionError('');
-    const authorName =
-      profile?.username?.trim() ||
-      profile?.display_name?.trim() ||
-      user?.email ||
-      'Utente';
+    const authorName = formatAuthorLabel(profile);
     const { comment, error } = await createComment({
       threadId,
       body: content,

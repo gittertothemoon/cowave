@@ -116,7 +116,7 @@ export type CommentAttachment = {
 
 export type ProfileRecord = {
   id: string;
-  username: string | null;
+  handle: string | null;
   display_name: string | null;
 };
 

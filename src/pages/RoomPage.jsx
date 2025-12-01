@@ -4,6 +4,7 @@ import { useAuth } from '../state/AuthContext.jsx';
 import { useAppState } from '../state/AppStateContext.jsx';
 import ThreadCard from '../components/threads/ThreadCard.jsx';
 import Modal from '../components/ui/Modal.jsx';
+import { formatAuthorLabel } from '../utils/profileLabel.js';
 import {
   buttonPrimaryClass,
   buttonGhostClass,
@@ -20,7 +21,7 @@ export default function RoomPage() {
   const { roomId: roomParam } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const {
     rooms,
     roomsById,
@@ -136,7 +137,7 @@ export default function RoomPage() {
       title: trimmedTitle,
       body: trimmedBody,
       createdBy: user?.id,
-      authorName: user?.email,
+      authorName: formatAuthorLabel(profile),
     });
     setIsSubmitting(false);
     if (error || !thread) {

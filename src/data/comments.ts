@@ -14,6 +14,7 @@ import {
   fetchMyWavesForComments,
   fetchWaveCountsForComments,
 } from './commentWaves';
+import { formatAuthorLabel } from '../utils/profileLabel.js';
 
 type ListCommentsOptions = {
   limit?: number;
@@ -29,10 +30,7 @@ function mapComment(
     ? record.comment_attachments.map(mapAttachmentRecord)
     : [];
   const profile = authorProfile ?? record.profiles ?? null;
-  const authorName =
-    profile?.username?.trim() ||
-    profile?.display_name?.trim() ||
-    null;
+  const authorName = formatAuthorLabel(profile, null);
   return {
     id: record.id,
     threadId: record.thread_id,
@@ -162,7 +160,7 @@ export async function listCommentsByThread(
     if (authorIds.length > 0) {
       const { data: authorProfiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, username, display_name')
+        .select('id, handle, display_name')
         .in('id', authorIds);
       if (profilesError) {
         console.error('Errore nel recupero dei profili autore', profilesError);
@@ -178,11 +176,7 @@ export async function listCommentsByThread(
     const baseComments = trimmed.map((record) => {
       const profile = profilesById[record.created_by ?? ''];
       const mapped = mapComment(record, profile);
-      const authorName =
-        mapped.authorName ||
-        profile?.username?.trim() ||
-        profile?.display_name?.trim() ||
-        'Utente';
+      const authorName = mapped.authorName || formatAuthorLabel(profile);
       return { ...mapped, authorName };
     });
     const commentIds = baseComments.map((comment) => comment.id);
