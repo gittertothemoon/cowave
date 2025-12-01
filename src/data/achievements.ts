@@ -6,6 +6,8 @@ export type AchievementUnlock = {
   unlockedAt: string | null;
 };
 
+const unlockedCache = new Set<string>();
+
 function buildError(message: string, cause?: unknown) {
   const errorMessage =
     cause && typeof cause === 'object' && 'message' in cause
@@ -88,6 +90,12 @@ export async function unlockAchievementForUser({
     };
   }
 
+  const cacheKey = `${userId}::${normalizedId}`;
+  if (unlockedCache.has(cacheKey)) {
+    return { unlocked: false, unlockedAt: null, error: null };
+  }
+  unlockedCache.add(cacheKey);
+
   const payload = {
     achievement_code: normalizedId,
     user_id: userId,
@@ -95,29 +103,15 @@ export async function unlockAchievementForUser({
 
   const { data, error } = await supabase
     .from('achievements_unlocked')
-    .insert(payload)
+    .upsert(payload, {
+      onConflict: 'achievement_code,user_id',
+      ignoreDuplicates: true,
+    })
     .select('achievement_code, unlocked_at')
     .maybeSingle();
 
-  if (error) {
-    if (isConflict(error)) {
-      const { data: existing } = await supabase
-        .from('achievements_unlocked')
-        .select('achievement_code, unlocked_at')
-        .eq('achievement_code', normalizedId)
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      return {
-        unlocked: false,
-        unlockedAt:
-          existing && 'unlocked_at' in (existing as { unlocked_at?: string })
-            ? ((existing as { unlocked_at?: string }).unlocked_at ?? null)
-            : null,
-        error: null,
-      };
-    }
-
+  if (error && !isConflict(error)) {
+    unlockedCache.delete(cacheKey);
     return {
       unlocked: false,
       unlockedAt: null,
@@ -125,12 +119,28 @@ export async function unlockAchievementForUser({
     };
   }
 
+  const wasInserted = Boolean(data);
+  let unlockedAt: string | null =
+    data && 'unlocked_at' in (data as { unlocked_at?: string })
+      ? ((data as { unlocked_at?: string }).unlocked_at ?? null)
+      : null;
+
+  if (!wasInserted && !unlockedAt) {
+    const { data: existing } = await supabase
+      .from('achievements_unlocked')
+      .select('unlocked_at')
+      .eq('achievement_code', normalizedId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    unlockedAt =
+      existing && 'unlocked_at' in (existing as { unlocked_at?: string })
+        ? ((existing as { unlocked_at?: string }).unlocked_at ?? null)
+        : null;
+  }
+
   return {
-    unlocked: true,
-    unlockedAt:
-      data && 'unlocked_at' in (data as { unlocked_at?: string })
-        ? ((data as { unlocked_at?: string }).unlocked_at ?? null)
-        : null,
+    unlocked: wasInserted,
+    unlockedAt,
     error: null,
   };
 }
