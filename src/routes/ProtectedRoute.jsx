@@ -54,5 +54,9 @@ export default function RequireAuth() {
     return <Navigate to="/onboarding" replace state={{ from: location }} />;
   }
 
+  if (!needsOnboarding && isOnboardingRoute) {
+    return <Navigate to="/app" replace />;
+  }
+
   return <Outlet />;
 }
